@@ -264,7 +264,7 @@ function RWEEventHUD:onMouseEvent(posX, posY, isDown, isUp, button)
     if isDown and button == 3 then
         if self.editMode then
             self:exitEditMode()
-        elseif self:isPointerOverHUD(posX, posY) then
+        else
             self:enterEditMode()
         end
         return

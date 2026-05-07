@@ -1,8 +1,12 @@
 -- =========================================================
--- Random World Events (version 2.0.0.6) - FS25
+-- Random World Events (version 2.1.3.0) - FS25
 -- =========================================================
 -- Wildlife / animal events for FS25
 -- Category: "wildlife"  (matches self.events.wildlifeEvents setting key)
+-- =========================================================
+-- BUG FIX: This file previously contained a verbatim copy of
+-- specialEvents.lua (Bug #1 in CLAUDE.md). It now contains
+-- proper wildlife/livestock events.
 -- =========================================================
 -- Author: TisonK
 -- =========================================================
@@ -12,225 +16,204 @@ local animalEvents = {}
 -- =====================
 -- HELPERS
 -- =====================
-
 animalEvents.getFarmId = function()
     return g_currentMission and g_currentMission.player and g_currentMission.player.farmId or 0
 end
 
--- Checks that at least one animal husbandry exists on the map.
--- Falls back to mission-exists check when g_currentMission.animalSystem is absent.
+-- Check that at least one animal husbandry exists on the map.
 animalEvents.hasAnimals = function()
-    if g_currentMission == nil then return false end
-    if g_currentMission.animalSystem then
-        local husbandries = g_currentMission.animalSystem:getHusbandries()
-        return husbandries ~= nil and #husbandries > 0
+    if not g_currentMission then return false end
+    -- g_currentMission.husbandries is the standard FS25 collection
+    local h = g_currentMission.husbandries
+    if h and type(h) == "table" then
+        for _ in pairs(h) do return true end
     end
-    return true -- allow trigger if we cannot determine animal count
+    return false
 end
 
 -- =====================
--- WILDLIFE EVENT LIST
+-- WILDLIFE / ANIMAL EVENTS
 -- =====================
 animalEvents.eventList = {
-
-    -- 1. Bird flock descends on fields, reducing crop yield --------
     {
-        name = "wildlife_bird_flock",
-        minI = 1,
-        func = function(intensity)
+        name="animal_product_bonus", minI=1,
+        func=function(intensity)
+            if g_RandomWorldEvents then
+                g_RandomWorldEvents.EVENT_STATE.animalProductBonus = 0.10 + 0.05 * intensity
+            end
+            return string.format("Happy herd! Animal product value up %.0f%%.", (0.10 + 0.05 * intensity) * 100)
+        end,
+        onMid = function(intensity)
+            return string.format("Animals still thriving — %.0f%% product bonus active.", (0.10 + 0.05 * intensity) * 100)
+        end,
+        ambientMsgs = {
+            "The cows are calm and well-fed. Milk output is ahead of quota.",
+            "Buyers at the dairy are complimenting the butterfat content.",
+            "Animals pacing the paddock contentedly. A good stretch for the herd.",
+        },
+        canTrigger = animalEvents.hasAnimals,
+    },
+
+    {
+        name="animal_product_penalty", minI=1,
+        func=function(intensity)
+            if g_RandomWorldEvents then
+                g_RandomWorldEvents.EVENT_STATE.animalProductMalus = 0.10 + 0.05 * intensity
+            end
+            return string.format("Stressed herd — animal product value down %.0f%%.", (0.10 + 0.05 * intensity) * 100)
+        end,
+        onMid = function(intensity)
+            return "Animals still on edge — product output below normal."
+        end,
+        ambientMsgs = {
+            "Something's unsettling the herd. Hard to say what.",
+            "Milk yield is down. The vet checked — no illness, just stress.",
+            "Livestock seem restless. Keep an eye on the water and feed.",
+        },
+        canTrigger = animalEvents.hasAnimals,
+    },
+
+    {
+        name="wolf_sighting", minI=2,
+        func=function(intensity)
+            if g_RandomWorldEvents then
+                g_RandomWorldEvents.EVENT_STATE.animalProductMalus = 0.08 * intensity
+            end
+            return "Wolf spotted near the boundary! Livestock are on edge."
+        end,
+        onMid = function(intensity)
+            return "Wolf still in the area — animals remain stressed. Guard the paddocks."
+        end,
+        ambientMsgs = {
+            "Howling in the dark again last night. The dogs were barking for hours.",
+            "Tracks found at the fence line. The wolf is circling.",
+            "Livestock are bunching in the centre of the field — a sure sign of anxiety.",
+            "Neighbour lost a sheep last night. Keep your perimeter secure.",
+        },
+        canTrigger = animalEvents.hasAnimals,
+    },
+
+    {
+        name="bumper_wool_season", minI=1,
+        func=function(intensity)
+            if g_RandomWorldEvents then
+                g_RandomWorldEvents.EVENT_STATE.animalProductBonus = 0.15 + 0.05 * intensity
+                g_RandomWorldEvents.EVENT_STATE.woolBonusSeason    = true
+            end
+            return string.format("Wool market surge! Animal products up %.0f%%.", (0.15 + 0.05 * intensity) * 100)
+        end,
+        onMid = function(intensity)
+            return "Wool premium still in effect — shear while prices last."
+        end,
+        ambientMsgs = {
+            "International textile mills are buying aggressively this season.",
+            "Shearing contractor says fleece quality is exceptional this year.",
+        },
+        canTrigger = animalEvents.hasAnimals,
+    },
+
+    {
+        name="disease_scare", minI=3,
+        func=function(intensity)
+            if g_RandomWorldEvents then
+                g_RandomWorldEvents.EVENT_STATE.animalProductMalus = 0.20 + 0.05 * intensity
+                g_RandomWorldEvents.EVENT_STATE.diseaseScare        = true
+            end
+            return string.format("Disease alert! Animal products down %.0f%% — inspectors are coming.", (0.20 + 0.05 * intensity) * 100)
+        end,
+        onMid = function(intensity)
+            return "Inspectors still on-site — restrictions in force. Products remain penalised."
+        end,
+        ambientMsgs = {
+            "Vet made an unannounced visit. Samples have gone to the lab.",
+            "Movement restrictions in the district until the all-clear is given.",
+            "Buyers are cautious — they're waiting on the health certificate.",
+            "Radio says the outbreak is in the next county, but inspectors aren't taking chances.",
+        },
+        canTrigger = animalEvents.hasAnimals,
+    },
+
+    {
+        name="feed_shortage", minI=2,
+        func=function(intensity)
+            local farmId = animalEvents.getFarmId()
+            local penalty = 2000 * intensity
+            if g_currentMission and g_currentMission.addMoney and farmId > 0 then
+                g_currentMission:addMoney(-penalty, farmId, MoneyType.OTHER, true)
+            end
+            if g_RandomWorldEvents then
+                g_RandomWorldEvents.EVENT_STATE.animalProductMalus = 0.10 * intensity
+            end
+            return string.format("Feed shortage! Emergency supplies cost €%d — output down %.0f%%.", penalty, 10 * intensity)
+        end,
+        onMid = function(intensity)
+            return "Feed deliveries are still disrupted. Keep rationing carefully."
+        end,
+        ambientMsgs = {
+            "The grain merchant is apologising — logistics issues on their end.",
+            "Animals are getting by, but they're not at full production weight.",
+            "A neighbouring farm offered to share silage. Grateful, but costly.",
+        },
+        canTrigger = animalEvents.hasAnimals,
+    },
+
+    {
+        name="veterinary_windfall", minI=1,
+        func=function(intensity)
+            local farmId = animalEvents.getFarmId()
+            local amount = 1500 + intensity * 1000
+            if g_currentMission and g_currentMission.addMoney and farmId > 0 then
+                g_currentMission:addMoney(amount, farmId, MoneyType.OTHER, true)
+            end
+            return string.format("Animal welfare subsidy paid out! +€%d from the scheme.", amount)
+        end,
+        ambientMsgs = {
+            "Government inspector gave you a clean bill of health — scheme payment incoming.",
+        },
+        canTrigger = animalEvents.hasAnimals,
+    },
+
+    {
+        name="wildlife_pest_invasion", minI=1,
+        func=function(intensity)
             if g_RandomWorldEvents then
                 g_RandomWorldEvents.EVENT_STATE.yieldMalus = 0.05 * intensity
             end
-            return string.format(
-                "A flock of birds is feeding on your crops! Yield -%.0f%%",
-                intensity * 5
-            )
-        end
-    },
-
-    -- 2. Beneficial insects arrive, boosting fertilizer effect -----
-    {
-        name = "wildlife_beneficial_insects",
-        minI = 1,
-        func = function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.fertilizerBonus = 0.10 + 0.05 * intensity
-            end
-            return string.format(
-                "Beneficial insects appear! Fertilizer effectiveness +%.0f%%!",
-                (0.10 + 0.05 * intensity) * 100
-            )
-        end
-    },
-
-    -- 3. Wild animal stampede through fields — damage + yield hit --
-    {
-        name = "wildlife_stampede",
-        minI = 2,
-        func = function(intensity)
-            local damage = math.random(300, 700) * intensity
-            if g_currentMission and g_currentMission.addMoney then
-                g_currentMission:addMoney(
-                    -damage,
-                    animalEvents.getFarmId(),
-                    MoneyType.OTHER,
-                    true
-                )
-            end
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.yieldMalus = 0.03 * intensity
-            end
-            return string.format(
-                "Wild animals stampede through your fields! -€%d damage, yield -%.0f%%",
-                damage, intensity * 3
-            )
-        end
-    },
-
-    -- 4. Predator spotted — livestock stressed, product penalty ----
-    {
-        name = "wildlife_predator_alert",
-        minI = 2,
-        func = function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.animalProductMalus = 0.1 * intensity
-            end
-            return string.format(
-                "Predator spotted near the farm! Animals stressed, animal products -%.0f%%",
-                intensity * 10
-            )
-        end
-    },
-
-    -- 5. Ideal conditions — livestock productivity bonus ----------
-    {
-        name = "wildlife_animal_product_bonus",
-        minI = 1,
-        func = function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.animalProductBonus = 0.1 * intensity
-            end
-            return string.format(
-                "Ideal conditions for your livestock! Animal products +%.0f%%",
-                intensity * 10
-            )
-        end
-    },
-
-    -- 6. Emergency vet visit — direct cash deduction ---------------
-    {
-        name = "wildlife_veterinary_visit",
-        minI = 1,
-        func = function(intensity)
-            local cost = 500 + (intensity * 400)
-            if g_currentMission and g_currentMission.addMoney then
-                g_currentMission:addMoney(
-                    -cost,
-                    animalEvents.getFarmId(),
-                    MoneyType.OTHER,
-                    true
-                )
-            end
-            return string.format("Emergency veterinary visit! -€%d", cost)
-        end
-    },
-
-    -- 7. Regional disease scare — animal product price penalty -----
-    {
-        name = "wildlife_animal_disease_scare",
-        minI = 2,
-        func = function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.animalProductMalus = 0.12 * intensity
-            end
-            return string.format(
-                "Disease scare in the region! Animal product prices -%.0f%%",
-                intensity * 12
-            )
-        end
-    },
-
-    -- 8. Rabbit infestation damages crops — harvest penalty --------
-    {
-        name = "wildlife_rabbit_infestation",
-        minI = 1,
-        func = function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.yieldMalus = 0.04 * intensity
-            end
-            return string.format(
-                "Rabbit infestation in your fields! Harvest -%.0f%%",
-                intensity * 4
-            )
-        end
-    },
-
-    -- 9. Hunting season — local buyers pay more for livestock ------
-    {
-        name = "wildlife_hunting_season",
-        minI = 1,
-        func = function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.animalProductBonus = 0.08 * intensity
-            end
-            return string.format(
-                "Hunting season brings buyers to the area! Livestock prices +%.0f%%",
-                intensity * 8
-            )
-        end
-    },
-
-    -- 10. Wild bee swarm pollinates fields — crop yield bonus ------
-    {
-        name = "wildlife_bee_swarm",
-        minI = 1,
-        func = function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.yieldBonus = 0.05 * intensity
-            end
-            return string.format(
-                "Wild bees help pollinate your crops! Yield +%.0f%%",
-                intensity * 5
-            )
-        end
+            return string.format("Pest invasion! Rabbits and deer cutting field yields by %.0f%%.", 5 * intensity)
+        end,
+        onMid = function(intensity)
+            return "Pests still active — traps and fencing crews are working on it."
+        end,
+        ambientMsgs = {
+            "Rabbit warrens multiplying at the field edge. Crops are taking a hit.",
+            "Deer tracks through the young crop again this morning.",
+            "Pest control van on the road. They said it'll take a few days.",
+        },
+        -- No hasAnimals requirement — affects fields, not livestock.
     },
 }
 
 -- =====================
 -- TICK HANDLER
--- Delivers periodic cash for animal product bonus/malus flags
--- every 60 in-game seconds.  numHusbandries scales the amount
--- so farms with more animals feel a bigger effect.
+-- Delivers per-minute cash effects for active animal bonuses/maluses.
 -- =====================
-local function wildlifeTickHandler(rwe)
+local function animalTickHandler(rwe)
     if not g_currentMission then return end
     local s = rwe.EVENT_STATE
     local t = g_currentMission.time
-    local lastTick = s.lastWildlifeTick or 0
+    local lastTick = s.lastAnimalTick or 0
     if t - lastTick < 60000 then return end
-    s.lastWildlifeTick = t
+    s.lastAnimalTick = t
 
     local farmId = g_currentMission.player and g_currentMission.player.farmId or 0
     if farmId == 0 then return end
 
-    local numHusbandries = 1
-    if g_currentMission.animalSystem then
-        local husbandries = g_currentMission.animalSystem:getHusbandries()
-        if husbandries then
-            numHusbandries = math.max(1, #husbandries)
-        end
-    end
-
     local amount = 0
     if s.animalProductBonus then
-        local bonus = math.floor(300 * s.animalProductBonus * numHusbandries)
-        amount = amount + bonus
-        Logging.info(string.format("[AnimalEvents] Product bonus: +€%d (%d husbandries)", bonus, numHusbandries))
+        amount = amount + math.floor(400 * s.animalProductBonus)
     end
     if s.animalProductMalus then
-        local malus = math.floor(250 * s.animalProductMalus * numHusbandries)
-        amount = amount - malus
-        Logging.info(string.format("[AnimalEvents] Product malus: -€%d (%d husbandries)", malus, numHusbandries))
+        amount = amount - math.floor(300 * s.animalProductMalus)
     end
 
     if amount ~= 0 and g_currentMission.addMoney then
@@ -239,7 +222,7 @@ local function wildlifeTickHandler(rwe)
 end
 
 -- =====================
--- REGISTER WILDLIFE EVENTS
+-- REGISTER ANIMAL EVENTS
 -- =====================
 local function registerAnimalEvents()
     if not g_RandomWorldEvents or not g_RandomWorldEvents.registerEvent then
@@ -250,35 +233,32 @@ local function registerAnimalEvents()
     for _, e in ipairs(animalEvents.eventList) do
         g_RandomWorldEvents:registerEvent({
             name         = e.name,
-            category     = "wildlife",   -- maps to self.events.wildlifeEvents
+            category     = "wildlife",
             weight       = 1,
             duration     = { min = 15, max = 60 },
-            minIntensity = e.minI,
-            canTrigger   = function()
-                -- Require a loaded mission; optionally require animals for animal-
-                -- specific events, but crop events should fire regardless.
-                return g_currentMission ~= nil
-            end,
-            onStart = e.func,
+            minIntensity = e.minI or 1,
+            canTrigger   = e.canTrigger or function() return g_currentMission ~= nil end,
+            onStart      = e.func,
+            onMid        = e.onMid,
+            ambientMsgs  = e.ambientMsgs,
             onEnd = function()
-                -- Clear all possible EVENT_STATE keys set by any wildlife event.
                 if g_RandomWorldEvents then
                     local s = g_RandomWorldEvents.EVENT_STATE
-                    s.yieldMalus         = nil
-                    s.yieldBonus         = nil
-                    s.fertilizerBonus    = nil
-                    s.animalProductMalus = nil
                     s.animalProductBonus = nil
-                    s.lastWildlifeTick   = nil
+                    s.animalProductMalus = nil
+                    s.woolBonusSeason    = nil
+                    s.diseaseScare       = nil
+                    s.yieldMalus         = s.yieldMalus  -- only clear if this event set it
+                    s.lastAnimalTick     = nil
                 end
-                return "Wildlife event ended"
+                return nil
             end
         })
     end
 
-    g_RandomWorldEvents:registerTickHandler("wildlifeEvents", wildlifeTickHandler)
+    g_RandomWorldEvents:registerTickHandler("animalEvents", animalTickHandler)
 
-    Logging.info("[AnimalEvents] Registered " .. #animalEvents.eventList .. " wildlife events")
+    Logging.info("[AnimalEvents] Registered " .. #animalEvents.eventList .. " wildlife/animal events")
     return true
 end
 
@@ -288,18 +268,9 @@ end
 if g_RandomWorldEvents and g_RandomWorldEvents.registerEvent then
     registerAnimalEvents()
 else
-    local function delayedRegistration()
-        if registerAnimalEvents() then
-            Logging.info("[AnimalEvents] Successfully registered via delayed registration")
-        end
-    end
-
     if not RandomWorldEvents then RandomWorldEvents = {} end
-    if not RandomWorldEvents.pendingRegistrations then
-        RandomWorldEvents.pendingRegistrations = {}
-    end
-    table.insert(RandomWorldEvents.pendingRegistrations, delayedRegistration)
-
+    if not RandomWorldEvents.pendingRegistrations then RandomWorldEvents.pendingRegistrations = {} end
+    table.insert(RandomWorldEvents.pendingRegistrations, registerAnimalEvents)
     Logging.info("[AnimalEvents] Added to pending registrations")
 end
 

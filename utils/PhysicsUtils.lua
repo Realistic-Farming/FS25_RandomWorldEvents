@@ -1,5 +1,5 @@
 -- =========================================================
--- Random World Events (version 2.0.0.6) - FS25
+-- Random World Events (version 2.1.3.0) - FS25
 -- =========================================================
 -- Physics utilities for FS25
 -- =========================================================
@@ -130,25 +130,31 @@ function PhysicsUtils:showPhysicsInfo(vehicle)
     ))
 end
 
--- Create instance if g_RandomWorldEvents exists
-if g_RandomWorldEvents then
+-- =====================
+-- SINGLETON INIT (Bug #7 fix)
+-- A sentinel prevents double-instantiation whether the core is already live
+-- (immediate path) or not yet ready (deferred path via pendingRegistrations).
+-- Both paths set _G.RWE_PhysicsUtils_initialized so the other can never run.
+-- =====================
+local function _initPhysicsUtils()
+    if _G.RWE_PhysicsUtils_initialized then
+        Logging.info("[PhysicsUtils] Already initialized — skipping duplicate init")
+        return
+    end
+    _G.RWE_PhysicsUtils_initialized = true
     PhysicsUtils = PhysicsUtils:new()
     Logging.info("[PhysicsUtils] Initialized")
+end
+
+if g_RandomWorldEvents then
+    _initPhysicsUtils()
 else
-    -- Store for later initialization
-    local function initializeLater()
-        if g_RandomWorldEvents then
-            PhysicsUtils = PhysicsUtils:new()
-            Logging.info("[PhysicsUtils] Initialized via delayed initialization")
-        end
-    end
-    
     if not RandomWorldEvents then RandomWorldEvents = {} end
-    if not RandomWorldEvents.pendingRegistrations then 
-        RandomWorldEvents.pendingRegistrations = {} 
+    if not RandomWorldEvents.pendingRegistrations then
+        RandomWorldEvents.pendingRegistrations = {}
     end
-    table.insert(RandomWorldEvents.pendingRegistrations, initializeLater)
-    Logging.info("[PhysicsUtils] Added to pending initializations")
+    table.insert(RandomWorldEvents.pendingRegistrations, _initPhysicsUtils)
+    Logging.info("[PhysicsUtils] Queued for deferred initialization")
 end
 
 Logging.info("[PhysicsUtils] Module loaded successfully")

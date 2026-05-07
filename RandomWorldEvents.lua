@@ -1,5 +1,5 @@
 -- =========================================================
--- Random World Events (version 2.0.0.6) - FS25 Conversion
+-- Random World Events (version 2.1.3.0) - FS25 Conversion
 -- =========================================================
 -- Random events that can occur. Settings can be changed!
 -- =========================================================
@@ -76,7 +76,15 @@ RandomWorldEvents.EVENT_STATE = {
     eventDuration = 0,
     eventData = {},
     history = {},
-    cooldownUntil = 0
+    cooldownUntil = 0,
+
+    -- Immersion: midpoint callback tracking
+    midpointFired = false,
+
+    -- Immersion: ambient message cycling
+    -- nextAmbientTime = absolute game-time (ms) when next ambient msg fires
+    nextAmbientTime = 0,
+    ambientMsgIndex = 1,
 }
 
 RandomWorldEvents.EVENTS = {}
@@ -383,29 +391,65 @@ function RandomWorldEvents:triggerRandomEvent()
         end
     end
     local event = self.EVENTS[eventId]
-    
-    self.EVENT_STATE.activeEvent = eventId
-    self.EVENT_STATE.eventStartTime = g_currentMission.time
-    
+    self:_activateEvent(event, self.events.intensity)
+    return true
+end
+
+--- Trigger a specific named event at a given intensity (1-5).
+--- Used by subsystem API triggerEvent calls so all lifecycle hooks fire correctly.
+--- Returns the onStart message string, or an error string if activation failed.
+---@param name string  event key in self.EVENTS
+---@param intensity number  1-5
+---@return string
+function RandomWorldEvents:triggerNamedEvent(name, intensity)
+    if self.EVENT_STATE.activeEvent ~= nil then
+        return "[RWE] Another event is already active: " .. tostring(self.EVENT_STATE.activeEvent)
+    end
+    local event = self.EVENTS[name]
+    if not event then
+        return "[RWE] Event not found: " .. tostring(name)
+    end
+    local safeIntensity = math.max(1, math.min(5, math.floor(intensity or 1)))
+    local msg = self:_activateEvent(event, safeIntensity)
+    Logging.info(string.format("[RWE] triggerNamedEvent: '%s' at intensity %d", name, safeIntensity))
+    return msg or ("Triggered: " .. name)
+end
+
+--- Internal: write EVENT_STATE for a new event and fire onStart + opening notify.
+--- Returns the onStart message string (may be nil for silent events).
+---@param event table   event definition from self.EVENTS
+---@param intensity number  1-5
+---@return string|nil
+function RandomWorldEvents:_activateEvent(event, intensity)
     local duration = 0
     if type(event.duration) == "table" then
         duration = math.random(event.duration.min, event.duration.max) * 60000
     end
-    self.EVENT_STATE.eventDuration = duration
-    
-    Logging.info("[RWE] Event triggered: " .. eventId .. " (Duration: " .. (duration / 60000) .. " minutes)")
-    
-    local message = event.onStart(self.events.intensity)
-    self:notifyEvent(message, event.category, true)
 
-    return true
+    self.EVENT_STATE.activeEvent    = event.name
+    self.EVENT_STATE.eventStartTime = g_currentMission.time
+    self.EVENT_STATE.eventDuration  = duration
+
+    -- Reset per-event immersion state
+    self.EVENT_STATE.midpointFired   = false
+    self.EVENT_STATE.ambientMsgIndex = 1
+    -- First ambient message fires after 10% of the event duration (min 60 s)
+    local firstAmbientDelay = math.max(60000, duration * 0.10)
+    self.EVENT_STATE.nextAmbientTime = g_currentMission.time + firstAmbientDelay
+
+    Logging.info(string.format("[RWE] Event activated: %s (intensity=%d, duration=%.1f min)",
+        event.name, intensity, duration / 60000))
+
+    local message = event.onStart(intensity)
+    self:notifyEvent(message, event.category, true)
+    return message
 end
 
 --- Show a rich event notification.
 -- Uses HUD flash queue when available; falls back to ingame notification.
 -- @param message     Display text (nil = silent)
 -- @param categoryKey Event category string
--- @param isPositive  true = good event, false = bad event
+-- @param isPositive  true = good event, false/nil = neutral, "warn" = warning
 function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive)
     if not message then return end
 
@@ -416,9 +460,14 @@ function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive)
 
     -- Also show the standard ingame notification if enabled
     if self.events.showNotifications and g_currentMission then
-        local notifType = isPositive
-            and FSBaseMission.INGAME_NOTIFICATION_OK
-            or  FSBaseMission.INGAME_NOTIFICATION_CRITICAL
+        local notifType
+        if isPositive == true then
+            notifType = FSBaseMission.INGAME_NOTIFICATION_OK
+        elseif isPositive == "warn" then
+            notifType = FSBaseMission.INGAME_NOTIFICATION_CRITICAL
+        else
+            notifType = FSBaseMission.INGAME_NOTIFICATION_INFO
+        end
         g_currentMission:addIngameNotification(notifType, message)
     end
 end
@@ -483,7 +532,8 @@ function RandomWorldEvents:update(dt)
     
     if self.EVENT_STATE.activeEvent then
         self:applyActiveEventEffects()
-        
+        self:_tickImmersion()
+
         if g_currentMission.time > (self.EVENT_STATE.eventStartTime + (self.EVENT_STATE.eventDuration or 0)) then
             local event = self.EVENTS[self.EVENT_STATE.activeEvent]
             if event and event.onEnd then
@@ -513,6 +563,55 @@ end
 function RandomWorldEvents:applyActiveEventEffects()
     for _, handler in pairs(self.tickHandlers) do
         handler(self)
+    end
+end
+
+--- Drive midpoint callbacks and ambient flavor messages for the active event.
+--- Called every frame from update() while an event is active.
+--- Both subsystems are no-ops for events that don't define onMid / ambientMsgs.
+function RandomWorldEvents:_tickImmersion()
+    local s = self.EVENT_STATE
+    if not s.activeEvent or not g_currentMission then return end
+
+    local event    = self.EVENTS[s.activeEvent]
+    if not event then return end
+
+    local now      = g_currentMission.time
+    local elapsed  = now - s.eventStartTime
+    local duration = s.eventDuration or 0
+
+    -- ── Midpoint callback ─────────────────────────────────────────────────
+    -- Fires once when the event is ≥ 50% complete (duration > 0 required).
+    -- Uses "warn" urgency so it stands out from the start notification.
+    if not s.midpointFired and duration > 0 and elapsed >= duration * 0.50 then
+        s.midpointFired = true
+        if event.onMid then
+            local ok, msg = pcall(event.onMid, self.events.intensity)
+            if ok and msg then
+                self:notifyEvent(msg, event.category, "warn")
+                Logging.info("[RWE] Midpoint fired for: " .. s.activeEvent)
+            end
+        end
+    end
+
+    -- ── Ambient flavor messages ───────────────────────────────────────────
+    -- Cycles through event.ambientMsgs on a timer.
+    -- Interval: 15 % of duration (min 90 s, max 5 min) so messages feel
+    -- proportional regardless of whether an event lasts 10 or 90 minutes.
+    if event.ambientMsgs and #event.ambientMsgs > 0 and now >= s.nextAmbientTime then
+        local msgs  = event.ambientMsgs
+        local idx   = ((s.ambientMsgIndex - 1) % #msgs) + 1
+        local msg   = msgs[idx]
+        s.ambientMsgIndex = idx + 1
+
+        -- Ambient messages use nil isPositive → INGAME_NOTIFICATION_INFO
+        if msg then
+            self:notifyEvent(msg, event.category, nil)
+        end
+
+        -- Schedule next ambient tick
+        local interval = math.max(90000, math.min(300000, duration * 0.15))
+        s.nextAmbientTime = now + interval
     end
 end
 
@@ -675,6 +774,8 @@ local function load(mission)
         
         -- Store in global namespace BEFORE loading modules
         getfenv(0)["g_RandomWorldEvents"] = rweManager
+        -- Cross-mod bridge: other mods (FarmTablet, CropStress, etc.) detect via mission property
+        mission.randomWorldEvents = rweManager
         
         -- Now load event modules (they need g_RandomWorldEvents to exist)
         rweManager:loadEventModules()
@@ -686,7 +787,7 @@ local function load(mission)
         if rweManager.events.enabled and rweManager.events.showNotifications then
             mission:addIngameNotification(
                 FSBaseMission.INGAME_NOTIFICATION_OK,
-                "Random World Events v2.1.0.0 loaded"
+                "Random World Events v2.1.3.0 loaded"
             )
         end
         
@@ -710,6 +811,7 @@ local function delete(mission)
         rweManager:saveSettings()
         rweManager = nil
         getfenv(0)["g_RandomWorldEvents"] = nil
+        if g_currentMission then g_currentMission.randomWorldEvents = nil end
         Logging.info("[RandomWorldEvents] Shutting down")
     end
 end
@@ -755,7 +857,7 @@ FSBaseMission.delete     = Utils.appendedFunction(FSBaseMission.delete,     dele
 FSBaseMission.keyEvent   = Utils.appendedFunction(FSBaseMission.keyEvent,   keyEvent)
 
 Logging.info("========================================")
-Logging.info("   FS25 Random World Events v2.1.0.0   ")
+Logging.info("   FS25 Random World Events v2.1.3.0   ")
 Logging.info("           Successfully Loaded          ")
 Logging.info("     Type 'rwe' in console for help     ")
 Logging.info("========================================")

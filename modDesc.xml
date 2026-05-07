@@ -53,6 +53,8 @@
         <sourceFile filename="utils/animalEvents.lua"/>
         <sourceFile filename="utils/specialEvents.lua"/>
         <sourceFile filename="utils/PhysicsUtils.lua"/>
+        <!-- RWEBaseAPI must load before any category API (it provides the shared mixin) -->
+        <sourceFile filename="api/RWEBaseAPI.lua"/>
         <!-- Subsystem public APIs loaded last so the core and event modules are ready -->
         <sourceFile filename="api/EconomicAPI.lua"/>
         <sourceFile filename="api/FieldAPI.lua"/>
