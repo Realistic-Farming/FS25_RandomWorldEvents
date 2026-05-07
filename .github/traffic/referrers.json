@@ -767,13 +767,13 @@
   "2026-05-07": [
     {
       "referrer": "github.com",
-      "count": 32,
+      "count": 30,
       "uniques": 18
     },
     {
       "referrer": "Google",
-      "count": 20,
-      "uniques": 6
+      "count": 22,
+      "uniques": 8
     },
     {
       "referrer": "Bing",
