@@ -1,5 +1,5 @@
 -- =========================================================
--- Random World Events (version 2.0.0.6) - FS25
+-- Random World Events (version 2.1.3.0) - FS25
 -- =========================================================
 -- EffectHooks — patches FS25 class methods to apply EVENT_STATE
 -- flags as real gameplay modifiers.
