@@ -330,6 +330,7 @@ function RWESettingsIntegration:updateSettingsUI(frame)
 
     local ev = rwe.events
     local ph = rwe.physics
+    local db = rwe.debug
 
     -- Enable
     if frame.rwe_eventsEnabled then
@@ -401,7 +402,7 @@ function RWESettingsIntegration:updateSettingsUI(frame)
         frame.rwe_showPhysicsInfo:setIsChecked(ph.showPhysicsInfo == true, false, false)
     end
     if frame.rwe_debugMode then
-        frame.rwe_debugMode:setIsChecked(ph.debugMode == true, false, false)
+        frame.rwe_debugMode:setIsChecked(db and db.enabled == true, false, false)
     end
 end
 
@@ -511,7 +512,12 @@ function RWESettingsIntegration:onRWEShowPhysicsInfoChanged(state)
 end
 
 function RWESettingsIntegration:onRWEDebugChanged(state)
-    applyPhysicsSetting("debugMode", state == BinaryOptionElement.STATE_RIGHT)
+    local isEnabled = state == BinaryOptionElement.STATE_RIGHT
+    if not g_RandomWorldEvents then return end
+    g_RandomWorldEvents.debug.enabled = isEnabled
+    g_RandomWorldEvents.debug.showDebugInfo = isEnabled
+    g_RandomWorldEvents:saveSettings()
+    Logging.info("[RWE] debug.enabled = " .. tostring(isEnabled))
 end
 
 -- =========================================================

@@ -159,11 +159,11 @@ function RWESettingsPanel:draw()
     setTextColor(unpack(self.COLORS.TEXT_HI))
     renderText(self.posX + 0.015, self.posY + self.height - 0.035, 0.02, "RANDOM WORLD EVENTS SETTINGS")
     
-    -- Version hint
+    -- Version hint (dynamic)
     setTextAlignment(RenderText.ALIGN_RIGHT)
     setTextBold(false)
     setTextColor(unpack(self.COLORS.TEXT_LO))
-    renderText(self.posX + self.width - 0.015, self.posY + self.height - 0.032, 0.012, "v2.1.3.0")
+    renderText(self.posX + self.width - 0.015, self.posY + self.height - 0.032, 0.012, "v" .. (self.rwe.VERSION or "?"))
 
     -- Tabs (Sidebar)
     local tabY = self.posY + self.height - headerH - 0.02
@@ -187,10 +187,11 @@ function RWESettingsPanel:draw()
         self:drawDebugTab(contentX, contentY, contentW)
     end
 
-    -- Close Hint
+    -- Close Hint (dynamic key)
+    local keyHint = (self.rwe.settingsKeyHint and self.rwe.settingsKeyHint ~= "") and self.rwe.settingsKeyHint or "Shift+O"
     setTextAlignment(RenderText.ALIGN_CENTER)
     setTextColor(unpack(self.COLORS.TEXT_LO))
-    renderText(self.posX + self.width / 2, self.posY + 0.015, 0.012, "Press SHIFT + O to close and save")
+    renderText(self.posX + self.width / 2, self.posY + 0.015, 0.012, "Press " .. keyHint .. " to close and save")
 
     -- Mouse cursor (simple crosshair or dot since we manage it)
     self:drawRect(self.mousePosX - 0.002, self.mousePosY - 0.0005, 0.004, 0.001, {1,1,1,1})
@@ -277,12 +278,28 @@ function RWESettingsPanel:drawDebugTab(x, y, w)
     local db = self.rwe.debug
     local ph = self.rwe.physics
 
-    cy = self:drawHeader(x, cy, w, "DEBUG OPTIONS")
-    cy = self:drawToggle(x, cy, w, "Show Physics Debug", ph.showPhysicsInfo, function(v) ph.showPhysicsInfo = v end)
-    cy = self:drawToggle(x, cy, w, "Debug Mode", ph.debugMode, function(v) ph.debugMode = v end)
-    
+    cy = self:drawHeader(x, cy, w, "DEBUG LOGGING")
+    cy = self:drawToggle(x, cy, w, "Enable Debug Logging", db.enabled, function(v) db.enabled = v end)
+    cy = self:drawSlider(x, cy, w, "Debug Level (1-3)", db.debugLevel, 1, 3, 1, function(v) db.debugLevel = v end)
+    cy = self:drawToggle(x, cy, w, "Show Debug Info HUD", db.showDebugInfo, function(v) db.showDebugInfo = v end)
+    cy = cy - 0.01
+
+    cy = self:drawHeader(x, cy, w, "PHYSICS DEBUG")
+    cy = self:drawToggle(x, cy, w, "Show Physics Info", ph.showPhysicsInfo, function(v) ph.showPhysicsInfo = v end)
+    cy = self:drawToggle(x, cy, w, "Physics Debug Mode", ph.debugMode, function(v) ph.debugMode = v end)
     cy = cy - 0.02
-    
+
+    -- Active event info
+    local activeEvent = self.rwe.EVENT_STATE and self.rwe.EVENT_STATE.activeEvent
+    cy = self:drawHeader(x, cy, w, "EVENT STATE")
+    setTextAlignment(RenderText.ALIGN_LEFT)
+    setTextBold(false)
+    setTextColor(unpack(self.COLORS.TEXT_LO))
+    local stateText = activeEvent and ("Active: " .. tostring(activeEvent)) or "No active event"
+    renderText(x, cy - 0.022, 0.013, stateText)
+    cy = cy - 0.035
+    cy = cy - 0.01
+
     -- Action buttons
     self:drawButton(x, cy, w * 0.45, 0.03, "FORCE RANDOM EVENT", function()
         self.rwe:triggerRandomEvent()

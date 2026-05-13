@@ -14,9 +14,19 @@
 local modDirectory = g_currentModDirectory
 local modName = g_currentModName
 
+-- Resolve mod version once at load time so it's available everywhere.
+local modVersion = "?"
+do
+    local ok, info = pcall(function()
+        return g_modManager and g_modManager:getModByName(modName)
+    end)
+    if ok and info and info.version then modVersion = info.version end
+end
+
 ---@class RandomWorldEvents
 RandomWorldEvents = {
     MOD_NAME = modName,
+    VERSION  = modVersion,
     
     events = {
         enabled = true,
@@ -264,7 +274,7 @@ function RandomWorldEvents:createSettingsManager()
             
             xml:save()
             xml:delete()
-            Logging.info("[RWE] Settings saved successfully")
+            self:dbg("Settings saved successfully")
         else
             Logging.error("[RWE] Failed to create XML file for settings")
         end
@@ -276,7 +286,7 @@ end
 function RandomWorldEvents:loadSettings()
     if self.settingsManager and self.settingsManager.loadSettings then
         self.settingsManager.loadSettings(self)
-        Logging.info("[RandomWorldEvents] Settings loaded")
+        self:dbg("Settings loaded")
     else
         Logging.error("[RandomWorldEvents] Settings manager not properly initialized")
     end
@@ -285,7 +295,7 @@ end
 function RandomWorldEvents:saveSettings()
     if self.settingsManager and self.settingsManager.saveSettings then
         self.settingsManager.saveSettings(self)
-        Logging.info("[RandomWorldEvents] Settings saved")
+        self:dbg("Settings saved")
     else
         Logging.error("[RandomWorldEvents] Settings manager not properly initialized")
     end
@@ -300,7 +310,7 @@ function RandomWorldEvents:registerConsoleCommands()
     addConsoleCommand("rweList", "List available events", "consoleCommandList", self)
     addConsoleCommand("rweSettings", "Open settings screen", "consoleCommandSettings", self)
     
-    Logging.info("[RandomWorldEvents] Console commands registered")
+    self:dbg("Console commands registered")
 end
 
 -- =====================
@@ -318,7 +328,7 @@ end
 function RandomWorldEvents:registerEvent(eventData)
     self.eventCounter = self.eventCounter + 1
     self.EVENTS[eventData.name] = eventData
-    Logging.info("[RWE] Registered event: " .. eventData.name)
+    self:dbg("Registered event: " .. eventData.name)
     return eventData.name
 end
 
@@ -327,7 +337,7 @@ end
 -- handler: function(rweInstance) called each frame during an active event
 function RandomWorldEvents:registerTickHandler(name, handler)
     self.tickHandlers[name] = handler
-    Logging.info("[RWE] Registered tick handler: " .. name)
+    self:dbg("Registered tick handler: " .. name)
 end
 
 -- Register a subsystem API table under a category name.
@@ -336,7 +346,7 @@ end
 -- apiTable : the RWE[Category]API global table
 function RandomWorldEvents:registerSubsystem(name, apiTable)
     self.subsystems[name] = apiTable
-    Logging.info("[RWE] Subsystem registered: " .. tostring(name))
+    self:dbg("Subsystem registered: " .. tostring(name))
 end
 
 -- Return the registered subsystem API for the given category, or nil.
@@ -347,14 +357,24 @@ function RandomWorldEvents:getSubsystem(name)
     return self.subsystems[name]
 end
 
+-- Debug log helper — only prints when debug.enabled is true.
+-- level 1 = verbose (default), level 2 = detailed, level 3 = trace
+function RandomWorldEvents:dbg(msg, level)
+    if self.debug and self.debug.enabled then
+        if (self.debug.debugLevel or 1) >= (level or 1) then
+            Logging.info("[RWE-DBG] " .. tostring(msg))
+        end
+    end
+end
+
 function RandomWorldEvents:triggerRandomEvent()
     if not self.events.enabled then
-        Logging.info("[RWE] Events disabled")
+        self:dbg("triggerRandomEvent: events disabled")
         return false
     end
-    
+
     if self.EVENT_STATE.activeEvent ~= nil then
-        Logging.info("[RWE] Event already active: " .. tostring(self.EVENT_STATE.activeEvent))
+        self:dbg("triggerRandomEvent: event already active: " .. tostring(self.EVENT_STATE.activeEvent))
         return false
     end
     
@@ -371,9 +391,10 @@ function RandomWorldEvents:triggerRandomEvent()
     end
     
     if #available == 0 then
-        Logging.info("[RWE] No events available to trigger")
+        self:dbg("triggerRandomEvent: no events passed canTrigger/category/intensity checks")
         return false
     end
+    self:dbg(string.format("triggerRandomEvent: %d events eligible", #available))
 
     -- Weighted random selection: sum weights, pick by accumulated roll
     local totalWeight = 0
@@ -411,7 +432,7 @@ function RandomWorldEvents:triggerNamedEvent(name, intensity)
     end
     local safeIntensity = math.max(1, math.min(5, math.floor(intensity or 1)))
     local msg = self:_activateEvent(event, safeIntensity)
-    Logging.info(string.format("[RWE] triggerNamedEvent: '%s' at intensity %d", name, safeIntensity))
+    self:dbg(string.format("triggerNamedEvent: '%s' at intensity %d", name, safeIntensity))
     return msg or ("Triggered: " .. name)
 end
 
@@ -516,16 +537,46 @@ function RandomWorldEvents:update(dt)
     if self.eventHUD then
         self.eventHUD:update(dt)
     end
-    
+
+    -- Debug heartbeat every ~30 seconds of game time
+    if self.debug and self.debug.enabled then
+        self._dbgNextHeartbeat = self._dbgNextHeartbeat or 0
+        if g_currentMission.time > self._dbgNextHeartbeat then
+            self._dbgNextHeartbeat = g_currentMission.time + 30000
+            local cooldownLeft = math.max(0, math.floor(((self.EVENT_STATE.cooldownUntil or 0) - g_currentMission.time) / 1000))
+            self:dbg(string.format(
+                "heartbeat | active=%s cooldown=%ds enabled=%s freq=%d intensity=%d",
+                tostring(self.EVENT_STATE.activeEvent or "none"),
+                cooldownLeft,
+                tostring(self.events.enabled),
+                self.events.frequency,
+                self.events.intensity
+            ))
+        end
+    end
+
     -- Event system update
     if self.events.enabled then
         if g_currentMission.time > (self.EVENT_STATE.cooldownUntil or 0) then
             local chance = self.events.frequency * 0.001
-            if math.random() <= chance then
+            local roll = math.random()
+            if roll <= chance then
+                self:dbg(string.format("roll %.4f <= chance %.4f — attempting trigger", roll, chance), 2)
                 self:triggerRandomEvent()
                 local cooldownMs = self.events.cooldown * 60000
                 local frequencyFactor = (11 - self.events.frequency) / 10
                 self.EVENT_STATE.cooldownUntil = g_currentMission.time + (cooldownMs * frequencyFactor)
+                self:dbg(string.format("cooldown set: %.1f min", (cooldownMs * frequencyFactor) / 60000), 2)
+            end
+        else
+            -- Only log cooldown at level 3 (very verbose)
+            if self.debug and self.debug.enabled and (self.debug.debugLevel or 1) >= 3 then
+                local remaining = math.floor(((self.EVENT_STATE.cooldownUntil or 0) - g_currentMission.time) / 1000)
+                if remaining > 0 and not self._dbgLastCooldownLog or
+                   (self._dbgLastCooldownLog and g_currentMission.time > self._dbgLastCooldownLog + 5000) then
+                    self:dbg("in cooldown: " .. remaining .. "s remaining", 3)
+                    self._dbgLastCooldownLog = g_currentMission.time
+                end
             end
         end
     end
@@ -589,7 +640,7 @@ function RandomWorldEvents:_tickImmersion()
             local ok, msg = pcall(event.onMid, self.events.intensity)
             if ok and msg then
                 self:notifyEvent(msg, event.category, "warn")
-                Logging.info("[RWE] Midpoint fired for: " .. s.activeEvent)
+                self:dbg("Midpoint fired for: " .. s.activeEvent)
             end
         end
     end
@@ -723,20 +774,20 @@ end
 function RandomWorldEvents:loadEventModules()
     -- Process any pending registrations that were collected
     if RandomWorldEvents and RandomWorldEvents.pendingRegistrations then
-        Logging.info("[RWE] Processing " .. #RandomWorldEvents.pendingRegistrations .. " pending registrations")
+        self:dbg("Processing " .. #RandomWorldEvents.pendingRegistrations .. " pending registrations")
         for _, registrationFunc in ipairs(RandomWorldEvents.pendingRegistrations) do
             if type(registrationFunc) == "function" then
                 registrationFunc()
             end
         end
         RandomWorldEvents.pendingRegistrations = {}
-        Logging.info("[RWE] All pending registrations processed")
+        self:dbg("All pending registrations processed")
     end
     
     -- PhysicsUtils self-initializes via the pendingRegistrations queue above;
     -- no second :new() call needed here.
 
-    Logging.info("[RWE] Loaded " .. self.eventCounter .. " events")
+    Logging.info("[RWE] Loaded " .. self.eventCounter .. " events total")
 end
 
 -- =====================
@@ -748,7 +799,7 @@ function RandomWorldEvents:loadGUI()
     self.eventHUD = RWEEventHUD.new(self)
     if self.eventHUD then
         self.eventHUD.scale = self.hudScale or 1.0
-        Logging.info("[RWE] Event HUD created")
+        self:dbg("Event HUD created")
     else
         Logging.warning("[RWE] RWEEventHUD not available — HUD disabled")
     end
@@ -756,11 +807,11 @@ function RandomWorldEvents:loadGUI()
     -- Create the custom settings panel (Shift+O)
     self.settingsPanel = RWESettingsPanel.new(self)
     if self.settingsPanel then
-        Logging.info("[RWE] Custom Settings Panel created")
+        self:dbg("Custom Settings Panel created")
     end
 
     -- Settings are also injected into ESC > Settings via RWESettingsIntegration.
-    Logging.info("[RWE] GUI ready")
+    self:dbg("GUI ready")
 end
 
 -- =====================
@@ -768,6 +819,7 @@ end
 -- =====================
 
 local rweManager
+local installInputHooks  -- forward declaration: defined below load/update, called from load
 
 local function load(mission)
     if rweManager == nil then
@@ -789,17 +841,22 @@ local function load(mission)
         -- Now load event modules
         rweManager:loadEventModules()
 
+        -- Install input hooks early (before player/vehicle registerActionEvents fires).
+        -- The PLAYER context hook intercepts PlayerInputComponent.registerActionEvents
+        -- which fires during mission loading — it must be in place before that happens.
+        installInputHooks()
+
         -- Mark as initialized
         rweManager.isInitialized = true
-        
+
         -- Show notification
         if rweManager.events.enabled and rweManager.events.showNotifications then
             mission:addIngameNotification(
                 FSBaseMission.INGAME_NOTIFICATION_OK,
-                "Random World Events v2.1.3.0 loaded"
+                "Random World Events v" .. modVersion .. " loaded"
             )
         end
-        
+
         Logging.info("[RandomWorldEvents] Initialized successfully")
     end
 end
@@ -862,7 +919,7 @@ end
 -- FSBaseMission.registerActionEvents targets the base class and never fires in FS25.
 -- =====================
 
-local function installInputHooks()
+installInputHooks = function()
     if not rweManager then return end
 
     -- ── PLAYER context ────────────────────────────────────────────────────
@@ -902,6 +959,11 @@ local function installInputHooks()
             if spOk and spId then
                 g_RandomWorldEvents.settingsPlayerEventId = spId
                 g_inputBinding:setActionEventText(spId, g_i18n:getText("input_RWE_TOGGLE_SETTINGS") or "RWE Settings")
+                -- Cache key hint for the settings panel close button
+                local ok, ktext = pcall(function()
+                    return g_inputBinding:getActionDisplayName(InputAction.RWE_TOGGLE_SETTINGS)
+                end)
+                g_RandomWorldEvents.settingsKeyHint = (ok and ktext and ktext ~= "") and ktext or "Shift+O"
                 Logging.info("[RWE] Settings toggle registered in PLAYER context")
             else
                 Logging.warning("[RWE] Settings toggle PLAYER registration failed")
@@ -934,13 +996,13 @@ local function installInputHooks()
 
             _rweVehicleHookActive = true
 
-            -- Remove stale event IDs to prevent duplicate callbacks
+            -- Only remove vehicle-context IDs. Player-context IDs were registered
+            -- once at loadFinished and must NOT be cleared here — doing so forces
+            -- re-registration which creates fresh event IDs and discards the user's
+            -- saved key binding, causing the "must rebind every session" issue.
             local mgr = g_RandomWorldEvents
-            local staleIds = {
-                "hudVehicleEventId", "settingsVehicleEventId",
-                "hudPlayerEventId",  "settingsPlayerEventId",
-            }
-            for _, field in ipairs(staleIds) do
+            local staleVehicleIds = { "hudVehicleEventId", "settingsVehicleEventId" }
+            for _, field in ipairs(staleVehicleIds) do
                 local oldId = mgr[field]
                 if oldId then
                     pcall(function() binding:removeActionEvent(oldId) end)
@@ -975,33 +1037,6 @@ local function installInputHooks()
 
             binding:endActionEventsModification()
 
-            -- Re-register PLAYER context (invalidated as a side-effect of removeActionEvent above)
-            binding:beginActionEventsModification(PlayerInputComponent.INPUT_CONTEXT_NAME)
-
-            local pHudOk, pHudId = binding:registerActionEvent(
-                InputAction.RWE_TOGGLE_HUD, mgr,
-                mgr.onToggleHUDInput,
-                false, true, false, true
-            )
-            if pHudOk and pHudId then
-                mgr.hudPlayerEventId = pHudId
-                binding:setActionEventText(pHudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
-                Logging.debug("[RWE] HUD toggle re-registered in PLAYER context after vehicle exit")
-            end
-
-            local pSpOk, pSpId = binding:registerActionEvent(
-                InputAction.RWE_TOGGLE_SETTINGS, mgr,
-                mgr.onToggleSettingsInput,
-                false, true, false, true
-            )
-            if pSpOk and pSpId then
-                mgr.settingsPlayerEventId = pSpId
-                binding:setActionEventTextVisibility(pSpId, false)
-                Logging.debug("[RWE] Settings toggle re-registered in PLAYER context after vehicle exit")
-            end
-
-            binding:endActionEventsModification()
-
             _rweVehicleHookActive = false
         end
         Logging.info("[RWE] InputBinding.endActionEventsModification hooked for VEHICLE context")
@@ -1010,14 +1045,16 @@ end
 
 local function draw(mission)
     if rweManager then
-        -- Only draw overlays when no other GUI is visible (pause menu, shop, etc)
+        -- HUD only draws when no GUI/menu is open
         if g_gui and not g_gui:getIsGuiVisible() then
             if rweManager.eventHUD then
                 rweManager.eventHUD:draw()
             end
-            if rweManager.settingsPanel then
-                rweManager.settingsPanel:draw()
-            end
+        end
+        -- Settings panel draws independently — it has its own isOpen guard
+        -- and must always render when open so hitboxes are rebuilt each frame
+        if rweManager.settingsPanel then
+            rweManager.settingsPanel:draw()
         end
     end
 end
@@ -1038,8 +1075,40 @@ local function loadFinished(mission, ...)
     if rweManager and not rweManager.guiLoaded then
         rweManager:loadGUI()
         rweManager.guiLoaded = true
-        -- Install input hooks after GUI is ready (settingsPanel must exist first)
-        installInputHooks()
+
+        -- Direct PLAYER context registration as a safety net:
+        -- PlayerInputComponent.registerActionEvents may have already fired during
+        -- mission loading before our hook in installInputHooks() could intercept it.
+        -- This ensures bindings work on-foot without the user needing to rebind.
+        if g_inputBinding and g_RandomWorldEvents and not g_RandomWorldEvents.hudPlayerEventId then
+            local mgr = g_RandomWorldEvents
+            g_inputBinding:beginActionEventsModification(PlayerInputComponent.INPUT_CONTEXT_NAME)
+
+            local hudOk, hudId = g_inputBinding:registerActionEvent(
+                InputAction.RWE_TOGGLE_HUD, mgr, mgr.onToggleHUDInput,
+                false, true, false, true)
+            if hudOk and hudId then
+                mgr.hudPlayerEventId = hudId
+                g_inputBinding:setActionEventText(hudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
+                Logging.info("[RWE] HUD toggle registered (PLAYER context, loadFinished fallback)")
+            end
+
+            local spOk, spId = g_inputBinding:registerActionEvent(
+                InputAction.RWE_TOGGLE_SETTINGS, mgr, mgr.onToggleSettingsInput,
+                false, true, false, true)
+            if spOk and spId then
+                mgr.settingsPlayerEventId = spId
+                g_inputBinding:setActionEventText(spId, g_i18n:getText("input_RWE_TOGGLE_SETTINGS") or "RWE Settings")
+                -- Cache key hint text for the settings panel close button
+                local ok, ktext = pcall(function()
+                    return g_inputBinding:getActionDisplayName(InputAction.RWE_TOGGLE_SETTINGS)
+                end)
+                mgr.settingsKeyHint = (ok and ktext and ktext ~= "") and ktext or "Shift+O"
+                Logging.info("[RWE] Settings toggle registered (PLAYER context, loadFinished fallback)")
+            end
+
+            g_inputBinding:endActionEventsModification()
+        end
     end
 end
 
@@ -1052,7 +1121,7 @@ FSBaseMission.mouseEvent = Utils.prependedFunction(FSBaseMission.mouseEvent, mou
 FSBaseMission.delete     = Utils.appendedFunction(FSBaseMission.delete,     delete)
 
 Logging.info("========================================")
-Logging.info("   FS25 Random World Events v2.1.3.0   ")
+Logging.info("   FS25 Random World Events v" .. modVersion .. "   ")
 Logging.info("           Successfully Loaded          ")
 Logging.info("     Type 'rwe' in console for help     ")
 Logging.info("========================================")
