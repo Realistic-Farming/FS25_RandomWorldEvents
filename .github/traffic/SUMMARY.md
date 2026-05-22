@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-05-20T12:24:13Z
-**Days tracked:** 40 | **Download snapshots:** 145 (hourly)
+**Last updated:** 2026-05-22T18:54:20Z
+**Days tracked:** 41 | **Download snapshots:** 149 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 330 | 93 |
-| Git Clones | 770 | 273 |
+| Page Views | 323 | 87 |
+| Git Clones | 751 | 259 |
 
-> **Engagement:** 3.5 pages per visitor (14-day avg)
+> **Engagement:** 3.7 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 467 of 93 visitors cloned or downloaded (**502.1%**)
+> **14-day conversion:** 456 of 87 visitors cloned or downloaded (**524.1%**)
 >
-> Unique cloners: 273 | Release downloads: 194
+> Unique cloners: 259 | Release downloads: 197
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 194 |
-| Git Clones (14-day) | 770 |
-| **Total Acquisitions** | **964** |
+| Zip Downloads | 197 |
+| Git Clones (14-day) | 751 |
+| **Total Acquisitions** | **948** |
 
 ---
 
@@ -54,10 +54,9 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 170 | 48 |
+| github.com | 173 | 44 |
 | kingmods.net | 45 | 28 |
-| Google | 36 | 13 |
-| Bing | 3 | 1 |
+| Google | 31 | 11 |
 
 ---
 
@@ -77,10 +76,10 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 190 | 85 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.4.0` | 28 | 22 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 187 | 79 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues` | 28 | 8 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.1` | 16 | 13 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.4.0` | 23 | 19 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.1` | 19 | 16 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases` | 11 | 9 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues/18` | 9 | 4 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues/17` | 6 | 2 |
