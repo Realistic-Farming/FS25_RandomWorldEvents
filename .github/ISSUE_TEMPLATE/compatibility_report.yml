@@ -12,7 +12,7 @@ body:
   - type: input
     id: mod_version
     attributes:
-      label: RandomWorldEvents Version
+      label: Random World Events Version
       placeholder: "e.g. 1.0.0.0"
     validations:
       required: true
@@ -46,6 +46,7 @@ body:
     id: other_mod_source
     attributes:
       label: Where did you get the conflicting mod?
+      description: ModHub, GitHub link, or other source. Helps us check the exact version.
       placeholder: "https://github.com/..."
     validations:
       required: true
@@ -54,8 +55,8 @@ body:
     id: description
     attributes:
       label: What is the conflict?
-      description: Describe exactly what goes wrong.
-      placeholder: "When FS25_SeasonalCropStress is loaded, random events stop triggering entirely after a drought event fires."
+      description: Describe exactly what goes wrong. Events not triggering? Double effects? Another mod's systems broken by events? Be specific.
+      placeholder: "When FS25_SeasonalCropStress is loaded, a drought event from RWE stacks with SeasonalCropStress drought effects, pushing stress values far beyond the normal maximum."
     validations:
       required: true
 
@@ -63,6 +64,12 @@ body:
     id: steps
     attributes:
       label: Steps to Reproduce
+      description: How to trigger the conflict reliably.
+      placeholder: |
+        1. Load both mods
+        2. Start a new game in summer
+        3. Wait for RWE to fire a drought event
+        4. Crop stress immediately jumps to 200% (beyond the 100% max)
     validations:
       required: true
 
@@ -70,8 +77,8 @@ body:
     id: isolation
     attributes:
       label: Isolation Test
-      description: Did you confirm the issue disappears when the conflicting mod is removed?
-      placeholder: "Yes — removing FS25_SeasonalCropStress makes events trigger normally again."
+      description: Did you confirm the issue disappears when the conflicting mod is removed? This is important — without this step we cannot tell which mod is the source.
+      placeholder: "Yes — removing FS25_SeasonalCropStress makes drought events apply normal stress values."
     validations:
       required: true
 
@@ -79,7 +86,7 @@ body:
     id: log
     attributes:
       label: Log Snippet
-      description: Paste all `[RWE]` lines from your log.txt, plus any errors in the same session.
+      description: Paste all `[RWE]` lines from your log.txt, plus any errors in the same session. Include the full stack trace if there is one.
       render: text
     validations:
       required: true

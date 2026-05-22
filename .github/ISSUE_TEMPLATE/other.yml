@@ -1,0 +1,22 @@
+name: Other
+description: Something that doesn't fit the other templates.
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for questions, general feedback, or anything that doesn't fit Bug Report, Compatibility Report, or Feature Request.
+        For questions only, consider [Discussions](https://github.com/TheCodingDad-TisonK/FS25_RandomWorldEvents/discussions) instead.
+  - type: textarea
+    id: description
+    attributes:
+      label: What's on your mind?
+      description: Be as specific as possible.
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Anything Else?
+    validations:
+      required: false

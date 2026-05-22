@@ -8,14 +8,14 @@ body:
         **Before opening this request:**
         - Check the roadmap in the README — your idea may already be planned.
         - Check open issues to avoid duplicates.
-        - Keep requests scoped and specific. "More events" will be closed. "Add a hailstorm event that damages crops in a radius around the impact zone" is actionable.
+        - Keep requests scoped and specific. "More events" will be closed. "Add a locust swarm event that reduces crop yield on affected fields by 30-70% over 3 in-game days" is actionable.
 
   - type: textarea
     id: problem
     attributes:
       label: What problem does this solve?
       description: Describe the situation or frustration this would address. Focus on the problem, not the solution.
-      placeholder: "I never know when an event is about to fire, so I can't prepare in time."
+      placeholder: "High-intensity events currently fire with no warning, leaving no time to react. There is no way to distinguish a coming minor event from a catastrophic one until it is already happening."
     validations:
       required: true
 
@@ -23,8 +23,8 @@ body:
     id: proposal
     attributes:
       label: Proposed Solution
-      description: Describe what you want to happen. Be specific.
-      placeholder: "Add a warning notification 1 in-game hour before an event triggers, so the player has time to react."
+      description: Describe what you want to happen. Be specific about the behavior, not just the concept.
+      placeholder: "Add a configurable advance warning window (e.g. 1-6 in-game hours) that shows a forecast notification for upcoming events. The warning text should hint at the event type and intensity without completely spoiling it."
     validations:
       required: true
 
@@ -32,6 +32,7 @@ body:
     id: alternatives
     attributes:
       label: Alternatives Considered
+      description: Have you thought of other ways to solve this? Why are they not good enough?
     validations:
       required: false
 
@@ -40,12 +41,11 @@ body:
     attributes:
       label: Which part of the mod does this relate to?
       options:
-        - Event System & Triggers
-        - Event Types & Effects
-        - Notifications & UI
-        - Settings / Difficulty
-        - Multiplayer
+        - Event Types
+        - Event Frequency / Intensity
+        - HUD / Notifications
         - Mod Compatibility
+        - Settings
         - Other
     validations:
       required: true
@@ -54,5 +54,6 @@ body:
     id: additional
     attributes:
       label: Anything Else?
+      description: Screenshots, mockups, references to how other mods handle this, or any extra context.
     validations:
       required: false

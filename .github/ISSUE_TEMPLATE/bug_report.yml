@@ -47,7 +47,7 @@ body:
     attributes:
       label: What happened?
       description: Describe the bug clearly. What did you see? What did you expect to see?
-      placeholder: "A drought event triggered but crop stress never changed, even after several in-game days."
+      placeholder: "A hailstorm event fired but the notification appeared instantly with no warning. The event also lasted 0 seconds — crops were marked damaged but weather never changed visually."
     validations:
       required: true
 
@@ -55,12 +55,12 @@ body:
     id: steps
     attributes:
       label: Steps to Reproduce
-      description: Exact steps that trigger the bug. If you cannot reproduce it reliably, say so.
+      description: Exact steps that trigger the bug. Note the event type and in-game day if known.
       placeholder: |
-        1. Start a new game on Elmcreek
-        2. Wait for a drought event to trigger
-        3. Check field conditions after 3 in-game days
-        4. No change in crop stress visible
+        1. Start a new game on Elmcreek with RWE active
+        2. Wait until day 12
+        3. A hailstorm event fires
+        4. Notification pops immediately, crops show damage, but weather does not change
     validations:
       required: true
 
@@ -73,8 +73,9 @@ body:
         If there are errors (lines containing "Error" or "attempt to"), include the full stack trace.
       render: text
       placeholder: |
-        [RWE] RandomWorldEvents initialized
-        [RWE] Event triggered: drought (severity=high)
+        [RWE] Initialized. Events loaded: 12
+        [RWE] Event scheduled: HAILSTORM, day=12, severity=HIGH
+        [RWE] Event fired: HAILSTORM, duration=0s
         ...
     validations:
       required: true
@@ -83,8 +84,8 @@ body:
     id: other_mods
     attributes:
       label: Other Mods Loaded
-      description: List any other mods active in this save.
-      placeholder: "FS25_SeasonalCropStress, Courseplay, AutoDrive, ..."
+      description: List any other mods active in this save. You can paste the mod list from the game's mod manager.
+      placeholder: "FS25_SeasonalCropStress, FS25_SoilFertilizer, Courseplay, ..."
     validations:
       required: true
 

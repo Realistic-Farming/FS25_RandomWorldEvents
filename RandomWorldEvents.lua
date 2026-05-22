@@ -209,7 +209,14 @@ function RandomWorldEvents:createSettingsManager()
                 settingsObject.physics.suspensionStiffness = xml:getFloat(manager.XMLTAG..".physics.suspensionStiffness", manager.defaultConfig.physics.suspensionStiffness)
                 settingsObject.physics.showPhysicsInfo = xml:getBool(manager.XMLTAG..".physics.showPhysicsInfo", manager.defaultConfig.physics.showPhysicsInfo)
                 settingsObject.physics.debugMode = xml:getBool(manager.XMLTAG..".physics.debugMode", manager.defaultConfig.physics.debugMode)
-                
+
+                -- Load saved event state (temp fields; applied in loadFinished when g_currentMission.time is valid)
+                local savedEvent = xml:getString(manager.XMLTAG..".eventState.activeEvent", "")
+                settingsObject._savedActiveEvent = savedEvent ~= "" and savedEvent or nil
+                settingsObject._savedRemainingMs = xml:getFloat(manager.XMLTAG..".eventState.remainingMs", 0)
+                settingsObject._savedCooldownRemainingMs = xml:getFloat(manager.XMLTAG..".eventState.cooldownRemainingMs", 0)
+                settingsObject._savedMidpointFired = xml:getBool(manager.XMLTAG..".eventState.midpointFired", false)
+
                 xml:delete()
                 return
             end
@@ -271,7 +278,20 @@ function RandomWorldEvents:createSettingsManager()
             xml:setFloat(manager.XMLTAG..".physics.suspensionStiffness", settingsObject.physics.suspensionStiffness)
             xml:setBool(manager.XMLTAG..".physics.showPhysicsInfo", settingsObject.physics.showPhysicsInfo)
             xml:setBool(manager.XMLTAG..".physics.debugMode", settingsObject.physics.debugMode)
-            
+
+            -- Save active event state as remaining time so timers survive reload
+            local es = settingsObject.EVENT_STATE
+            if es and es.activeEvent then
+                xml:setString(manager.XMLTAG..".eventState.activeEvent", es.activeEvent)
+                local remaining = math.max(0, (es.eventStartTime + (es.eventDuration or 0)) - g_currentMission.time)
+                xml:setFloat(manager.XMLTAG..".eventState.remainingMs", remaining)
+                xml:setBool(manager.XMLTAG..".eventState.midpointFired", es.midpointFired or false)
+            else
+                xml:setString(manager.XMLTAG..".eventState.activeEvent", "")
+            end
+            local esCooldown = es and math.max(0, (es.cooldownUntil or 0) - g_currentMission.time) or 0
+            xml:setFloat(manager.XMLTAG..".eventState.cooldownRemainingMs", esCooldown)
+
             xml:save()
             xml:delete()
             self:dbg("Settings saved successfully")
@@ -1108,6 +1128,24 @@ local function loadFinished(mission, ...)
             end
 
             g_inputBinding:endActionEventsModification()
+        end
+
+        -- Restore active event state saved before this session ended.
+        -- g_currentMission.time is valid here; we use remaining-time offsets
+        -- instead of absolute timestamps so reloads work correctly.
+        if g_RandomWorldEvents and g_RandomWorldEvents._savedActiveEvent then
+            local mgr = g_RandomWorldEvents
+            local es = mgr.EVENT_STATE
+            es.activeEvent    = mgr._savedActiveEvent
+            es.eventStartTime = g_currentMission.time
+            es.eventDuration  = mgr._savedRemainingMs or 0
+            es.midpointFired  = mgr._savedMidpointFired or false
+            es.cooldownUntil  = g_currentMission.time + (mgr._savedCooldownRemainingMs or 0)
+            mgr._savedActiveEvent         = nil
+            mgr._savedRemainingMs         = nil
+            mgr._savedCooldownRemainingMs = nil
+            mgr._savedMidpointFired       = nil
+            Logging.info("[RWE] Resumed active event from save: " .. tostring(es.activeEvent))
         end
     end
 end

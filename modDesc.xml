@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="106">
     <author>TisonK</author>
-    <version>2.1.6.1</version>
+    <version>2.1.6.2</version>
     <modName>FS25_RandomWorldEvents</modName>
     <title>
         <en>Random World Events</en>
@@ -14,6 +14,7 @@
         <br>Eventos Mundiais Aleatórios</br>
         <uk>Випадкові світові події</uk>
         <ru>Случайные мировые события</ru>
+        <da>Random World Events</da>
     </title>
     <description>
         <en>Adds random events, physics overhaul, and configurable settings.</en>
@@ -26,6 +27,7 @@
         <br>Adiciona eventos aleatórios, revisão de física e configurações personalizáveis.</br>
         <uk>Додає випадкові події, переробку фізики та настроювані параметри.</uk>
         <ru>Добавляет случайные события, переработку физики и настраиваемые параметры.</ru>
+        <da>Tilføjer tilfældige hændelser, fysikopdateringer og konfigurerbare indstillinger.</da>
     </description>
     <iconFilename>icon.dds</iconFilename>
 
@@ -81,6 +83,7 @@
             <br>Eventos Mundiais Aleatórios</br>
             <uk>Випадкові світові події</uk>
             <ru>Случайные мировые события</ru>
+            <da>Random World Events</da>
         </text>
 
         <text name="rwe_events_enabled_short">
@@ -94,6 +97,7 @@
             <br>Ativar eventos</br>
             <uk>Увімкнути події</uk>
             <ru>Включить события</ru>
+            <da>Aktiver hændelser</da>
         </text>
 
         <text name="rwe_events_enabled_long">
@@ -107,180 +111,581 @@
             <br>Ativar ou desativar todos os eventos aleatórios</br>
             <uk>Увімкнути або вимкнути всі випадкові події</uk>
             <ru>Включить или выключить все случайные события</ru>
+            <da>Aktivér eller deaktivér alle tilfældige hændelser</da>
         </text>
 
         <!-- Subsection headers -->
         <text name="rwe_subheader_timing">
             <en>Event Timing</en>
             <uk>Розклад подій</uk>
+            <da>Interval for hændelser</da>
+        
+            <de>Event Zeitpunkt</de>
+            <fr>[EN] Event Timing</fr>
+            <pl>[EN] Event Timing</pl>
+            <es>[EN] Event Timing</es>
+            <it>[EN] Event Timing</it>
+            <cz>[EN] Event Timing</cz>
+            <br>[EN] Event Timing</br>
+            <ru>[EN] Event Timing</ru>
         </text>
         <text name="rwe_subheader_hud">
             <en>Notifications &amp; HUD</en>
             <uk>Сповіщення та HUD</uk>
+            <da>Notifikationer &amp; HUD</da>
+        
+            <de>HUD Benachrichtigung </de>
+            <fr>[EN] Notifications &amp; HUD</fr>
+            <pl>[EN] Notifications &amp; HUD</pl>
+            <es>[EN] Notifications &amp; HUD</es>
+            <it>[EN] Notifications &amp; HUD</it>
+            <cz>[EN] Notifications &amp; HUD</cz>
+            <br>[EN] Notifications &amp; HUD</br>
+            <ru>[EN] Notifications &amp; HUD</ru>
         </text>
         <text name="rwe_subheader_categories">
             <en>Event Categories</en>
             <uk>Категорії подій</uk>
+            <da>Hændelsestyper</da>
+        
+            <de>Eventkategorien</de>
+            <fr>[EN] Event Categories</fr>
+            <pl>[EN] Event Categories</pl>
+            <es>[EN] Event Categories</es>
+            <it>[EN] Event Categories</it>
+            <cz>[EN] Event Categories</cz>
+            <br>[EN] Event Categories</br>
+            <ru>[EN] Event Categories</ru>
         </text>
         <text name="rwe_subheader_physics">
             <en>Physics Override</en>
             <uk>Налаштування фізики</uk>
+            <da>Fysikoverstyring</da>
+        
+            <de>Überschreibung der Mechanik</de>
+            <fr>[EN] Physics Override</fr>
+            <pl>[EN] Physics Override</pl>
+            <es>[EN] Physics Override</es>
+            <it>[EN] Physics Override</it>
+            <cz>[EN] Physics Override</cz>
+            <br>[EN] Physics Override</br>
+            <ru>[EN] Physics Override</ru>
         </text>
         <text name="rwe_subheader_debug">
             <en>Debug</en>
             <uk>Налагодження</uk>
+            <da>Fejlfinding</da>
+        
+            <de>Debug</de>
+            <fr>[EN] Debug</fr>
+            <pl>[EN] Debug</pl>
+            <es>[EN] Debug</es>
+            <it>[EN] Debug</it>
+            <cz>[EN] Debug</cz>
+            <br>[EN] Debug</br>
+            <ru>[EN] Debug</ru>
         </text>
 
         <!-- Timing -->
         <text name="rwe_frequency_short">
             <en>Frequency</en>
             <uk>Частота</uk>
+            <da>Frekvens</da>
+        
+            <de>Häufigkeit</de>
+            <fr>[EN] Frequency</fr>
+            <pl>[EN] Frequency</pl>
+            <es>[EN] Frequency</es>
+            <it>[EN] Frequency</it>
+            <cz>[EN] Frequency</cz>
+            <br>[EN] Frequency</br>
+            <ru>[EN] Frequency</ru>
         </text>
         <text name="rwe_frequency_long">
             <en>How often events fire (1 = rare, 10 = frequent)</en>
             <uk>Як часто виникають події (1 = рідко, 10 = часто)</uk>
+            <da>Hvor ofte hændelser udløses (1 = sjældent, 10 = ofte)</da>
+        
+            <de>Wie häufig Events kommen (1 = selten, 10 = häufig)</de>
+            <fr>[EN] How often events fire (1 = rare, 10 = frequent)</fr>
+            <pl>[EN] How often events fire (1 = rare, 10 = frequent)</pl>
+            <es>[EN] How often events fire (1 = rare, 10 = frequent)</es>
+            <it>[EN] How often events fire (1 = rare, 10 = frequent)</it>
+            <cz>[EN] How often events fire (1 = rare, 10 = frequent)</cz>
+            <br>[EN] How often events fire (1 = rare, 10 = frequent)</br>
+            <ru>[EN] How often events fire (1 = rare, 10 = frequent)</ru>
         </text>
         <text name="rwe_intensity_short">
             <en>Intensity</en>
             <uk>Інтенсивність</uk>
+            <da>Styrke</da>
+        
+            <de>Intensität</de>
+            <fr>[EN] Intensity</fr>
+            <pl>[EN] Intensity</pl>
+            <es>[EN] Intensity</es>
+            <it>[EN] Intensity</it>
+            <cz>[EN] Intensity</cz>
+            <br>[EN] Intensity</br>
+            <ru>[EN] Intensity</ru>
         </text>
         <text name="rwe_intensity_long">
             <en>Strength of event effects (1 = mild, 5 = extreme)</en>
             <uk>Сила ефектів подій (1 = слабка, 5 = екстремальна)</uk>
+            <da>Styrken af hændelseseffekter (1 = mild, 5 = ekstrem)</da>
+        
+            <de>Stärke der Weltereignisse (1 = schwach, 5 = extrem)</de>
+            <fr>[EN] Strength of event effects (1 = mild, 5 = extreme)</fr>
+            <pl>[EN] Strength of event effects (1 = mild, 5 = extreme)</pl>
+            <es>[EN] Strength of event effects (1 = mild, 5 = extreme)</es>
+            <it>[EN] Strength of event effects (1 = mild, 5 = extreme)</it>
+            <cz>[EN] Strength of event effects (1 = mild, 5 = extreme)</cz>
+            <br>[EN] Strength of event effects (1 = mild, 5 = extreme)</br>
+            <ru>[EN] Strength of event effects (1 = mild, 5 = extreme)</ru>
         </text>
         <text name="rwe_cooldown_short">
             <en>Cooldown</en>
             <uk>Перерва</uk>
+            <da>Cooldown</da>
+        
+            <de>Abklingzeit</de>
+            <fr>[EN] Cooldown</fr>
+            <pl>[EN] Cooldown</pl>
+            <es>[EN] Cooldown</es>
+            <it>[EN] Cooldown</it>
+            <cz>[EN] Cooldown</cz>
+            <br>[EN] Cooldown</br>
+            <ru>[EN] Cooldown</ru>
         </text>
         <text name="rwe_cooldown_long">
             <en>Minimum in-game time between events</en>
             <uk>Мінімальний ігровий час між подіями</uk>
+            <da>Minimum in-game tid mellem hændelser</da>
+        
+            <de>Mindestzeit (Ingame) zwischen den Ereignissen</de>
+            <fr>[EN] Minimum in-game time between events</fr>
+            <pl>[EN] Minimum in-game time between events</pl>
+            <es>[EN] Minimum in-game time between events</es>
+            <it>[EN] Minimum in-game time between events</it>
+            <cz>[EN] Minimum in-game time between events</cz>
+            <br>[EN] Minimum in-game time between events</br>
+            <ru>[EN] Minimum in-game time between events</ru>
         </text>
 
         <!-- Notifications and HUD -->
         <text name="rwe_notifications_short">
             <en>Show Notifications</en>
             <uk>Показувати сповіщення</uk>
+            <da>Vis Notifikationer</da>
+        
+            <de>Zeige Benachrichtigungen</de>
+            <fr>[EN] Show Notifications</fr>
+            <pl>[EN] Show Notifications</pl>
+            <es>[EN] Show Notifications</es>
+            <it>[EN] Show Notifications</it>
+            <cz>[EN] Show Notifications</cz>
+            <br>[EN] Show Notifications</br>
+            <ru>[EN] Show Notifications</ru>
         </text>
         <text name="rwe_notifications_long">
             <en>Display event notifications on screen</en>
             <uk>Відображати сповіщення про події на екрані</uk>
+            <da>Vis hændelsesnotifikationer på skærmen</da>
+        
+            <de>Zeige die Benachrichtigungen auf dem Bildschirm</de>
+            <fr>[EN] Display event notifications on screen</fr>
+            <pl>[EN] Display event notifications on screen</pl>
+            <es>[EN] Display event notifications on screen</es>
+            <it>[EN] Display event notifications on screen</it>
+            <cz>[EN] Display event notifications on screen</cz>
+            <br>[EN] Display event notifications on screen</br>
+            <ru>[EN] Display event notifications on screen</ru>
         </text>
         <text name="rwe_warnings_short">
             <en>Show Warnings</en>
             <uk>Показувати попередження</uk>
+            <da>Vis Advarsler</da>
+        
+            <de>Zeige Warnungen</de>
+            <fr>[EN] Show Warnings</fr>
+            <pl>[EN] Show Warnings</pl>
+            <es>[EN] Show Warnings</es>
+            <it>[EN] Show Warnings</it>
+            <cz>[EN] Show Warnings</cz>
+            <br>[EN] Show Warnings</br>
+            <ru>[EN] Show Warnings</ru>
         </text>
         <text name="rwe_warnings_long">
             <en>Show event warning messages</en>
             <uk>Відображати попереджувальні повідомлення про події</uk>
+            <da>Vis hændelsesadvarsler</da>
+        
+            <de>Zeige Warnungen der Weltereignisse</de>
+            <fr>[EN] Show event warning messages</fr>
+            <pl>[EN] Show event warning messages</pl>
+            <es>[EN] Show event warning messages</es>
+            <it>[EN] Show event warning messages</it>
+            <cz>[EN] Show event warning messages</cz>
+            <br>[EN] Show event warning messages</br>
+            <ru>[EN] Show event warning messages</ru>
         </text>
         <text name="rwe_show_hud_short">
             <en>Show HUD Panel</en>
             <uk>Показати панель HUD</uk>
+            <da>Vis HUD-panel</da>
+        
+            <de>Zeige HUD Panel</de>
+            <fr>[EN] Show HUD Panel</fr>
+            <pl>[EN] Show HUD Panel</pl>
+            <es>[EN] Show HUD Panel</es>
+            <it>[EN] Show HUD Panel</it>
+            <cz>[EN] Show HUD Panel</cz>
+            <br>[EN] Show HUD Panel</br>
+            <ru>[EN] Show HUD Panel</ru>
         </text>
         <text name="rwe_show_hud_long">
             <en>Show the World Events HUD overlay (F3 to toggle in-game)</en>
             <uk>Показати накладку HUD світових подій (F3 для перемикання в грі)</uk>
+            <da>Vis HUD-overlayet for hændelser (F3 for at slå til/fra i spillet)</da>
+        
+            <de>Zeige das Weltereignisse HUD (F3 zum Umschalten)</de>
+            <fr>[EN] Show the World Events HUD overlay (F3 to toggle in-game)</fr>
+            <pl>[EN] Show the World Events HUD overlay (F3 to toggle in-game)</pl>
+            <es>[EN] Show the World Events HUD overlay (F3 to toggle in-game)</es>
+            <it>[EN] Show the World Events HUD overlay (F3 to toggle in-game)</it>
+            <cz>[EN] Show the World Events HUD overlay (F3 to toggle in-game)</cz>
+            <br>[EN] Show the World Events HUD overlay (F3 to toggle in-game)</br>
+            <ru>[EN] Show the World Events HUD overlay (F3 to toggle in-game)</ru>
         </text>
         <text name="rwe_hud_scale_short">
             <en>HUD Scale</en>
             <uk>Масштаб HUD</uk>
+            <da>HUD-skala</da>
+        
+            <de>HUD-Skalierung</de>
+            <fr>[EN] HUD Scale</fr>
+            <pl>[EN] HUD Scale</pl>
+            <es>[EN] HUD Scale</es>
+            <it>[EN] HUD Scale</it>
+            <cz>[EN] HUD Scale</cz>
+            <br>[EN] HUD Scale</br>
+            <ru>[EN] HUD Scale</ru>
         </text>
         <text name="rwe_hud_scale_long">
             <en>Size of the World Events HUD panel</en>
             <uk>Розмір панелі HUD світових подій</uk>
+            <da>Størrelse på HUD-panelet for hændelser</da>
+        
+            <de>Größe des Weltereignisse HUD</de>
+            <fr>[EN] Size of the World Events HUD panel</fr>
+            <pl>[EN] Size of the World Events HUD panel</pl>
+            <es>[EN] Size of the World Events HUD panel</es>
+            <it>[EN] Size of the World Events HUD panel</it>
+            <cz>[EN] Size of the World Events HUD panel</cz>
+            <br>[EN] Size of the World Events HUD panel</br>
+            <ru>[EN] Size of the World Events HUD panel</ru>
         </text>
 
         <!-- Categories -->
         <text name="rwe_economic_short">
             <en>Economic Events</en>
             <uk>Економічні події</uk>
+            <da>Økonomiske hændelser</da>
+        
+            <de>Wirtschaftsereignisse</de>
+            <fr>[EN] Economic Events</fr>
+            <pl>[EN] Economic Events</pl>
+            <es>[EN] Economic Events</es>
+            <it>[EN] Economic Events</it>
+            <cz>[EN] Economic Events</cz>
+            <br>[EN] Economic Events</br>
+            <ru>[EN] Economic Events</ru>
         </text>
         <text name="rwe_economic_long">
             <en>Enable market and economic events</en>
             <uk>Увімкнути ринкові та економічні події</uk>
+            <da>Slå markeds- og økonomiske hændelser til</da>
+        
+            <de>Markt- und Wirtschaftsereignisse aktivieren</de>
+            <fr>[EN] Enable market and economic events</fr>
+            <pl>[EN] Enable market and economic events</pl>
+            <es>[EN] Enable market and economic events</es>
+            <it>[EN] Enable market and economic events</it>
+            <cz>[EN] Enable market and economic events</cz>
+            <br>[EN] Enable market and economic events</br>
+            <ru>[EN] Enable market and economic events</ru>
         </text>
         <text name="rwe_vehicle_short">
             <en>Vehicle Events</en>
             <uk>Події з технікою</uk>
+            <da>Køretøjshændelser</da>
+        
+            <de>Fahrzeugereignisse</de>
+            <fr>[EN] Vehicle Events</fr>
+            <pl>[EN] Vehicle Events</pl>
+            <es>[EN] Vehicle Events</es>
+            <it>[EN] Vehicle Events</it>
+            <cz>[EN] Vehicle Events</cz>
+            <br>[EN] Vehicle Events</br>
+            <ru>[EN] Vehicle Events</ru>
         </text>
         <text name="rwe_vehicle_long">
             <en>Enable vehicle events (speed, fuel, damage)</en>
             <uk>Увімкнути події з технікою (швидкість, паливо, пошкодження)</uk>
+            <da>Aktivér køretøjshændelser (hastighed, brændstof, skader)</da>
+        
+            <de>Aktiviere Fahrzeugereignisse (Geschwindigkeit, Verbrauch, Schaden)</de>
+            <fr>[EN] Enable vehicle events (speed, fuel, damage)</fr>
+            <pl>[EN] Enable vehicle events (speed, fuel, damage)</pl>
+            <es>[EN] Enable vehicle events (speed, fuel, damage)</es>
+            <it>[EN] Enable vehicle events (speed, fuel, damage)</it>
+            <cz>[EN] Enable vehicle events (speed, fuel, damage)</cz>
+            <br>[EN] Enable vehicle events (speed, fuel, damage)</br>
+            <ru>[EN] Enable vehicle events (speed, fuel, damage)</ru>
         </text>
         <text name="rwe_field_short">
             <en>Field Events</en>
             <uk>Події на полях</uk>
+            <da>Markhændelser</da>
+        
+            <de>Feldereignisse</de>
+            <fr>[EN] Field Events</fr>
+            <pl>[EN] Field Events</pl>
+            <es>[EN] Field Events</es>
+            <it>[EN] Field Events</it>
+            <cz>[EN] Field Events</cz>
+            <br>[EN] Field Events</br>
+            <ru>[EN] Field Events</ru>
         </text>
         <text name="rwe_field_long">
             <en>Enable crop and field events</en>
             <uk>Увімкнути події з культурами та полями</uk>
+            <da>Aktivér afgrøde- og markhændelser</da>
+        
+            <de>Aktiviere Ernte- und Feldereignisse</de>
+            <fr>[EN] Enable crop and field events</fr>
+            <pl>[EN] Enable crop and field events</pl>
+            <es>[EN] Enable crop and field events</es>
+            <it>[EN] Enable crop and field events</it>
+            <cz>[EN] Enable crop and field events</cz>
+            <br>[EN] Enable crop and field events</br>
+            <ru>[EN] Enable crop and field events</ru>
         </text>
         <text name="rwe_wildlife_short">
             <en>Wildlife Events</en>
             <uk>Події з дикою природою</uk>
+            <da>Dyrelivshændelser</da>
+        
+            <de>Wildtierereignisse</de>
+            <fr>[EN] Wildlife Events</fr>
+            <pl>[EN] Wildlife Events</pl>
+            <es>[EN] Wildlife Events</es>
+            <it>[EN] Wildlife Events</it>
+            <cz>[EN] Wildlife Events</cz>
+            <br>[EN] Wildlife Events</br>
+            <ru>[EN] Wildlife Events</ru>
         </text>
         <text name="rwe_wildlife_long">
             <en>Enable wildlife and animal events</en>
             <uk>Увімкнути події з дикою природою та тваринами</uk>
+            <da>Aktivér hændelser med dyreliv og dyr</da>
+        
+            <de>Wildtierereignisse aktivieren</de>
+            <fr>[EN] Enable wildlife and animal events</fr>
+            <pl>[EN] Enable wildlife and animal events</pl>
+            <es>[EN] Enable wildlife and animal events</es>
+            <it>[EN] Enable wildlife and animal events</it>
+            <cz>[EN] Enable wildlife and animal events</cz>
+            <br>[EN] Enable wildlife and animal events</br>
+            <ru>[EN] Enable wildlife and animal events</ru>
         </text>
         <text name="rwe_special_short">
             <en>Special Events</en>
             <uk>Особливі події</uk>
+            <da>Særlige hændelser</da>
+        
+            <de>Spezialereignisse</de>
+            <fr>[EN] Special Events</fr>
+            <pl>[EN] Special Events</pl>
+            <es>[EN] Special Events</es>
+            <it>[EN] Special Events</it>
+            <cz>[EN] Special Events</cz>
+            <br>[EN] Special Events</br>
+            <ru>[EN] Special Events</ru>
         </text>
         <text name="rwe_special_long">
             <en>Enable time, XP, and special events</en>
             <uk>Увімкнути події з часом, досвідом та особливі події</uk>
+            <da>Aktivér tids-, XP- og Særlige hændelser</da>
+        
+            <de>Zeit-, EP- und Spezialereignisse aktivieren</de>
+            <fr>[EN] Enable time, XP, and special events</fr>
+            <pl>[EN] Enable time, XP, and special events</pl>
+            <es>[EN] Enable time, XP, and special events</es>
+            <it>[EN] Enable time, XP, and special events</it>
+            <cz>[EN] Enable time, XP, and special events</cz>
+            <br>[EN] Enable time, XP, and special events</br>
+            <ru>[EN] Enable time, XP, and special events</ru>
         </text>
 
         <!-- Physics -->
         <text name="rwe_physics_enabled_short">
             <en>Enable Physics Override</en>
             <uk>Увімкнути налаштування фізики</uk>
+            <da>Aktivér fysikoverstyring</da>
+        
+            <de>Spielphysik überschreiben aktivieren</de>
+            <fr>[EN] Enable Physics Override</fr>
+            <pl>[EN] Enable Physics Override</pl>
+            <es>[EN] Enable Physics Override</es>
+            <it>[EN] Enable Physics Override</it>
+            <cz>[EN] Enable Physics Override</cz>
+            <br>[EN] Enable Physics Override</br>
+            <ru>[EN] Enable Physics Override</ru>
         </text>
         <text name="rwe_physics_enabled_long">
             <en>Apply terrain-aware wheel grip and suspension</en>
             <uk>Застосувати зчеплення коліс і підвіску залежно від типу поверхні</uk>
+            <da>Anvend terræntilpasset hjulgreb og affjedring</da>
+        
+            <de>Aktiviere dynamischen Schlupf und Federung</de>
+            <fr>[EN] Apply terrain-aware wheel grip and suspension</fr>
+            <pl>[EN] Apply terrain-aware wheel grip and suspension</pl>
+            <es>[EN] Apply terrain-aware wheel grip and suspension</es>
+            <it>[EN] Apply terrain-aware wheel grip and suspension</it>
+            <cz>[EN] Apply terrain-aware wheel grip and suspension</cz>
+            <br>[EN] Apply terrain-aware wheel grip and suspension</br>
+            <ru>[EN] Apply terrain-aware wheel grip and suspension</ru>
         </text>
         <text name="rwe_wheel_grip_short">
             <en>Wheel Grip</en>
             <uk>Зчеплення коліс</uk>
+            <da>hjulgreb</da>
+        
+            <de>Radschlupf</de>
+            <fr>[EN] Wheel Grip</fr>
+            <pl>[EN] Wheel Grip</pl>
+            <es>[EN] Wheel Grip</es>
+            <it>[EN] Wheel Grip</it>
+            <cz>[EN] Wheel Grip</cz>
+            <br>[EN] Wheel Grip</br>
+            <ru>[EN] Wheel Grip</ru>
         </text>
         <text name="rwe_wheel_grip_long">
             <en>Scale terrain grip values (1.00 = default)</en>
             <uk>Масштаб зчеплення з поверхнею (1.00 = за замовчуванням)</uk>
+            <da>Skaler terrænets grebsværdier (1,00 = standard)</da>
+        
+            <de>Radschlupf einstellen (1.00 = default)</de>
+            <fr>[EN] Scale terrain grip values (1.00 = default)</fr>
+            <pl>[EN] Scale terrain grip values (1.00 = default)</pl>
+            <es>[EN] Scale terrain grip values (1.00 = default)</es>
+            <it>[EN] Scale terrain grip values (1.00 = default)</it>
+            <cz>[EN] Scale terrain grip values (1.00 = default)</cz>
+            <br>[EN] Scale terrain grip values (1.00 = default)</br>
+            <ru>[EN] Scale terrain grip values (1.00 = default)</ru>
         </text>
         <text name="rwe_suspension_short">
             <en>Suspension Stiffness</en>
             <uk>Жорсткість підвіски</uk>
+            <da>Affjedringsstivhed</da>
+        
+            <de>Federhärte</de>
+            <fr>[EN] Suspension Stiffness</fr>
+            <pl>[EN] Suspension Stiffness</pl>
+            <es>[EN] Suspension Stiffness</es>
+            <it>[EN] Suspension Stiffness</it>
+            <cz>[EN] Suspension Stiffness</cz>
+            <br>[EN] Suspension Stiffness</br>
+            <ru>[EN] Suspension Stiffness</ru>
         </text>
         <text name="rwe_suspension_long">
             <en>Scale suspension spring force (1.00 = default)</en>
             <uk>Масштаб сили пружини підвіски (1.00 = за замовчуванням)</uk>
+            <da>Skaler affjedringens fjederkraft (1,00 = standard)</da>
+        
+            <de>Federhärte einstellen (1.00 = default)</de>
+            <fr>[EN] Scale suspension spring force (1.00 = default)</fr>
+            <pl>[EN] Scale suspension spring force (1.00 = default)</pl>
+            <es>[EN] Scale suspension spring force (1.00 = default)</es>
+            <it>[EN] Scale suspension spring force (1.00 = default)</it>
+            <cz>[EN] Scale suspension spring force (1.00 = default)</cz>
+            <br>[EN] Scale suspension spring force (1.00 = default)</br>
+            <ru>[EN] Scale suspension spring force (1.00 = default)</ru>
         </text>
 
         <!-- Debug -->
         <text name="rwe_physics_info_short">
             <en>Show Physics Info</en>
             <uk>Показати інформацію про фізику</uk>
+            <da>Vis fysikinfo</da>
+        
+            <de>Info zur Physik zeigen</de>
+            <fr>[EN] Show Physics Info</fr>
+            <pl>[EN] Show Physics Info</pl>
+            <es>[EN] Show Physics Info</es>
+            <it>[EN] Show Physics Info</it>
+            <cz>[EN] Show Physics Info</cz>
+            <br>[EN] Show Physics Info</br>
+            <ru>[EN] Show Physics Info</ru>
         </text>
         <text name="rwe_physics_info_long">
             <en>Log per-vehicle speed and grip data each frame</en>
             <uk>Записувати дані швидкості та зчеплення для кожного транспортного засобу щокадру</uk>
+            <da>Log hastigheds- og grebsdata pr. køretøj i hver frame</da>
+        
+            <de>Log pro Fahrzeug und Frame (Geschwindigkeit, Schlupf) </de>
+            <fr>[EN] Log per-vehicle speed and grip data each frame</fr>
+            <pl>[EN] Log per-vehicle speed and grip data each frame</pl>
+            <es>[EN] Log per-vehicle speed and grip data each frame</es>
+            <it>[EN] Log per-vehicle speed and grip data each frame</it>
+            <cz>[EN] Log per-vehicle speed and grip data each frame</cz>
+            <br>[EN] Log per-vehicle speed and grip data each frame</br>
+            <ru>[EN] Log per-vehicle speed and grip data each frame</ru>
         </text>
         <text name="rwe_debug_short">
             <en>Debug Mode</en>
             <uk>Режим налагодження</uk>
+            <da>Fejlfindingstilstand</da>
+        
+            <de>Debugmodus</de>
+            <fr>[EN] Debug Mode</fr>
+            <pl>[EN] Debug Mode</pl>
+            <es>[EN] Debug Mode</es>
+            <it>[EN] Debug Mode</it>
+            <cz>[EN] Debug Mode</cz>
+            <br>[EN] Debug Mode</br>
+            <ru>[EN] Debug Mode</ru>
         </text>
         <text name="rwe_debug_long">
             <en>Show verbose Random World Events debug output</en>
             <uk>Показувати детальні діагностичні дані випадкових світових подій</uk>
+            <da>Vis detaljeret debugoutput for tilfældige hændelser</da>
+        
+            <de>Zeige den Debug-Output der Weltereignisse</de>
+            <fr>[EN] Show verbose Random World Events debug output</fr>
+            <pl>[EN] Show verbose Random World Events debug output</pl>
+            <es>[EN] Show verbose Random World Events debug output</es>
+            <it>[EN] Show verbose Random World Events debug output</it>
+            <cz>[EN] Show verbose Random World Events debug output</cz>
+            <br>[EN] Show verbose Random World Events debug output</br>
+            <ru>[EN] Show verbose Random World Events debug output</ru>
         </text>
 
         <!-- Input action description (shows in keybinding menu) -->
         <text name="input_RWE_TOGGLE_HUD">
             <en>Toggle Random World Events HUD</en>
             <uk>Перемкнути HUD випадкових світових подій</uk>
+            <da>Skift tilfældige hændelser HUD</da>
+        
+            <de>Zufällige Weltereignisse HUD ein- und ausschalten</de>
+            <fr>[EN] Toggle Random World Events HUD</fr>
+            <pl>[EN] Toggle Random World Events HUD</pl>
+            <es>[EN] Toggle Random World Events HUD</es>
+            <it>[EN] Toggle Random World Events HUD</it>
+            <cz>[EN] Toggle Random World Events HUD</cz>
+            <br>[EN] Toggle Random World Events HUD</br>
+            <ru>[EN] Toggle Random World Events HUD</ru>
         </text>
         <text name="input_RWE_TOGGLE_SETTINGS">
             <en>Toggle Random World Events Settings</en>
@@ -293,200 +698,641 @@
             <br>Abrir configurações de eventos aleatórios</br>
             <uk>Відкрити налаштування випадкових подій</uk>
             <ru>Открыть настройки случайных событий</ru>
+            <da>Slå indstillinger for Random World Events til/fra</da>
         </text>
 
         <!-- Help page: category titles -->
         <text name="helpLine_rwe_cat_overview">
             <en>Overview</en>
             <uk>Огляд</uk>
+            <da>Oversigt</da>
+        
+            <de>Übersicht</de>
+            <fr>[EN] Overview</fr>
+            <pl>[EN] Overview</pl>
+            <es>[EN] Overview</es>
+            <it>[EN] Overview</it>
+            <cz>[EN] Overview</cz>
+            <br>[EN] Overview</br>
+            <ru>[EN] Overview</ru>
         </text>
         <text name="helpLine_rwe_cat_categories">
             <en>Event Categories</en>
             <uk>Категорії подій</uk>
+            <da>Hændelseskategorier</da>
+        
+            <de>Eventkategorien</de>
+            <fr>[EN] Event Categories</fr>
+            <pl>[EN] Event Categories</pl>
+            <es>[EN] Event Categories</es>
+            <it>[EN] Event Categories</it>
+            <cz>[EN] Event Categories</cz>
+            <br>[EN] Event Categories</br>
+            <ru>[EN] Event Categories</ru>
         </text>
         <text name="helpLine_rwe_cat_settings">
             <en>Settings</en>
             <uk>Налаштування</uk>
+            <da>indstillinger</da>
+        
+            <de>Einstellungen</de>
+            <fr>[EN] Settings</fr>
+            <pl>[EN] Settings</pl>
+            <es>[EN] Settings</es>
+            <it>[EN] Settings</it>
+            <cz>[EN] Settings</cz>
+            <br>[EN] Settings</br>
+            <ru>[EN] Settings</ru>
         </text>
         <text name="helpLine_rwe_cat_controls">
             <en>Controls &amp; Commands</en>
             <uk>Керування та команди</uk>
+            <da>Styring &amp; kommandoer</da>
+        
+            <de>Tastaturbefehle</de>
+            <fr>[EN] Controls &amp; Commands</fr>
+            <pl>[EN] Controls &amp; Commands</pl>
+            <es>[EN] Controls &amp; Commands</es>
+            <it>[EN] Controls &amp; Commands</it>
+            <cz>[EN] Controls &amp; Commands</cz>
+            <br>[EN] Controls &amp; Commands</br>
+            <ru>[EN] Controls &amp; Commands</ru>
         </text>
 
         <!-- Help page: Overview page 1 -->
         <text name="helpLine_rwe_ov1_title">
             <en>What is Random World Events?</en>
             <uk>Що таке випадкові світові події?</uk>
+            <da> Hvad er Random World Events</da>
+        
+            <de>Was sind zufällige Weltereignisse?</de>
+            <fr>[EN] What is Random World Events?</fr>
+            <pl>[EN] What is Random World Events?</pl>
+            <es>[EN] What is Random World Events?</es>
+            <it>[EN] What is Random World Events?</it>
+            <cz>[EN] What is Random World Events?</cz>
+            <br>[EN] What is Random World Events?</br>
+            <ru>[EN] What is Random World Events?</ru>
         </text>
         <text name="helpLine_rwe_ov1_intro_title">
             <en>Living World</en>
             <uk>Живий світ</uk>
+            <da>Levende verden</da>
+        
+            <de>Lebendige Welt</de>
+            <fr>[EN] Living World</fr>
+            <pl>[EN] Living World</pl>
+            <es>[EN] Living World</es>
+            <it>[EN] Living World</it>
+            <cz>[EN] Living World</cz>
+            <br>[EN] Living World</br>
+            <ru>[EN] Living World</ru>
         </text>
         <text name="helpLine_rwe_ov1_intro_text">
             <en>Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</en>
             <uk>Випадкові світові події привносять динамічні та непередбачувані події на вашу ферму. 53 унікальні події у п'яти категоріях запускаються автоматично під час гри, впливаючи на економіку, техніку, поля, дику природу та багато іншого. Жодне проходження не буде схожим на попереднє.</uk>
+            <da>Random World Events bringer dynamiske og uforudsigelige hændelser til din gård. 53 unikke hændelser fordelt på fem kategorier udløses automatisk under spillet og påvirker din økonomi, dine køretøjer, marker, dyreliv og meget mere. Hver gennemspilning føles unik.</da>
+        
+            <de>Zufällige Welteregnisse bringen dynamische, unvorhersagbare Ereignisse auf deine Farm. 53 einzigartige Ereignisse aus fünf Kategorien starten zufällig im Spiel und beeinflussen Wirtschaft, Fahrzeuge, Wildtiere und mehr. Kein Spieldurchlauf wird sich mehr gleich anfühlen.</de>
+            <fr>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</fr>
+            <pl>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</pl>
+            <es>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</es>
+            <it>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</it>
+            <cz>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</cz>
+            <br>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</br>
+            <ru>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</ru>
         </text>
         <text name="helpLine_rwe_ov1_expect_title">
             <en>What to Expect</en>
             <uk>Чого очікувати</uk>
+            <da>Hvad kan du forvente</da>
+        
+            <de>Was zu erwarten ist</de>
+            <fr>[EN] What to Expect</fr>
+            <pl>[EN] What to Expect</pl>
+            <es>[EN] What to Expect</es>
+            <it>[EN] What to Expect</it>
+            <cz>[EN] What to Expect</cz>
+            <br>[EN] What to Expect</br>
+            <ru>[EN] What to Expect</ru>
         </text>
         <text name="helpLine_rwe_ov1_expect_text">
             <en>Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</en>
             <uk>Події відображаються як сповіщення HUD і тривають налаштовуваний час. Деякі дають бонуси (підйоми на ринку, поповнення палива, підсилення врожаю), тоді як інші створюють труднощі (аварії, падіння цін, натовпи тварин). Таймер перерви запобігає надмірній кількості подій.</uk>
+            <da>Hændelser vises som HUD-notifikationer og varer i et tidsrum, du selv kan konfigurere. Nogle giver bonusser (markedsboom, brændstofpåfyldning, afgrødebonusser), mens andre skaber udfordringer (ulykker, prisstyrt, paniske dyreflokke). En cooldown-timer sikrer, at hændelser ikke spammer spillet.</da>
+        
+            <de>Die Ereignisse starten mit einer HUD-Benachrichtigung und dauern für eine einstellbare Zeit an. Einige geben Boni (z.B. Marktnachfrage, Betankungen oder Erntebuffs), andere sorgen für Schwierigkeiten (z.B. Unfälle, Preiseinbrüche, wilde Tierherden). Eingebaute Timer verhindern, dass zu viele Ereignisse starten.</de>
+            <fr>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</fr>
+            <pl>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</pl>
+            <es>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</es>
+            <it>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</it>
+            <cz>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</cz>
+            <br>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</br>
+            <ru>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</ru>
         </text>
 
         <!-- Help page: Overview page 2 -->
         <text name="helpLine_rwe_ov2_title">
             <en>How Events Work</en>
             <uk>Як працюють події</uk>
+            <da>Hvordan hændelser virker</da>
+        
+            <de>Wie Ereignisse funktionieren</de>
+            <fr>[EN] How Events Work</fr>
+            <pl>[EN] How Events Work</pl>
+            <es>[EN] How Events Work</es>
+            <it>[EN] How Events Work</it>
+            <cz>[EN] How Events Work</cz>
+            <br>[EN] How Events Work</br>
+            <ru>[EN] How Events Work</ru>
         </text>
         <text name="helpLine_rwe_ov2_trigger_title">
             <en>Trigger System</en>
             <uk>Система запуску</uk>
+            <da>Hændelsesudløser</da>
+        
+            <de>Auslösung</de>
+            <fr>[EN] Trigger System</fr>
+            <pl>[EN] Trigger System</pl>
+            <es>[EN] Trigger System</es>
+            <it>[EN] Trigger System</it>
+            <cz>[EN] Trigger System</cz>
+            <br>[EN] Trigger System</br>
+            <ru>[EN] Trigger System</ru>
         </text>
         <text name="helpLine_rwe_ov2_trigger_text">
             <en>Each game tick there is a small probability of an event firing, controlled by the Frequency setting (1-10). When an event triggers, a random eligible event from all enabled categories is selected. Only one event can be active at a time.</en>
             <uk>При кожному ігровому тику є невелика ймовірність запуску події, яка контролюється параметром «Частота» (1–10). Коли подія запускається, з усіх увімкнених категорій вибирається випадкова відповідна подія. Одночасно може бути активна лише одна подія.</uk>
+            <da>Ved hvert game-tick er der en lille sandsynlighed for, at en hændelse udløses, styret af indstillingen Hyppighed (1–10). Når en hændelse aktiveres, vælges en tilfældig tilgængelig hændelse fra alle aktiverede kategorier. Kun én hændelse kan være aktiv ad gangen.</da>
+        
+            <de>Zu jedem Spielzeitpunkt ist es mit einer geringen Wahrscheinlichkeit möglich, ein Ereignis auszulösen - abhängig der  eingestellten Frequenz (1-10). Wenn ein Ereignis ausgelöst wird, so wird ein zufälliges Ereignis aus allen aktiven Kategorien gewählt. Es kann nur ein Ereignis aktiv sein.</de>
+            <fr>[EN] Each game tick there is a small probability of an event firing, controlled by the Frequency setting (1-10). When an event triggers, a random eligible event from all enabled categories is selected. Only one event can be active at a time.</fr>
+            <pl>[EN] Each game tick there is a small probability of an event firing, controlled by the Frequency setting (1-10). When an event triggers, a random eligible event from all enabled categories is selected. Only one event can be active at a time.</pl>
+            <es>[EN] Each game tick there is a small probability of an event firing, controlled by the Frequency setting (1-10). When an event triggers, a random eligible event from all enabled categories is selected. Only one event can be active at a time.</es>
+            <it>[EN] Each game tick there is a small probability of an event firing, controlled by the Frequency setting (1-10). When an event triggers, a random eligible event from all enabled categories is selected. Only one event can be active at a time.</it>
+            <cz>[EN] Each game tick there is a small probability of an event firing, controlled by the Frequency setting (1-10). When an event triggers, a random eligible event from all enabled categories is selected. Only one event can be active at a time.</cz>
+            <br>[EN] Each game tick there is a small probability of an event firing, controlled by the Frequency setting (1-10). When an event triggers, a random eligible event from all enabled categories is selected. Only one event can be active at a time.</br>
+            <ru>[EN] Each game tick there is a small probability of an event firing, controlled by the Frequency setting (1-10). When an event triggers, a random eligible event from all enabled categories is selected. Only one event can be active at a time.</ru>
         </text>
         <text name="helpLine_rwe_ov2_intensity_title">
             <en>Intensity &amp; Cooldown</en>
             <uk>Інтенсивність та перерва</uk>
+            <da>Intensitet &amp; cooldown</da>
+        
+            <de>Intensität &amp; Cooldown</de>
+            <fr>[EN] Intensity &amp; Cooldown</fr>
+            <pl>[EN] Intensity &amp; Cooldown</pl>
+            <es>[EN] Intensity &amp; Cooldown</es>
+            <it>[EN] Intensity &amp; Cooldown</it>
+            <cz>[EN] Intensity &amp; Cooldown</cz>
+            <br>[EN] Intensity &amp; Cooldown</br>
+            <ru>[EN] Intensity &amp; Cooldown</ru>
         </text>
         <text name="helpLine_rwe_ov2_intensity_text">
             <en>Intensity (1-5) scales the strength of effects — a level 5 market boom gives a bigger bonus than level 1. After each event, a cooldown period (1-240 minutes) must pass before the next event can fire. Both settings are configurable per savegame.</en>
             <uk>Інтенсивність (1–5) визначає силу ефектів — підйом ринку рівня 5 дає більший бонус, ніж рівень 1. Після кожної події має пройти час перерви (1–240 хвилин), перш ніж може статися наступна подія. Обидва параметри налаштовуються для кожного збереження.</uk>
+            <da>Intensitet (1–5) skalerer styrken af effekterne — et markedsboom på niveau 5 giver en større bonus end niveau 1. Efter hver hændelse skal en cooldown-periode (1–240 minutter) passere, før den næste hændelse kan udløses. Begge indstillinger kan konfigureres separat for hvert savegame.</da>
+        
+            <de>Intensität (1-5) skaliert die Effektstärke - ein Level 5 Marktboom gibt einen größeren Bonus als Level 1. Nach jedem Ereignis muss ein Cooldown abgewartet werden (1-240 Minuten), bevor ein neues Ereignis ausgelöst werden kann. Beide Einstellungen sind im Savegame konfigurierbar.</de>
+            <fr>[EN] Intensity (1-5) scales the strength of effects — a level 5 market boom gives a bigger bonus than level 1. After each event, a cooldown period (1-240 minutes) must pass before the next event can fire. Both settings are configurable per savegame.</fr>
+            <pl>[EN] Intensity (1-5) scales the strength of effects — a level 5 market boom gives a bigger bonus than level 1. After each event, a cooldown period (1-240 minutes) must pass before the next event can fire. Both settings are configurable per savegame.</pl>
+            <es>[EN] Intensity (1-5) scales the strength of effects — a level 5 market boom gives a bigger bonus than level 1. After each event, a cooldown period (1-240 minutes) must pass before the next event can fire. Both settings are configurable per savegame.</es>
+            <it>[EN] Intensity (1-5) scales the strength of effects — a level 5 market boom gives a bigger bonus than level 1. After each event, a cooldown period (1-240 minutes) must pass before the next event can fire. Both settings are configurable per savegame.</it>
+            <cz>[EN] Intensity (1-5) scales the strength of effects — a level 5 market boom gives a bigger bonus than level 1. After each event, a cooldown period (1-240 minutes) must pass before the next event can fire. Both settings are configurable per savegame.</cz>
+            <br>[EN] Intensity (1-5) scales the strength of effects — a level 5 market boom gives a bigger bonus than level 1. After each event, a cooldown period (1-240 minutes) must pass before the next event can fire. Both settings are configurable per savegame.</br>
+            <ru>[EN] Intensity (1-5) scales the strength of effects — a level 5 market boom gives a bigger bonus than level 1. After each event, a cooldown period (1-240 minutes) must pass before the next event can fire. Both settings are configurable per savegame.</ru>
         </text>
 
         <!-- Help page: Categories / economic -->
         <text name="helpLine_rwe_cat1_title">
             <en>Economic Events</en>
             <uk>Економічні події</uk>
+            <da>Økonomiske hændelser</da>
+        
+            <de>Wirtschaftsereignisse</de>
+            <fr>[EN] Economic Events</fr>
+            <pl>[EN] Economic Events</pl>
+            <es>[EN] Economic Events</es>
+            <it>[EN] Economic Events</it>
+            <cz>[EN] Economic Events</cz>
+            <br>[EN] Economic Events</br>
+            <ru>[EN] Economic Events</ru>
         </text>
         <text name="helpLine_rwe_cat1_good_title">
             <en>Positive Events (11)</en>
             <uk>Позитивні події (11)</uk>
+            <da>Positive hændelser (11)</da>
+        
+            <de>11 positive Ereignisse</de>
+            <fr>[EN] Positive Events (11)</fr>
+            <pl>[EN] Positive Events (11)</pl>
+            <es>[EN] Positive Events (11)</es>
+            <it>[EN] Positive Events (11)</it>
+            <cz>[EN] Positive Events (11)</cz>
+            <br>[EN] Positive Events (11)</br>
+            <ru>[EN] Positive Events (11)</ru>
         </text>
         <text name="helpLine_rwe_cat1_good_text">
             <en>Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</en>
             <uk>Державні субсидії, підйоми на ринку, пожертви фермерів, повернення податків, страхові виплати, експортні можливості, знижки на насіння, знижки на добрива, знижки на паливо, знижки на обладнання та цінові бонуси (тимчасово підвищені ціни продажу). Ці події надають пряму готівку або тимчасові цінові бонуси.</uk>
+            <da>Statslige tilskud, markedsboom, donationer fra landmænd, skatterefusioner, forsikringsudbetalinger, eksportmuligheder, rabatter på frø, rabatter på gødning, rabatter på brændstof, rabatter på udstyr samt bonusser fra prisfastsættelse (midlertidigt forhøjede salgspriser). Disse hændelser giver direkte kontanter eller midlertidige prisbonusser.</da>
+        
+            <de>Staatliche Subventionen, Marktbooms, Spenden von Landwirten, Steuerrückerstattungen, Versicherungsleistungen, Exportmöglichkeiten, Saatgut-, Düngemittel-, Kraftstoff- und Geräterabatte sowie Preisbindungsprämien (vorübergehend erhöhte Verkaufspreise) können zu direkten Geldauszahlungen oder befristeten Preisboni führen.</de>
+            <fr>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</fr>
+            <pl>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</pl>
+            <es>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</es>
+            <it>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</it>
+            <cz>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</cz>
+            <br>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</br>
+            <ru>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</ru>
         </text>
         <text name="helpLine_rwe_cat1_bad_title">
             <en>Negative Events (4)</en>
             <uk>Негативні події (4)</uk>
+            <da>Negative hændelser (4)</da>
+        
+            <de>4 negative Ereignisse</de>
+            <fr>[EN] Negative Events (4)</fr>
+            <pl>[EN] Negative Events (4)</pl>
+            <es>[EN] Negative Events (4)</es>
+            <it>[EN] Negative Events (4)</it>
+            <cz>[EN] Negative Events (4)</cz>
+            <br>[EN] Negative Events (4)</br>
+            <ru>[EN] Negative Events (4)</ru>
         </text>
         <text name="helpLine_rwe_cat1_bad_text">
             <en>Market crashes (reduced sell prices), sudden expenses (immediate cash loss), loan interest charges (percentage of current money), and economic crises (combined market penalty plus ongoing loan costs). High-intensity crises stack both effects. Toggle the Economic category off to disable all of these.</en>
             <uk>Обвали ринку (знижені ціни продажу), раптові витрати (миттєва втрата грошей), нарахування відсотків за кредитом (відсоток від наявних коштів) та економічні кризи (поєднання ринкових штрафів і поточних витрат за кредитом). Кризи високої інтенсивності накопичують обидва ефекти. Вимкніть категорію «Економіка», щоб відключити все це.</uk>
+            <da>Markedsnedbrud (reducerede salgspriser), uforudsete udgifter (øjeblikkeligt pengetab), lånerenter (en procentdel af din nuværende saldo) og økonomiske kriser (kombineret markedstraf plus løbende låneomkostninger). Kriser med høj intensitet kombinerer begge effekter. Slå kategorien Økonomi fra for at deaktivere dem alle.</da>
+        
+            <de>Markteinbrüche (sinkende Verkaufspreise), plötzliche Ausgaben (sofortiger Geldverlust), Kreditzinsen (Prozentsatz des aktuellen Geldbetrags) und Wirtschaftskrisen (Kombination aus Markteinbußen und laufenden Kreditkosten) verstärken diese Effekte. Schwere Krisen addieren beide Effekte. Deaktivieren der Kategtegorie Wirtschaft schalte all diese Effekte aus.</de>
+            <fr>[EN] Market crashes (reduced sell prices), sudden expenses (immediate cash loss), loan interest charges (percentage of current money), and economic crises (combined market penalty plus ongoing loan costs). High-intensity crises stack both effects. Toggle the Economic category off to disable all of these.</fr>
+            <pl>[EN] Market crashes (reduced sell prices), sudden expenses (immediate cash loss), loan interest charges (percentage of current money), and economic crises (combined market penalty plus ongoing loan costs). High-intensity crises stack both effects. Toggle the Economic category off to disable all of these.</pl>
+            <es>[EN] Market crashes (reduced sell prices), sudden expenses (immediate cash loss), loan interest charges (percentage of current money), and economic crises (combined market penalty plus ongoing loan costs). High-intensity crises stack both effects. Toggle the Economic category off to disable all of these.</es>
+            <it>[EN] Market crashes (reduced sell prices), sudden expenses (immediate cash loss), loan interest charges (percentage of current money), and economic crises (combined market penalty plus ongoing loan costs). High-intensity crises stack both effects. Toggle the Economic category off to disable all of these.</it>
+            <cz>[EN] Market crashes (reduced sell prices), sudden expenses (immediate cash loss), loan interest charges (percentage of current money), and economic crises (combined market penalty plus ongoing loan costs). High-intensity crises stack both effects. Toggle the Economic category off to disable all of these.</cz>
+            <br>[EN] Market crashes (reduced sell prices), sudden expenses (immediate cash loss), loan interest charges (percentage of current money), and economic crises (combined market penalty plus ongoing loan costs). High-intensity crises stack both effects. Toggle the Economic category off to disable all of these.</br>
+            <ru>[EN] Market crashes (reduced sell prices), sudden expenses (immediate cash loss), loan interest charges (percentage of current money), and economic crises (combined market penalty plus ongoing loan costs). High-intensity crises stack both effects. Toggle the Economic category off to disable all of these.</ru>
         </text>
 
         <!-- Help page: Categories / vehicle and field -->
         <text name="helpLine_rwe_cat2_title">
             <en>Vehicle &amp; Field Events</en>
             <uk>Події з технікою та полями</uk>
+            <da>Køretøjs- &amp; markhændelser</da>
+        
+            <de>Fahrzeug- &amp; Feldereignisse</de>
+            <fr>[EN] Vehicle &amp; Field Events</fr>
+            <pl>[EN] Vehicle &amp; Field Events</pl>
+            <es>[EN] Vehicle &amp; Field Events</es>
+            <it>[EN] Vehicle &amp; Field Events</it>
+            <cz>[EN] Vehicle &amp; Field Events</cz>
+            <br>[EN] Vehicle &amp; Field Events</br>
+            <ru>[EN] Vehicle &amp; Field Events</ru>
         </text>
         <text name="helpLine_rwe_cat2_vehicle_title">
             <en>Vehicle Events (8)</en>
             <uk>Події з технікою (8)</uk>
+            <da>Køretøjshændelser (8)</da>
+        
+            <de>8 Fahrzeugereignisse</de>
+            <fr>[EN] Vehicle Events (8)</fr>
+            <pl>[EN] Vehicle Events (8)</pl>
+            <es>[EN] Vehicle Events (8)</es>
+            <it>[EN] Vehicle Events (8)</it>
+            <cz>[EN] Vehicle Events (8)</cz>
+            <br>[EN] Vehicle Events (8)</br>
+            <ru>[EN] Vehicle Events (8)</ru>
         </text>
         <text name="helpLine_rwe_cat2_vehicle_text">
             <en>Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</en>
             <uk>Прискорення, безкоштовне поповнення палива, витік палива, дрібні аварії з рахунками за ремонт, повне чищення парку техніки, візуальні оновлення, проблеми з двигуном (знижена потужність) та екстрені рахунки за ремонт. Більшість подій з технікою стосуються транспортного засобу, яким ви керуєте.</uk>
+            <da>Hastighedsboosts, gratis brændstofpåfyldninger, brændstoflækager, mindre ulykker med reparationsregninger, rengøring af hele køretøjsflåden, visuelle opgraderinger, motorproblemer (reduceret kraft) samt akutte reparationsregninger. De fleste køretøjshændelser påvirker det køretøj, du aktuelt styrer.</da>
+        
+            <de>Höhere Geschwindigkeiten, kostenlose Tankfüllungen, Kraftstofflecks, kleinere Unfälle mit Reparaturkosten, Komplettreinigung der Flotte, kostenlose Lackierungen, Motorprobleme (Leistungsverlust) und Rechnungen für Notfallreparaturen. Die meisten Fahrzeugereignisse betreffen das aktuell gesteuerte Fahrzeug.</de>
+            <fr>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</fr>
+            <pl>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</pl>
+            <es>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</es>
+            <it>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</it>
+            <cz>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</cz>
+            <br>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</br>
+            <ru>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</ru>
         </text>
         <text name="helpLine_rwe_cat2_field_title">
             <en>Field Events (10)</en>
             <uk>Події на полях (10)</uk>
+            <da>Markhændelser (10)</da>
+        
+            <de>10 Feldereignisse</de>
+            <fr>[EN] Field Events (10)</fr>
+            <pl>[EN] Field Events (10)</pl>
+            <es>[EN] Field Events (10)</es>
+            <it>[EN] Field Events (10)</it>
+            <cz>[EN] Field Events (10)</cz>
+            <br>[EN] Field Events (10)</br>
+            <ru>[EN] Field Events (10)</ru>
         </text>
         <text name="helpLine_rwe_cat2_field_text">
             <en>Crop yield bonuses and penalties, doubled or halved fertilizer effectiveness, seed growth speed changes, harvest amount modifiers, and field sale price shifts. Field events require at least one field on the map to be eligible.</en>
             <uk>Бонуси та штрафи до врожайності культур, подвоєна або вдвічі знижена ефективність добрив, зміни швидкості росту насіння, модифікатори кількості врожаю та зміни цін продажу з поля. Для подій на полях потрібне хоча б одне поле на карті.</uk>
+            <da>Bonusser og straf på afgrødeudbytte, fordoblet eller halveret effektivitet af gødning, ændringer i frøenes væksthastighed, modifikatorer for høstmængde samt ændringer i markens salgspris. Markhændelser kræver, at der er mindst én mark på kortet for at kunne udløses.</da>
+        
+            <de>Ernteertragsboni und -mali, verdoppelte oder halbierte Düngemittelwirkung, Änderungen der Wachstumsgeschwindigkeit, Modifikationen der Erntemenge und Änderungen der Feldverkaufspreise. Feldereignisse erfordern mindestens ein Feld auf der Karte, um ausgelöst zu werden.</de>
+            <fr>[EN] Crop yield bonuses and penalties, doubled or halved fertilizer effectiveness, seed growth speed changes, harvest amount modifiers, and field sale price shifts. Field events require at least one field on the map to be eligible.</fr>
+            <pl>[EN] Crop yield bonuses and penalties, doubled or halved fertilizer effectiveness, seed growth speed changes, harvest amount modifiers, and field sale price shifts. Field events require at least one field on the map to be eligible.</pl>
+            <es>[EN] Crop yield bonuses and penalties, doubled or halved fertilizer effectiveness, seed growth speed changes, harvest amount modifiers, and field sale price shifts. Field events require at least one field on the map to be eligible.</es>
+            <it>[EN] Crop yield bonuses and penalties, doubled or halved fertilizer effectiveness, seed growth speed changes, harvest amount modifiers, and field sale price shifts. Field events require at least one field on the map to be eligible.</it>
+            <cz>[EN] Crop yield bonuses and penalties, doubled or halved fertilizer effectiveness, seed growth speed changes, harvest amount modifiers, and field sale price shifts. Field events require at least one field on the map to be eligible.</cz>
+            <br>[EN] Crop yield bonuses and penalties, doubled or halved fertilizer effectiveness, seed growth speed changes, harvest amount modifiers, and field sale price shifts. Field events require at least one field on the map to be eligible.</br>
+            <ru>[EN] Crop yield bonuses and penalties, doubled or halved fertilizer effectiveness, seed growth speed changes, harvest amount modifiers, and field sale price shifts. Field events require at least one field on the map to be eligible.</ru>
         </text>
 
         <!-- Help page: Categories / special and wildlife -->
         <text name="helpLine_rwe_cat3_title">
             <en>Special &amp; Wildlife Events</en>
             <uk>Особливі події та події з дикою природою</uk>
+            <da>Særlige &amp; dyrelivshændelser</da>
+        
+            <de>Spezial- &amp; Wildtierereignisse</de>
+            <fr>[EN] Special &amp; Wildlife Events</fr>
+            <pl>[EN] Special &amp; Wildlife Events</pl>
+            <es>[EN] Special &amp; Wildlife Events</es>
+            <it>[EN] Special &amp; Wildlife Events</it>
+            <cz>[EN] Special &amp; Wildlife Events</cz>
+            <br>[EN] Special &amp; Wildlife Events</br>
+            <ru>[EN] Special &amp; Wildlife Events</ru>
         </text>
         <text name="helpLine_rwe_cat3_special_title">
             <en>Special Events (10)</en>
             <uk>Особливі події (10)</uk>
+            <da>Særlige hændelser (10)</da>
+        
+            <de>10 Spezialereignisse</de>
+            <fr>[EN] Special Events (10)</fr>
+            <pl>[EN] Special Events (10)</pl>
+            <es>[EN] Special Events (10)</es>
+            <it>[EN] Special Events (10)</it>
+            <cz>[EN] Special Events (10)</cz>
+            <br>[EN] Special Events (10)</br>
+            <ru>[EN] Special Events (10)</ru>
         </text>
         <text name="helpLine_rwe_cat3_special_text">
             <en>Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</en>
             <uk>Прискорення та уповільнення часу (впливає на масштаб ігрового часу), бонуси та штрафи до отримання досвіду, множники грошей, зміни міцності обладнання, кращі торгові ціни та міські фестивалі. Після закінчення часових подій відновлюється початковий масштаб часу.</uk>
+            <da>Tidsacceleration og -opbremsning (påvirker spillets tidsskala), bonusser og straf på XP-optjening, pengemultiplikatorer, ændringer i udstyrets holdbarhed, bedre handelspriser samt byfestivaler. Tidsrelaterede hændelser gendanner den oprindelige tidsskala, når de slutter.</da>
+        
+            <de>Zeitbeschleunigung und -verlangsamung (beeinflusst die Spielzeit), Boni und Mali beim EP-Gewinn, Geldmultiplikatoren, Änderungen der Ausrüstungshaltbarkeit, bessere Handelspreise und Stadtfeste. Zeitereignisse stellen nach ihrem Ende die ursprüngliche Zeit wieder her.</de>
+            <fr>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</fr>
+            <pl>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</pl>
+            <es>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</es>
+            <it>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</it>
+            <cz>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</cz>
+            <br>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</br>
+            <ru>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</ru>
         </text>
         <text name="helpLine_rwe_cat3_wildlife_title">
             <en>Wildlife Events (10)</en>
             <uk>Події з дикою природою (10)</uk>
+            <da>Dyrelivshændelser (10)</da>
+        
+            <de>10 Wildtierereignisse</de>
+            <fr>[EN] Wildlife Events (10)</fr>
+            <pl>[EN] Wildlife Events (10)</pl>
+            <es>[EN] Wildlife Events (10)</es>
+            <it>[EN] Wildlife Events (10)</it>
+            <cz>[EN] Wildlife Events (10)</cz>
+            <br>[EN] Wildlife Events (10)</br>
+            <ru>[EN] Wildlife Events (10)</ru>
         </text>
         <text name="helpLine_rwe_cat3_wildlife_text">
             <en>Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</en>
             <uk>Зграї птахів, корисні комахи, дикі натовпи тварин, сповіщення про хижаків, нашестя кролів, рої бджіл, бонуси сезону полювання, бонуси та штрафи до продуктів тваринництва, ветеринарні рахунки та спалахи хвороб. Увімкніть категорію «Дика природа», щоб переживати ці події.</uk>
+            <da>Fugleflokke, nyttige insekter, vilde dyreflokke på flugt, rovdyrvarsler, kaninangreb, bisværme, bonusser i jagtsæsonen, bonusser og straf på husdyrprodukter, dyrlægeregninger samt sygdomsbekymringer. Aktivér kategorien Dyreliv for at opleve disse hændelser.</da>
+        
+            <de>Vogelschwärme, nützliche Insekten, wilde Tierherden, Raubtierwarnungen, Kaninchenplagen, Bienenschwärme, Boni in der Jagdsaison, Boni und Mali bei der Viehprodukten, Tierarztkosten und Seuchenwarnungen. Diese Ereignisse sind nur aktiv, wenn die Einstellung Wildtiere aktiv ist.</de>
+            <fr>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</fr>
+            <pl>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</pl>
+            <es>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</es>
+            <it>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</it>
+            <cz>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</cz>
+            <br>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</br>
+            <ru>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</ru>
         </text>
 
         <!-- Help page: Settings / event settings -->
         <text name="helpLine_rwe_set1_title">
             <en>Event Settings</en>
             <uk>Налаштування подій</uk>
+            <da>Hændelsesindstillinger</da>
+        
+            <de>Ereigniseinstellungen</de>
+            <fr>[EN] Event Settings</fr>
+            <pl>[EN] Event Settings</pl>
+            <es>[EN] Event Settings</es>
+            <it>[EN] Event Settings</it>
+            <cz>[EN] Event Settings</cz>
+            <br>[EN] Event Settings</br>
+            <ru>[EN] Event Settings</ru>
         </text>
         <text name="helpLine_rwe_set1_freq_title">
             <en>Frequency (1-10)</en>
             <uk>Частота (1–10)</uk>
+            <da>Frekvens (1–10)</da>
+        
+            <de>Häufigkeit (1-10)</de>
+            <fr>[EN] Frequency (1-10)</fr>
+            <pl>[EN] Frequency (1-10)</pl>
+            <es>[EN] Frequency (1-10)</es>
+            <it>[EN] Frequency (1-10)</it>
+            <cz>[EN] Frequency (1-10)</cz>
+            <br>[EN] Frequency (1-10)</br>
+            <ru>[EN] Frequency (1-10)</ru>
         </text>
         <text name="helpLine_rwe_set1_freq_text">
             <en>Controls how often events fire. Higher values increase the per-tick trigger probability. A frequency of 10 means events fire nearly every cooldown period, while 1 makes them very rare. Default is 5 for a balanced experience.</en>
             <uk>Контролює, як часто відбуваються події. Вищі значення збільшують ймовірність запуску за кожен тік. Частота 10 означає, що події відбуваються майже в кожен період перерви, тоді як 1 робить їх дуже рідкісними. За замовчуванням встановлено 5 для збалансованого ігрового процесу.</uk>
+            <da>Styrer, hvor ofte hændelser udløses. Højere værdier øger sandsynligheden for udløsning ved hvert tick. En hyppighed på 10 betyder, at hændelser udløses næsten ved hver cooldown-periode, mens 1 gør dem meget sjældne. Standardværdien er 5 for en afbalanceret oplevelse.</da>
+        
+            <de>Steuert, wie oft Ereignisse eintreten. Höhere Werte steigern die Wahrscheinlichkeit. Eine Häufigkeit von 10 bedeutet, dass ein neues Ereignis nahezu immer nach dem Cooldown startet, während 1 Ereignisse sehr selten machen. Der Standard (5) ist für ein ausgewogenes Verhältnis.</de>
+            <fr>[EN] Controls how often events fire. Higher values increase the per-tick trigger probability. A frequency of 10 means events fire nearly every cooldown period, while 1 makes them very rare. Default is 5 for a balanced experience.</fr>
+            <pl>[EN] Controls how often events fire. Higher values increase the per-tick trigger probability. A frequency of 10 means events fire nearly every cooldown period, while 1 makes them very rare. Default is 5 for a balanced experience.</pl>
+            <es>[EN] Controls how often events fire. Higher values increase the per-tick trigger probability. A frequency of 10 means events fire nearly every cooldown period, while 1 makes them very rare. Default is 5 for a balanced experience.</es>
+            <it>[EN] Controls how often events fire. Higher values increase the per-tick trigger probability. A frequency of 10 means events fire nearly every cooldown period, while 1 makes them very rare. Default is 5 for a balanced experience.</it>
+            <cz>[EN] Controls how often events fire. Higher values increase the per-tick trigger probability. A frequency of 10 means events fire nearly every cooldown period, while 1 makes them very rare. Default is 5 for a balanced experience.</cz>
+            <br>[EN] Controls how often events fire. Higher values increase the per-tick trigger probability. A frequency of 10 means events fire nearly every cooldown period, while 1 makes them very rare. Default is 5 for a balanced experience.</br>
+            <ru>[EN] Controls how often events fire. Higher values increase the per-tick trigger probability. A frequency of 10 means events fire nearly every cooldown period, while 1 makes them very rare. Default is 5 for a balanced experience.</ru>
         </text>
         <text name="helpLine_rwe_set1_cool_title">
             <en>Intensity (1-5) &amp; Cooldown (1-240 min)</en>
             <uk>Інтенсивність (1–5) та перерва (1–240 хв)</uk>
+            <da>Intensitet (1–5) &amp; cooldown (1–240 min.)</da>
+        
+            <de>Intensität (1-5) &amp; Cooldown (1-240 min)</de>
+            <fr>[EN] Intensity (1-5) &amp; Cooldown (1-240 min)</fr>
+            <pl>[EN] Intensity (1-5) &amp; Cooldown (1-240 min)</pl>
+            <es>[EN] Intensity (1-5) &amp; Cooldown (1-240 min)</es>
+            <it>[EN] Intensity (1-5) &amp; Cooldown (1-240 min)</it>
+            <cz>[EN] Intensity (1-5) &amp; Cooldown (1-240 min)</cz>
+            <br>[EN] Intensity (1-5) &amp; Cooldown (1-240 min)</br>
+            <ru>[EN] Intensity (1-5) &amp; Cooldown (1-240 min)</ru>
         </text>
         <text name="helpLine_rwe_set1_cool_text">
             <en>Intensity scales the magnitude of event effects — use lower values for a gentle experience and higher values for dramatic swings. Cooldown sets the minimum in-game minutes between events. Increase cooldown for a calmer, less frequent experience.</en>
             <uk>Інтенсивність визначає масштаб ефектів подій — використовуйте нижчі значення для спокійного ігрового процесу, а вищі — для драматичних змін. Перерва встановлює мінімальний ігровий час між подіями. Збільшіть перерву для спокійнішого і менш частого ігрового процесу.</uk>
+            <da>Intensitet skalerer styrken af hændelsernes effekter — brug lavere værdier for en mere rolig oplevelse og højere værdier for mere dramatiske udsving. Ventetid angiver det minimale antal minutter i spillet mellem hændelser. Øg ventetiden for en roligere oplevelse med færre hændelser.</da>
+        
+            <de>Die Intensität skaliert die Stärke der Ereigniseffekte - kleinere Werte sorgen für ein harmonisches Erlebnis, größere Werte sorgen für stärkere Überraschungen. Der Cooldown setzt den Mindestwert in Ingame-Minuten zwischen den Ereignissen. Ein höherer Cooldown sorgt für ein ruhigeres Erlebnis mit weniger Ereignissen.</de>
+            <fr>[EN] Intensity scales the magnitude of event effects — use lower values for a gentle experience and higher values for dramatic swings. Cooldown sets the minimum in-game minutes between events. Increase cooldown for a calmer, less frequent experience.</fr>
+            <pl>[EN] Intensity scales the magnitude of event effects — use lower values for a gentle experience and higher values for dramatic swings. Cooldown sets the minimum in-game minutes between events. Increase cooldown for a calmer, less frequent experience.</pl>
+            <es>[EN] Intensity scales the magnitude of event effects — use lower values for a gentle experience and higher values for dramatic swings. Cooldown sets the minimum in-game minutes between events. Increase cooldown for a calmer, less frequent experience.</es>
+            <it>[EN] Intensity scales the magnitude of event effects — use lower values for a gentle experience and higher values for dramatic swings. Cooldown sets the minimum in-game minutes between events. Increase cooldown for a calmer, less frequent experience.</it>
+            <cz>[EN] Intensity scales the magnitude of event effects — use lower values for a gentle experience and higher values for dramatic swings. Cooldown sets the minimum in-game minutes between events. Increase cooldown for a calmer, less frequent experience.</cz>
+            <br>[EN] Intensity scales the magnitude of event effects — use lower values for a gentle experience and higher values for dramatic swings. Cooldown sets the minimum in-game minutes between events. Increase cooldown for a calmer, less frequent experience.</br>
+            <ru>[EN] Intensity scales the magnitude of event effects — use lower values for a gentle experience and higher values for dramatic swings. Cooldown sets the minimum in-game minutes between events. Increase cooldown for a calmer, less frequent experience.</ru>
         </text>
 
         <!-- Help page: Settings / physics settings -->
         <text name="helpLine_rwe_set2_title">
             <en>Physics Settings</en>
             <uk>Налаштування фізики</uk>
+            <da>Fysiske indstillinger</da>
+        
+            <de>Spielphysik-Einstellungen</de>
+            <fr>[EN] Physics Settings</fr>
+            <pl>[EN] Physics Settings</pl>
+            <es>[EN] Physics Settings</es>
+            <it>[EN] Physics Settings</it>
+            <cz>[EN] Physics Settings</cz>
+            <br>[EN] Physics Settings</br>
+            <ru>[EN] Physics Settings</ru>
         </text>
         <text name="helpLine_rwe_set2_grip_title">
             <en>Wheel Grip &amp; Suspension</en>
             <uk>Зчеплення коліс та підвіска</uk>
+            <da>Hjulgreb &amp; affjedring</da>
+        
+            <de>Radschlupf &amp; Federung</de>
+            <fr>[EN] Wheel Grip &amp; Suspension</fr>
+            <pl>[EN] Wheel Grip &amp; Suspension</pl>
+            <es>[EN] Wheel Grip &amp; Suspension</es>
+            <it>[EN] Wheel Grip &amp; Suspension</it>
+            <cz>[EN] Wheel Grip &amp; Suspension</cz>
+            <br>[EN] Wheel Grip &amp; Suspension</br>
+            <ru>[EN] Wheel Grip &amp; Suspension</ru>
         </text>
         <text name="helpLine_rwe_set2_grip_text">
             <en>The physics system applies terrain-aware wheel friction to your controlled vehicle every frame. Asphalt gives 110% grip, dirt 95%, fields 85%, grass 90%, and snow 70%. The Wheel Grip Multiplier scales all of these values. Suspension Stiffness multiplies spring force.</en>
             <uk>Система фізики застосовує зчеплення коліс залежно від типу поверхні для вашого транспортного засобу щокадру. Асфальт дає 110% зчеплення, бруд — 95%, поля — 85%, трава — 90%, сніг — 70%. Множник зчеплення коліс масштабує всі ці значення. Жорсткість підвіски множить силу пружини.</uk>
+            <da>Fysiksystemet anvender terræntilpasset hjulfriktion på det køretøj, du styrer, i hver frame. Asfalt giver 110 % greb, jord 95 %, marker 85 %, græs 90 % og sne 70 %. Multiplikatoren for hjulgreb skalerer alle disse værdier. Affjedringsstivhed multiplicerer fjederkraften.</da>
+        
+            <de>Das Physiksystem wendet in jedem Frame eine geländeabhängige Radreibung auf Ihr gesteuertes Fahrzeug an. Asphalt bietet 110 % Grip, Schotter 95 %, Wiesen 85 %, Gras 90 % und Schnee 70 %. Der Radgrip-Multiplikator skaliert all diese Werte. Die Federungssteifigkeit multipliziert die Federkraft.</de>
+            <fr>[EN] The physics system applies terrain-aware wheel friction to your controlled vehicle every frame. Asphalt gives 110% grip, dirt 95%, fields 85%, grass 90%, and snow 70%. The Wheel Grip Multiplier scales all of these values. Suspension Stiffness multiplies spring force.</fr>
+            <pl>[EN] The physics system applies terrain-aware wheel friction to your controlled vehicle every frame. Asphalt gives 110% grip, dirt 95%, fields 85%, grass 90%, and snow 70%. The Wheel Grip Multiplier scales all of these values. Suspension Stiffness multiplies spring force.</pl>
+            <es>[EN] The physics system applies terrain-aware wheel friction to your controlled vehicle every frame. Asphalt gives 110% grip, dirt 95%, fields 85%, grass 90%, and snow 70%. The Wheel Grip Multiplier scales all of these values. Suspension Stiffness multiplies spring force.</es>
+            <it>[EN] The physics system applies terrain-aware wheel friction to your controlled vehicle every frame. Asphalt gives 110% grip, dirt 95%, fields 85%, grass 90%, and snow 70%. The Wheel Grip Multiplier scales all of these values. Suspension Stiffness multiplies spring force.</it>
+            <cz>[EN] The physics system applies terrain-aware wheel friction to your controlled vehicle every frame. Asphalt gives 110% grip, dirt 95%, fields 85%, grass 90%, and snow 70%. The Wheel Grip Multiplier scales all of these values. Suspension Stiffness multiplies spring force.</cz>
+            <br>[EN] The physics system applies terrain-aware wheel friction to your controlled vehicle every frame. Asphalt gives 110% grip, dirt 95%, fields 85%, grass 90%, and snow 70%. The Wheel Grip Multiplier scales all of these values. Suspension Stiffness multiplies spring force.</br>
+            <ru>[EN] The physics system applies terrain-aware wheel friction to your controlled vehicle every frame. Asphalt gives 110% grip, dirt 95%, fields 85%, grass 90%, and snow 70%. The Wheel Grip Multiplier scales all of these values. Suspension Stiffness multiplies spring force.</ru>
         </text>
         <text name="helpLine_rwe_set2_debug_title">
             <en>Debug &amp; Physics Info</en>
             <uk>Налагодження та інформація про фізику</uk>
+            <da>Fejlfinding &amp; Fysisk info</da>
+        
+            <de>Debug &amp; Physikinfo</de>
+            <fr>[EN] Debug &amp; Physics Info</fr>
+            <pl>[EN] Debug &amp; Physics Info</pl>
+            <es>[EN] Debug &amp; Physics Info</es>
+            <it>[EN] Debug &amp; Physics Info</it>
+            <cz>[EN] Debug &amp; Physics Info</cz>
+            <br>[EN] Debug &amp; Physics Info</br>
+            <ru>[EN] Debug &amp; Physics Info</ru>
         </text>
         <text name="helpLine_rwe_set2_debug_text">
             <en>Enable Show Physics Info to log per-vehicle speed and multiplier data each frame. Enable Debug Mode for per-wheel grip values. These are useful for tuning your physics settings but may produce verbose console output during normal play.</en>
             <uk>Увімкніть «Показати інформацію про фізику», щоб записувати дані швидкості та множника для кожного транспортного засобу щокадру. Увімкніть режим налагодження для перегляду значень зчеплення кожного колеса. Це корисно для налаштування параметрів фізики, але може призвести до детального виводу в консоль під час звичайної гри.</uk>
+            <da>Aktivér Vis fysikinfo for at logge hastigheds- og multiplikatordata pr. køretøj i hver frame. Aktivér Debugtilstand for grebsværdier pr. hjul. Disse er nyttige til finjustering af dine fysikindstillinger, men kan give meget detaljeret konsoloutput under normal spilbrug.</da>
+        
+            <de>Aktivieren Sie die Physikinfo-Anzeige, um Geschwindigkeits- und Multiplikatordaten für jedes Fahrzeug in jedem Frame zu protokollieren. Aktivieren Sie den Debug-Modus für die Haftungswerte jedes einzelnen Rades. Diese Einstellungen sind nützlich, um die Physik-Einstellungen anzupassen, können aber während des normalen Spielverlaufs zu ausführlichen Konsolenausgaben führen.</de>
+            <fr>[EN] Enable Show Physics Info to log per-vehicle speed and multiplier data each frame. Enable Debug Mode for per-wheel grip values. These are useful for tuning your physics settings but may produce verbose console output during normal play.</fr>
+            <pl>[EN] Enable Show Physics Info to log per-vehicle speed and multiplier data each frame. Enable Debug Mode for per-wheel grip values. These are useful for tuning your physics settings but may produce verbose console output during normal play.</pl>
+            <es>[EN] Enable Show Physics Info to log per-vehicle speed and multiplier data each frame. Enable Debug Mode for per-wheel grip values. These are useful for tuning your physics settings but may produce verbose console output during normal play.</es>
+            <it>[EN] Enable Show Physics Info to log per-vehicle speed and multiplier data each frame. Enable Debug Mode for per-wheel grip values. These are useful for tuning your physics settings but may produce verbose console output during normal play.</it>
+            <cz>[EN] Enable Show Physics Info to log per-vehicle speed and multiplier data each frame. Enable Debug Mode for per-wheel grip values. These are useful for tuning your physics settings but may produce verbose console output during normal play.</cz>
+            <br>[EN] Enable Show Physics Info to log per-vehicle speed and multiplier data each frame. Enable Debug Mode for per-wheel grip values. These are useful for tuning your physics settings but may produce verbose console output during normal play.</br>
+            <ru>[EN] Enable Show Physics Info to log per-vehicle speed and multiplier data each frame. Enable Debug Mode for per-wheel grip values. These are useful for tuning your physics settings but may produce verbose console output during normal play.</ru>
         </text>
 
         <!-- Help page: Controls -->
         <text name="helpLine_rwe_ctrl_title">
             <en>Controls &amp; Console Commands</en>
             <uk>Керування та консольні команди</uk>
+            <da>Styring &amp; kommandoer</da>
+        
+            <de>Tastatur- &amp; Konsolenbefehle</de>
+            <fr>[EN] Controls &amp; Console Commands</fr>
+            <pl>[EN] Controls &amp; Console Commands</pl>
+            <es>[EN] Controls &amp; Console Commands</es>
+            <it>[EN] Controls &amp; Console Commands</it>
+            <cz>[EN] Controls &amp; Console Commands</cz>
+            <br>[EN] Controls &amp; Console Commands</br>
+            <ru>[EN] Controls &amp; Console Commands</ru>
         </text>
         <text name="helpLine_rwe_ctrl_keys_title">
             <en>Keyboard Shortcuts</en>
             <uk>Гарячі клавіші</uk>
+            <da>Genvejstaster</da>
+        
+            <de>Tastatur-Eingaben</de>
+            <fr>[EN] Keyboard Shortcuts</fr>
+            <pl>[EN] Keyboard Shortcuts</pl>
+            <es>[EN] Keyboard Shortcuts</es>
+            <it>[EN] Keyboard Shortcuts</it>
+            <cz>[EN] Keyboard Shortcuts</cz>
+            <br>[EN] Keyboard Shortcuts</br>
+            <ru>[EN] Keyboard Shortcuts</ru>
         </text>
         <text name="helpLine_rwe_ctrl_keys_text">
             <en>F3: Open the Random World Events settings screen. F9: Immediately force-trigger a random event (useful for testing). These bindings can be changed in the game's keybinding menu under the Random World Events section.</en>
             <uk>F3: Відкрити екран налаштувань випадкових світових подій. F9: Негайно примусово запустити випадкову подію (корисно для тестування). Ці прив'язки можна змінити в меню прив'язок клавіш гри в розділі «Випадкові світові події».</uk>
+            <da>F3: Åbn indstillingsskærmen for Random World Events. F9: Tving straks en tilfældig hændelse til at udløses (nyttigt til test). Disse tastetildelinger kan ændres i spillets menu for tastetildelinger under sektionen Random World Events.</da>
+        
+            <de>F3: Öffnet den Einstellungsbildschirm von zufällige Weltereignisse. F9: Sofort ein zufälliges Ereignis auslösen (nützlich zum Testen). Alle Belegungen können in den Spieleinstellungen unter dem Abschnitt zufällige Weltereignisse angepasst werden.</de>
+            <fr>[EN] F3: Open the Random World Events settings screen. F9: Immediately force-trigger a random event (useful for testing). These bindings can be changed in the game's keybinding menu under the Random World Events section.</fr>
+            <pl>[EN] F3: Open the Random World Events settings screen. F9: Immediately force-trigger a random event (useful for testing). These bindings can be changed in the game's keybinding menu under the Random World Events section.</pl>
+            <es>[EN] F3: Open the Random World Events settings screen. F9: Immediately force-trigger a random event (useful for testing). These bindings can be changed in the game's keybinding menu under the Random World Events section.</es>
+            <it>[EN] F3: Open the Random World Events settings screen. F9: Immediately force-trigger a random event (useful for testing). These bindings can be changed in the game's keybinding menu under the Random World Events section.</it>
+            <cz>[EN] F3: Open the Random World Events settings screen. F9: Immediately force-trigger a random event (useful for testing). These bindings can be changed in the game's keybinding menu under the Random World Events section.</cz>
+            <br>[EN] F3: Open the Random World Events settings screen. F9: Immediately force-trigger a random event (useful for testing). These bindings can be changed in the game's keybinding menu under the Random World Events section.</br>
+            <ru>[EN] F3: Open the Random World Events settings screen. F9: Immediately force-trigger a random event (useful for testing). These bindings can be changed in the game's keybinding menu under the Random World Events section.</ru>
         </text>
         <text name="helpLine_rwe_ctrl_console_title">
             <en>Console Commands</en>
             <uk>Консольні команди</uk>
+            <da>Kommandoer</da>
+        
+            <de>Konsolenbefehle</de>
+            <fr>[EN] Console Commands</fr>
+            <pl>[EN] Console Commands</pl>
+            <es>[EN] Console Commands</es>
+            <it>[EN] Console Commands</it>
+            <cz>[EN] Console Commands</cz>
+            <br>[EN] Console Commands</br>
+            <ru>[EN] Console Commands</ru>
         </text>
         <text name="helpLine_rwe_ctrl_console_text">
             <en>Open the developer console and type: rwe (help), rweStatus (current state), rweTest (force trigger), rweEnd (stop active event), rweSettings (open GUI), rweDebug on|off (toggle verbose logging), rweList [category] (list all events).</en>
             <uk>Відкрийте консоль розробника та введіть: rwe (допомога), rweStatus (поточний стан), rweTest (примусовий запуск), rweEnd (зупинити активну подію), rweSettings (відкрити інтерфейс), rweDebug on|off (перемкнути детальне журналювання), rweList [категорія] (список усіх подій).</uk>
+            <da>Åbn udviklerkonsollen og skriv: rwe (hjælp), rweStatus (nuværende status), rweTest (tving en hændelse til at udløses), rweEnd (stop aktiv hændelse), rweSettings (åbn GUI), rweDebug on|off (slå detaljeret logning til/fra), rweList [kategori] (vis alle hændelser).</da>
+        
+            <de>In der geöffneten Entwicklerkonsole (Standard: ^): rwe (Hilfe), rweStatus (Aktueller Status), rweTest (sofortiges Ereignis), rweEnd (aktives Ereignis stoppen), rweSettings (Einstellungsbildschirm öffnen), rweDebug on|off (ausführliches Loggen (de)aktivieren), rweList [category] (Alle Ereignisse auflisten).</de>
+            <fr>[EN] Open the developer console and type: rwe (help), rweStatus (current state), rweTest (force trigger), rweEnd (stop active event), rweSettings (open GUI), rweDebug on|off (toggle verbose logging), rweList [category] (list all events).</fr>
+            <pl>[EN] Open the developer console and type: rwe (help), rweStatus (current state), rweTest (force trigger), rweEnd (stop active event), rweSettings (open GUI), rweDebug on|off (toggle verbose logging), rweList [category] (list all events).</pl>
+            <es>[EN] Open the developer console and type: rwe (help), rweStatus (current state), rweTest (force trigger), rweEnd (stop active event), rweSettings (open GUI), rweDebug on|off (toggle verbose logging), rweList [category] (list all events).</es>
+            <it>[EN] Open the developer console and type: rwe (help), rweStatus (current state), rweTest (force trigger), rweEnd (stop active event), rweSettings (open GUI), rweDebug on|off (toggle verbose logging), rweList [category] (list all events).</it>
+            <cz>[EN] Open the developer console and type: rwe (help), rweStatus (current state), rweTest (force trigger), rweEnd (stop active event), rweSettings (open GUI), rweDebug on|off (toggle verbose logging), rweList [category] (list all events).</cz>
+            <br>[EN] Open the developer console and type: rwe (help), rweStatus (current state), rweTest (force trigger), rweEnd (stop active event), rweSettings (open GUI), rweDebug on|off (toggle verbose logging), rweList [category] (list all events).</br>
+            <ru>[EN] Open the developer console and type: rwe (help), rweStatus (current state), rweTest (force trigger), rweEnd (stop active event), rweSettings (open GUI), rweDebug on|off (toggle verbose logging), rweList [category] (list all events).</ru>
         </text>
 
         <!-- HUD overlay strings -->
@@ -501,6 +1347,7 @@
             <br>HUD RWE exibido</br>
             <uk>HUD RWE показано</uk>
             <ru>HUD RWE показан</ru>
+            <da>RWE HUD aktiveret</da>
         </text>
         <text name="rwe_hud_hidden">
             <en>RWE HUD hidden</en>
@@ -513,6 +1360,7 @@
             <br>HUD RWE ocultado</br>
             <uk>HUD RWE приховано</uk>
             <ru>HUD RWE скрыт</ru>
+            <da>RWE HUD deaktiveret</da>
         </text>
         <text name="rwe_hud_title">
             <en>WORLD EVENTS</en>
@@ -525,6 +1373,7 @@
             <br>EVENTOS MUNDIAIS</br>
             <uk>СВІТОВІ ПОДІЇ</uk>
             <ru>МИРОВЫЕ СОБЫТИЯ</ru>
+            <da>HÆNDELSER</da>
         </text>
         <text name="rwe_hud_status_on">
             <en>[ON]</en>
@@ -537,6 +1386,7 @@
             <br>[LIG]</br>
             <uk>[УВК]</uk>
             <ru>[ВКЛ]</ru>
+            <da>[TÆNDT]</da>
         </text>
         <text name="rwe_hud_status_off">
             <en>[OFF]</en>
@@ -549,6 +1399,7 @@
             <br>[DES]</br>
             <uk>[ВИМ]</uk>
             <ru>[ВЫКЛ]</ru>
+            <da>[SlUKKET]</da>
         </text>
         <text name="rwe_hud_ends_in">
             <en>Ends in</en>
@@ -561,6 +1412,7 @@
             <br>Termina em</br>
             <uk>Завершується через</uk>
             <ru>Завершится через</ru>
+            <da>Slutter om</da>
         </text>
         <text name="rwe_hud_no_active_event">
             <en>No active event</en>
@@ -573,6 +1425,7 @@
             <br>Nenhum evento ativo</br>
             <uk>Немає активної події</uk>
             <ru>Нет активного события</ru>
+            <da>Ingen aktive hændelser</da>
         </text>
         <text name="rwe_hud_ready_to_trigger">
             <en>Ready to trigger</en>
@@ -585,6 +1438,7 @@
             <br>Pronto para acionar</br>
             <uk>Готово до запуску</uk>
             <ru>Готов к запуску</ru>
+            <da>Klar til aktivering</da>
         </text>
         <text name="rwe_hud_next_in">
             <en>Next in %dm</en>
@@ -597,6 +1451,7 @@
             <br>Próximo em %dm</br>
             <uk>Наступне через %dх</uk>
             <ru>Следующее через %dм</ru>
+            <da>Næste om %dm</da>
         </text>
         <text name="rwe_hud_freq_intensity">
             <en>Freq %d/10  |  Intensity %d/5</en>
@@ -609,6 +1464,7 @@
             <br>Freq. %d/10  |  Intensidade %d/5</br>
             <uk>Частота %d/10  |  Інтенс. %d/5</uk>
             <ru>Частота %d/10  |  Интенс. %d/5</ru>
+            <da>Hyppighed %d/10 | Intensitet %d/5</da>
         </text>
         <text name="rwe_hud_hint_edit">
             <en>Drag: move   Corner: resize   RMB: done</en>
@@ -621,6 +1477,7 @@
             <br>Arrastar: mover   Canto: redimensionar   RMB: concluído</br>
             <uk>Перетяг: рух   Кут: розмір   ПКМ: готово</uk>
             <ru>Перетащить: переместить   Угол: размер   ПКМ: готово</ru>
+            <da>Træk: flyt Hjørne: ændr størrelse Højreklik: færdig</da>
         </text>
         <text name="rwe_hud_hint_normal">
             <en>[F3]: toggle   RMB: move/resize</en>
@@ -633,6 +1490,7 @@
             <br>[F3]: alternar   RMB: mover/redimensionar</br>
             <uk>[F3]: перемкнути   ПКМ: рух/розмір</uk>
             <ru>[F3]: переключить   ПКМ: переместить/размер</ru>
+            <da>[F3]: slå til/fra Højreklik: flyt/ændr størrelse</da>
         </text>
     </l10n>
 
