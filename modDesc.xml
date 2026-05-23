@@ -40,12 +40,8 @@
         <action name="RWE_TOGGLE_SETTINGS" category="ONFOOT VEHICLE" />
     </actions>
     <inputBinding>
-        <actionBinding action="RWE_TOGGLE_HUD">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_f3" />
-        </actionBinding>
-        <actionBinding action="RWE_TOGGLE_SETTINGS">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_o" />
-        </actionBinding>
+        <actionBinding action="RWE_TOGGLE_HUD" />
+        <actionBinding action="RWE_TOGGLE_SETTINGS" />
     </inputBinding>
 
     <extraSourceFiles>
