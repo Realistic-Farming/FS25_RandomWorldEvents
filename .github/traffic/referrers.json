@@ -1021,18 +1021,18 @@
   "2026-05-24": [
     {
       "referrer": "github.com",
-      "count": 162,
-      "uniques": 41
-    },
-    {
-      "referrer": "kingmods.net",
-      "count": 29,
-      "uniques": 20
+      "count": 180,
+      "uniques": 45
     },
     {
       "referrer": "Google",
-      "count": 24,
+      "count": 28,
       "uniques": 8
+    },
+    {
+      "referrer": "kingmods.net",
+      "count": 22,
+      "uniques": 15
     }
   ]
 }
