@@ -38,10 +38,12 @@
     <actions>
         <action name="RWE_TOGGLE_HUD"      category="ONFOOT VEHICLE" />
         <action name="RWE_TOGGLE_SETTINGS" category="ONFOOT VEHICLE" />
+        <action name="RWE_HUD_DRAG"        category="ONFOOT VEHICLE" />
     </actions>
     <inputBinding>
         <actionBinding action="RWE_TOGGLE_HUD" />
         <actionBinding action="RWE_TOGGLE_SETTINGS" />
+        <actionBinding action="RWE_HUD_DRAG" />
     </inputBinding>
 
     <extraSourceFiles>
@@ -695,6 +697,19 @@
             <uk>Відкрити налаштування випадкових подій</uk>
             <ru>Открыть настройки случайных событий</ru>
             <da>Slå indstillinger for Random World Events til/fra</da>
+        </text>
+        <text name="input_RWE_HUD_DRAG">
+            <en>RWE HUD Edit Mode</en>
+            <de>RWE HUD-Bearbeitungsmodus</de>
+            <fr>[EN] RWE HUD Edit Mode</fr>
+            <pl>[EN] RWE HUD Edit Mode</pl>
+            <es>[EN] RWE HUD Edit Mode</es>
+            <it>[EN] RWE HUD Edit Mode</it>
+            <cz>[EN] RWE HUD Edit Mode</cz>
+            <br>[EN] RWE HUD Edit Mode</br>
+            <uk>[EN] RWE HUD Edit Mode</uk>
+            <ru>[EN] RWE HUD Edit Mode</ru>
+            <da>RWE HUD-redigeringstilstand</da>
         </text>
 
         <!-- Help page: category titles -->

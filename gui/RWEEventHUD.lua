@@ -263,15 +263,12 @@ end
 function RWEEventHUD:onMouseEvent(posX, posY, isDown, isUp, button)
     if not self.visible then return end
 
-    -- RMB: exit edit mode if active; enter only when cursor is over the HUD.
-    -- Never consume RMB during normal play — preserves CoursePlay, AutoDrive, and
-    -- other mods that rely on right-click.
+    -- RMB: exit edit mode only. Edit mode is entered exclusively via the
+    -- RWE_HUD_DRAG key binding — never via right-click — so RMB is never
+    -- consumed during normal play, preserving CoursePlay, AutoDrive, etc.
     if isDown and button == 3 then
         if self.editMode then
             self:exitEditMode()
-            return true
-        elseif self:isPointerOverHUD(posX, posY) then
-            self:enterEditMode()
             return true
         end
         return false
