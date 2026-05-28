@@ -263,17 +263,21 @@ end
 function RWEEventHUD:onMouseEvent(posX, posY, isDown, isUp, button)
     if not self.visible then return end
 
-    -- RMB: enter if over HUD, exit from anywhere
+    -- RMB: exit edit mode if active; enter only when cursor is over the HUD.
+    -- Never consume RMB during normal play — preserves CoursePlay, AutoDrive, and
+    -- other mods that rely on right-click.
     if isDown and button == 3 then
         if self.editMode then
             self:exitEditMode()
-        else
+            return true
+        elseif self:isPointerOverHUD(posX, posY) then
             self:enterEditMode()
+            return true
         end
-        return
+        return false
     end
 
-    if not self.editMode then return end
+    if not self.editMode then return false end
 
     if isDown and button == 1 then
         local corner = self:hitTestCorner(posX, posY)
