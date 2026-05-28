@@ -931,6 +931,16 @@ function RandomWorldEvents:onToggleSettingsInput()
     end
 end
 
+function RandomWorldEvents:onHUDDragInput()
+    if not self.eventHUD then return end
+    if not self.eventHUD.visible then return end
+    if self.eventHUD.editMode then
+        self.eventHUD:exitEditMode()
+    else
+        self.eventHUD:enterEditMode()
+    end
+end
+
 -- =====================
 -- INPUT REGISTRATION
 -- Mirrors the SoilFertilizer pattern:
@@ -989,6 +999,18 @@ installInputHooks = function()
                 Logging.warning("[RWE] Settings toggle PLAYER registration failed")
             end
 
+            -- HUD drag (enter/exit edit mode) — PLAYER context
+            local dragOk, dragId = g_inputBinding:registerActionEvent(
+                InputAction.RWE_HUD_DRAG, g_RandomWorldEvents,
+                g_RandomWorldEvents.onHUDDragInput,
+                false, true, false, true
+            )
+            if dragOk and dragId then
+                g_RandomWorldEvents.hudDragPlayerEventId = dragId
+                g_inputBinding:setActionEventText(dragId, g_i18n:getText("input_RWE_HUD_DRAG") or "RWE HUD Edit Mode")
+                Logging.info("[RWE] HUD drag registered in PLAYER context")
+            end
+
             g_inputBinding:endActionEventsModification()
         end
         Logging.info("[RWE] PlayerInputComponent hook installed")
@@ -1021,7 +1043,7 @@ installInputHooks = function()
             -- re-registration which creates fresh event IDs and discards the user's
             -- saved key binding, causing the "must rebind every session" issue.
             local mgr = g_RandomWorldEvents
-            local staleVehicleIds = { "hudVehicleEventId", "settingsVehicleEventId" }
+            local staleVehicleIds = { "hudVehicleEventId", "settingsVehicleEventId", "hudDragVehicleEventId" }
             for _, field in ipairs(staleVehicleIds) do
                 local oldId = mgr[field]
                 if oldId then
@@ -1053,6 +1075,17 @@ installInputHooks = function()
                 mgr.settingsVehicleEventId = vSpId
                 binding:setActionEventTextVisibility(vSpId, false)
                 Logging.debug("[RWE] Settings toggle registered in VEHICLE context")
+            end
+
+            local vDragOk, vDragId = binding:registerActionEvent(
+                InputAction.RWE_HUD_DRAG, mgr,
+                mgr.onHUDDragInput,
+                false, true, false, true
+            )
+            if vDragOk and vDragId then
+                mgr.hudDragVehicleEventId = vDragId
+                binding:setActionEventTextVisibility(vDragId, false)
+                Logging.debug("[RWE] HUD drag registered in VEHICLE context")
             end
 
             binding:endActionEventsModification()
