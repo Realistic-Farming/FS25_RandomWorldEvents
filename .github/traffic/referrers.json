@@ -1153,5 +1153,22 @@
       "count": 16,
       "uniques": 9
     }
+  ],
+  "2026-06-02": [
+    {
+      "referrer": "github.com",
+      "count": 129,
+      "uniques": 45
+    },
+    {
+      "referrer": "Google",
+      "count": 34,
+      "uniques": 8
+    },
+    {
+      "referrer": "kingmods.net",
+      "count": 10,
+      "uniques": 7
+    }
   ]
 }
