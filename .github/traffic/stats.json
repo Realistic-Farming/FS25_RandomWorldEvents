@@ -10672,7 +10672,7 @@
     "watchers": 2
   },
   {
-    "timestamp": "2026-06-07T12:20:22Z",
+    "timestamp": "2026-06-07T18:03:36Z",
     "date": "2026-06-07",
     "views": {
       "count": 136,
@@ -10758,7 +10758,7 @@
       {
         "assets": [
           {
-            "downloads": 21,
+            "downloads": 22,
             "name": "FS25_RandomWorldEvents.zip"
           }
         ],
@@ -10885,7 +10885,7 @@
         "tag": "v2.0.0.0"
       }
     ],
-    "stars": 9,
+    "stars": 8,
     "forks": 1,
     "watchers": 2
   }
