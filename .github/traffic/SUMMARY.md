@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-06-10T00:12:54Z
-**Days tracked:** 59 | **Download snapshots:** 201 (hourly)
+**Last updated:** 2026-06-11T00:13:57Z
+**Days tracked:** 60 | **Download snapshots:** 202 (hourly)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 113 | 58 |
-| Git Clones | 472 | 164 |
+| Page Views | 95 | 48 |
+| Git Clones | 418 | 146 |
 
 > **Engagement:** 1.9 pages per visitor (14-day avg)
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 410 of 58 visitors cloned or downloaded (**706.8%**)
+> **14-day conversion:** 392 of 48 visitors cloned or downloaded (**816.6%**)
 >
-> Unique cloners: 164 | Release downloads: 246
+> Unique cloners: 146 | Release downloads: 246
 
 ---
 
@@ -43,8 +43,8 @@
 | Channel | Count |
 |---------|-------|
 | Zip Downloads | 246 |
-| Git Clones (14-day) | 472 |
-| **Total Acquisitions** | **718** |
+| Git Clones (14-day) | 418 |
+| **Total Acquisitions** | **664** |
 
 ---
 
@@ -54,9 +54,9 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 69 | 40 |
-| Google | 26 | 10 |
-| kingmods.net | 4 | 4 |
+| github.com | 54 | 33 |
+| Google | 25 | 9 |
+| claude.ai | 1 | 1 |
 | search.brave.com | 1 | 1 |
 
 ---
@@ -77,11 +77,11 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 88 | 55 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 12 | 10 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases` | 5 | 4 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.3` | 4 | 3 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 74 | 46 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 13 | 11 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases` | 3 | 3 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/blob/master/README.md` | 1 | 1 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/commits` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues/20` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/pull/22` | 1 | 1 |
