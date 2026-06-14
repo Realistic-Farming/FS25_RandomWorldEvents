@@ -1407,5 +1407,27 @@
       "count": 1,
       "uniques": 1
     }
+  ],
+  "2026-06-14": [
+    {
+      "referrer": "github.com",
+      "count": 47,
+      "uniques": 30
+    },
+    {
+      "referrer": "Google",
+      "count": 28,
+      "uniques": 10
+    },
+    {
+      "referrer": "claude.ai",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "referrer": "search.brave.com",
+      "count": 1,
+      "uniques": 1
+    }
   ]
 }
