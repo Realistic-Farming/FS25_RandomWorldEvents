@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-06-15T00:07:42Z
-**Days tracked:** 64 | **Download snapshots:** 214 (hourly)
+**Last updated:** 2026-06-15T06:23:13Z
+**Days tracked:** 64 | **Download snapshots:** 215 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 91 | 43 |
-| Git Clones | 386 | 133 |
+| Page Views | 87 | 43 |
+| Git Clones | 361 | 125 |
 
-> **Engagement:** 2.1 pages per visitor (14-day avg)
+> **Engagement:** 2.0 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 386 of 43 visitors cloned or downloaded (**897.6%**)
+> **14-day conversion:** 378 of 43 visitors cloned or downloaded (**879.0%**)
 >
-> Unique cloners: 133 | Release downloads: 253
+> Unique cloners: 125 | Release downloads: 253
 
 ---
 
@@ -43,8 +43,8 @@
 | Channel | Count |
 |---------|-------|
 | Zip Downloads | 253 |
-| Git Clones (14-day) | 386 |
-| **Total Acquisitions** | **639** |
+| Git Clones (14-day) | 361 |
+| **Total Acquisitions** | **614** |
 
 ---
 
@@ -54,8 +54,8 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 45 | 27 |
-| Google | 28 | 8 |
+| github.com | 43 | 26 |
+| Google | 27 | 8 |
 | claude.ai | 1 | 1 |
 | search.brave.com | 1 | 1 |
 
@@ -77,9 +77,9 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 71 | 41 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 13 | 11 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases` | 3 | 3 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 70 | 41 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 9 | 7 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases` | 4 | 4 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/blob/master/CLAUDE.md` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/blob/master/README.md` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/commits` | 1 | 1 |
