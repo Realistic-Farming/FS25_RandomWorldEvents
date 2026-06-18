@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-06-17T18:15:16Z
-**Days tracked:** 65 | **Download snapshots:** 223 (hourly)
+**Last updated:** 2026-06-18T12:25:43Z
+**Days tracked:** 66 | **Download snapshots:** 224 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 92 | 47 |
-| Git Clones | 403 | 141 |
+| Page Views | 95 | 45 |
+| Git Clones | 422 | 148 |
 
-> **Engagement:** 1.9 pages per visitor (14-day avg)
+> **Engagement:** 2.1 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 400 of 47 visitors cloned or downloaded (**851.0%**)
+> **14-day conversion:** 407 of 45 visitors cloned or downloaded (**904.4%**)
 >
-> Unique cloners: 141 | Release downloads: 259
+> Unique cloners: 148 | Release downloads: 259
 
 ---
 
@@ -43,8 +43,8 @@
 | Channel | Count |
 |---------|-------|
 | Zip Downloads | 259 |
-| Git Clones (14-day) | 403 |
-| **Total Acquisitions** | **662** |
+| Git Clones (14-day) | 422 |
+| **Total Acquisitions** | **681** |
 
 ---
 
@@ -54,10 +54,9 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 42 | 25 |
-| Google | 33 | 13 |
+| github.com | 49 | 26 |
+| Google | 32 | 12 |
 | claude.ai | 1 | 1 |
-| search.brave.com | 1 | 1 |
 
 ---
 
@@ -77,9 +76,9 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 74 | 45 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 10 | 7 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases` | 4 | 4 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 75 | 42 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 11 | 8 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases` | 5 | 3 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/blob/master/CLAUDE.md` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/blob/master/README.md` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/commits` | 1 | 1 |
