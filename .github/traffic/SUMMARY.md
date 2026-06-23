@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-06-23T00:05:13Z
-**Days tracked:** 70 | **Download snapshots:** 238 (hourly)
+**Last updated:** 2026-06-23T12:06:44Z
+**Days tracked:** 70 | **Download snapshots:** 239 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 105 | 46 |
-| Git Clones | 674 | 231 |
+| Page Views | 100 | 47 |
+| Git Clones | 681 | 232 |
 
-> **Engagement:** 2.2 pages per visitor (14-day avg)
+> **Engagement:** 2.1 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 500 of 46 visitors cloned or downloaded (**1086.9%**)
+> **14-day conversion:** 501 of 47 visitors cloned or downloaded (**1065.9%**)
 >
-> Unique cloners: 231 | Release downloads: 269
+> Unique cloners: 232 | Release downloads: 269
 
 ---
 
@@ -43,8 +43,8 @@
 | Channel | Count |
 |---------|-------|
 | Zip Downloads | 269 |
-| Git Clones (14-day) | 674 |
-| **Total Acquisitions** | **943** |
+| Git Clones (14-day) | 681 |
+| **Total Acquisitions** | **950** |
 
 ---
 
@@ -54,9 +54,8 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 65 | 30 |
-| Google | 26 | 10 |
-| claude.ai | 1 | 1 |
+| github.com | 67 | 33 |
+| Google | 24 | 10 |
 
 ---
 
@@ -76,16 +75,16 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 69 | 37 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 14 | 8 |
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 8 | 7 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 61 | 34 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 13 | 8 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 12 | 10 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases` | 5 | 3 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 3 | 2 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 4 | 3 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/blob/master/CLAUDE.md` | 1 | 1 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/commits` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues/20` | 1 | 1 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/tree/development` | 1 | 1 |
 
 ---
 

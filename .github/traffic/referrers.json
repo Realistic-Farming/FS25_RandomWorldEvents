@@ -1545,18 +1545,13 @@
   "2026-06-23": [
     {
       "referrer": "github.com",
-      "count": 65,
-      "uniques": 30
+      "count": 67,
+      "uniques": 33
     },
     {
       "referrer": "Google",
-      "count": 26,
+      "count": 24,
       "uniques": 10
-    },
-    {
-      "referrer": "claude.ai",
-      "count": 1,
-      "uniques": 1
     }
   ]
 }

@@ -13680,51 +13680,46 @@
     "watchers": 2
   },
   {
-    "timestamp": "2026-06-23T00:04:55Z",
+    "timestamp": "2026-06-23T12:06:28Z",
     "date": "2026-06-23",
     "views": {
-      "count": 105,
-      "uniques": 46
+      "count": 100,
+      "uniques": 47
     },
     "clones": {
-      "count": 674,
-      "uniques": 231
+      "count": 681,
+      "uniques": 232
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 65,
-        "uniques": 30
+        "count": 67,
+        "uniques": 33
       },
       {
         "referrer": "Google",
-        "count": 26,
+        "count": 24,
         "uniques": 10
-      },
-      {
-        "referrer": "claude.ai",
-        "count": 1,
-        "uniques": 1
       }
     ],
     "popular_paths": [
       {
         "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents",
         "title": "Overview",
-        "count": 69,
-        "uniques": 37
+        "count": 61,
+        "uniques": 34
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4",
         "title": "/releases/tag/v2.1.6.4",
-        "count": 14,
+        "count": 13,
         "uniques": 8
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents",
         "title": "Overview",
-        "count": 8,
-        "uniques": 7
+        "count": 12,
+        "uniques": 10
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases",
@@ -13735,8 +13730,8 @@
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4",
         "title": "/releases/tag/v2.1.6.4",
-        "count": 3,
-        "uniques": 2
+        "count": 4,
+        "uniques": 3
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases",
@@ -13751,12 +13746,6 @@
         "uniques": 1
       },
       {
-        "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/commits",
-        "title": "/commits",
-        "count": 1,
-        "uniques": 1
-      },
-      {
         "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues",
         "title": "/issues",
         "count": 1,
@@ -13765,6 +13754,12 @@
       {
         "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues/20",
         "title": "/issues/20",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/tree/development",
+        "title": "/tree/development",
         "count": 1,
         "uniques": 1
       }
