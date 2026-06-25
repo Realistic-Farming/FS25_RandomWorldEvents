@@ -1569,13 +1569,13 @@
   "2026-06-25": [
     {
       "referrer": "github.com",
-      "count": 64,
-      "uniques": 32
+      "count": 65,
+      "uniques": 35
     },
     {
       "referrer": "Google",
-      "count": 22,
-      "uniques": 10
+      "count": 23,
+      "uniques": 11
     }
   ]
 }
