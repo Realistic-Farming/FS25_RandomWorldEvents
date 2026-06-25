@@ -14112,5 +14112,219 @@
     "stars": 8,
     "forks": 1,
     "watchers": 2
+  },
+  {
+    "timestamp": "2026-06-25T00:12:14Z",
+    "date": "2026-06-25",
+    "views": {
+      "count": 96,
+      "uniques": 47
+    },
+    "clones": {
+      "count": 703,
+      "uniques": 233
+    },
+    "referrers": [
+      {
+        "referrer": "github.com",
+        "count": 64,
+        "uniques": 32
+      },
+      {
+        "referrer": "Google",
+        "count": 22,
+        "uniques": 10
+      }
+    ],
+    "popular_paths": [
+      {
+        "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents",
+        "title": "Overview",
+        "count": 54,
+        "uniques": 32
+      },
+      {
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents",
+        "title": "Overview",
+        "count": 15,
+        "uniques": 13
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4",
+        "title": "/releases/tag/v2.1.6.4",
+        "count": 13,
+        "uniques": 8
+      },
+      {
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4",
+        "title": "/releases/tag/v2.1.6.4",
+        "count": 6,
+        "uniques": 3
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases",
+        "title": "/releases",
+        "count": 4,
+        "uniques": 2
+      },
+      {
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases",
+        "title": "/releases",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues",
+        "title": "/issues",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues/20",
+        "title": "/issues/20",
+        "count": 1,
+        "uniques": 1
+      },
+      {
+        "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents/tree/development",
+        "title": "/tree/development",
+        "count": 1,
+        "uniques": 1
+      }
+    ],
+    "releases": [
+      {
+        "assets": [
+          {
+            "downloads": 47,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.6.4"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 26,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.6.3"
+      },
+      {
+        "assets": [],
+        "tag": "v2.1.6.2"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 34,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.6.1"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 7,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.6.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 43,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.4.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 41,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.3.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 13,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.2.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 15,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.1.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 6,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.0.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 14,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.0.0.6"
+      },
+      {
+        "assets": [],
+        "tag": "v2.0.0.5"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 16,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.0.0.4"
+      },
+      {
+        "assets": [],
+        "tag": "v2.0.0.3"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 6,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.0.0.2"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 2,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.0.0.0"
+      }
+    ],
+    "stars": 8,
+    "forks": 1,
+    "watchers": 2
   }
 ]
