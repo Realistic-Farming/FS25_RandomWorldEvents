@@ -141,7 +141,7 @@ Open the in-game console (`` ` `` key) and type any of these:
 |----------|--------|
 | **GitHub** | ✅ [Official Source](https://github.com/TheCodingDad-TisonK/FS25_RandomWorldEvents) |
 | **ModHub** | 🔄 Pending |
-| **KingMods** | 🔄 Pending |
+| **KingMods** | ✅ [Download](https://www.kingmods.net/en/fs25/mods/75232/random-world-events) |
 
 ---
 
