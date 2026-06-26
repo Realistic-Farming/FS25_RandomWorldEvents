@@ -268,9 +268,9 @@ function RWESettingsPanel:drawPhysicsTab(x, y, w)
     cy = cy - 0.01
 
     cy = self:drawHeader(x, cy, w, "HANDLING")
-    cy = self:drawSlider(x, cy, w, "Wheel Grip", ph.wheelGripMultiplier, 0.5, 2.0, 0.05, function(v) ph.wheelGripMultiplier = v end, "%.2fx")
-    cy = self:drawSlider(x, cy, w, "Suspension Stiffness", ph.suspensionStiffness, 0.5, 2.0, 0.05, function(v) ph.suspensionStiffness = v end, "%.2fx")
-    cy = self:drawSlider(x, cy, w, "COM Strength", ph.comStrength, 0.5, 2.0, 0.05, function(v) ph.comStrength = v end, "%.2fx")
+    -- Traction governor: higher = more grip = less slowdown on loose ground
+    -- (field, mud, snow). 1.00 = neutral. Drives RWEVehiclePhysics.
+    cy = self:drawSlider(x, cy, w, "Traction (loose ground)", ph.wheelGripMultiplier, 0.5, 2.0, 0.05, function(v) ph.wheelGripMultiplier = v end, "%.2fx")
 end
 
 function RWESettingsPanel:drawDebugTab(x, y, w)

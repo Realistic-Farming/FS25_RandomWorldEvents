@@ -516,35 +516,13 @@ end
 -- =====================
 -- PHYSICS SYSTEM (FS25)
 -- =====================
-
-function RandomWorldEvents:updatePhysics(vehicle)
-    if not self.physics.enabled or vehicle == nil then
-        return
-    end
-
-    if vehicle.getIsActiveForInput == nil or not vehicle:getIsActiveForInput() then
-        return
-    end
-
-    if vehicle.wheels and self.physics.wheelGripMultiplier then
-        local grip = self.physics.wheelGripMultiplier
-        for _, wheel in pairs(vehicle.wheels) do
-            if wheel.physics ~= nil then
-                wheel.physics.frictionScale = grip
-            end
-        end
-    end
-
-    if vehicle.wheels and self.physics.suspensionStiffness then
-        for _, wheel in pairs(vehicle.wheels) do
-            if wheel.suspension ~= nil then
-                local originalForce = wheel.suspension.originalSpringForce or wheel.suspension.springForce
-                wheel.suspension.originalSpringForce = originalForce
-                wheel.suspension.springForce = originalForce * self.physics.suspensionStiffness
-            end
-        end
-    end
-end
+--
+-- The terrain "traction governor" and all event-driven vehicle physics
+-- now live in the RWEVehiclePhysics vehicle specialization
+-- (utils/VehiclePhysics.lua), which only touches real engine fields.
+-- The old per-frame updatePhysics() here wrote to non-existent fields
+-- (wheel.physics.frictionScale / wheel.suspension.springForce) and has
+-- been removed. The core keeps only an optional debug readout below.
 
 -- =====================
 -- UPDATE LOOPS
@@ -616,14 +594,12 @@ function RandomWorldEvents:update(dt)
         end
     end
     
-    if self.physics.enabled then
+    -- Optional debug telemetry only. Real physics is applied per-vehicle by
+    -- the RWEVehiclePhysics specialization, not from this loop.
+    if self.physics.showPhysicsInfo and PhysicsUtils and PhysicsUtils.showPhysicsInfo then
         local vehicle = g_currentMission.controlledVehicle
         if vehicle then
-            if PhysicsUtils and PhysicsUtils.applyAdvancedPhysics then
-                PhysicsUtils:applyAdvancedPhysics(vehicle)
-            else
-                self:updatePhysics(vehicle)
-            end
+            PhysicsUtils:showPhysicsInfo(vehicle)
         end
     end
 end
@@ -1063,7 +1039,7 @@ installInputHooks = function()
             if vHudOk and vHudId then
                 mgr.hudVehicleEventId = vHudId
                 binding:setActionEventText(vHudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
-                Logging.debug("[RWE] HUD toggle registered in VEHICLE context")
+                Logging.info("[RWE] HUD toggle registered in VEHICLE context")
             end
 
             local vSpOk, vSpId = binding:registerActionEvent(
@@ -1074,7 +1050,7 @@ installInputHooks = function()
             if vSpOk and vSpId then
                 mgr.settingsVehicleEventId = vSpId
                 binding:setActionEventTextVisibility(vSpId, false)
-                Logging.debug("[RWE] Settings toggle registered in VEHICLE context")
+                Logging.info("[RWE] Settings toggle registered in VEHICLE context")
             end
 
             local vDragOk, vDragId = binding:registerActionEvent(
@@ -1085,7 +1061,7 @@ installInputHooks = function()
             if vDragOk and vDragId then
                 mgr.hudDragVehicleEventId = vDragId
                 binding:setActionEventTextVisibility(vDragId, false)
-                Logging.debug("[RWE] HUD drag registered in VEHICLE context")
+                Logging.info("[RWE] HUD drag registered in VEHICLE context")
             end
 
             binding:endActionEventsModification()
@@ -1169,16 +1145,27 @@ local function loadFinished(mission, ...)
         if g_RandomWorldEvents and g_RandomWorldEvents._savedActiveEvent then
             local mgr = g_RandomWorldEvents
             local es = mgr.EVENT_STATE
-            es.activeEvent    = mgr._savedActiveEvent
-            es.eventStartTime = g_currentMission.time
-            es.eventDuration  = mgr._savedRemainingMs or 0
-            es.midpointFired  = mgr._savedMidpointFired or false
-            es.cooldownUntil  = g_currentMission.time + (mgr._savedCooldownRemainingMs or 0)
+            local savedName  = mgr._savedActiveEvent
+            local savedEvent = mgr.EVENTS[savedName]
+
+            -- Vehicle physics effects are transient and only applied at trigger
+            -- time, not on restore. Resuming one as "active" would apply nothing
+            -- yet block every new trigger ("already active"). Skip those.
+            if savedEvent ~= nil and savedEvent.category == "vehicle" then
+                Logging.info("[RWE] Not resuming transient vehicle event from save: " .. tostring(savedName))
+            else
+                es.activeEvent    = savedName
+                es.eventStartTime = g_currentMission.time
+                es.eventDuration  = mgr._savedRemainingMs or 0
+                es.midpointFired  = mgr._savedMidpointFired or false
+                es.cooldownUntil  = g_currentMission.time + (mgr._savedCooldownRemainingMs or 0)
+                Logging.info("[RWE] Resumed active event from save: " .. tostring(savedName))
+            end
+
             mgr._savedActiveEvent         = nil
             mgr._savedRemainingMs         = nil
             mgr._savedCooldownRemainingMs = nil
             mgr._savedMidpointFired       = nil
-            Logging.info("[RWE] Resumed active event from save: " .. tostring(es.activeEvent))
         end
     end
 end

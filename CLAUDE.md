@@ -40,11 +40,25 @@ for FS25 API specifics; it may be outdated, wrong, or hallucinated.
 ## Project Overview
 
 **FS25_RandomWorldEvents** is a Farming Simulator 25 mod (v2.0.0.0) that introduces a
-random-event system and a physics override layer to the base game. Events fire on a
+random-event system and a real vehicle-physics layer to the base game. Events fire on a
 probabilistic timer during gameplay and can affect the economy, vehicles, fields, animals,
 and special game-state variables. All settings persist per-savegame via an XML file.
 
 Author: TisonK | License: All rights reserved.
+
+### Vehicle physics
+
+The vehicle-physics layer (`utils/VehiclePhysics.lua`, the `RWEVehiclePhysics`
+specialization) only touches fields the engine actually reads. The earlier code wrote to
+non-existent fields (`wheel.physics.frictionScale`, `wheel.suspension.springForce`,
+`motor.maxPower`, `vehicle.maxSpeed`) and did nothing — see `VEHICLE_PHYSICS_FINDINGS.txt`
+in the repo root for the full wrong-vs-correct writeup, and `DEVELOPMENT.md` §5 for the
+architecture.
+
+> **Credit:** the steering technique (writing `spec_drivable.lastInputValues.axisSteer`
+> each frame) and the `TypeManager.finalizeTypes` specialization-injection approach are
+> adapted from **"RealPhysics Steering" by Tubez47**, recorded inline in the source header.
+> Keep that credit intact in any future edits to the physics layer.
 
 ---
 
@@ -69,11 +83,12 @@ FS25_RandomWorldEvents/
 │   └── RandomWorldDebugFrame.xml
 └── utils/
     ├── economicEvents.lua           # 15 economic events
-    ├── vehicleEvents.lua            # 8 vehicle events
+    ├── vehicleEvents.lua            # 10 vehicle events (speed/engine/steering via RWEVehiclePhysics)
     ├── fieldEvents.lua              # 10 field events
     ├── animalEvents.lua             # BUG: currently duplicates specialEvents.lua
     ├── specialEvents.lua            # 10 special events (time, XP, money, trade)
-    └── PhysicsUtils.lua             # Terrain-aware physics override layer
+    ├── VehiclePhysics.lua           # RWEVehiclePhysics specialization — real vehicle physics
+    └── PhysicsUtils.lua             # Debug telemetry only (honest speed/surface readout)
 ```
 
 ---
