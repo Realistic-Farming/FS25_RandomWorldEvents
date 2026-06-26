@@ -1,4 +1,4 @@
-# FS25_RandomWorldEvents — Claude Code Project Instructions
+# FS25_RandomWorldEvents - Claude Code Project Instructions
 
 ## !! MANDATORY: Before Writing ANY FS25 API Code !!
 Before implementing any FS25 Lua API call, class usage, or game system interaction,
@@ -51,7 +51,7 @@ Author: TisonK | License: All rights reserved.
 The vehicle-physics layer (`utils/VehiclePhysics.lua`, the `RWEVehiclePhysics`
 specialization) only touches fields the engine actually reads. The earlier code wrote to
 non-existent fields (`wheel.physics.frictionScale`, `wheel.suspension.springForce`,
-`motor.maxPower`, `vehicle.maxSpeed`) and did nothing — see `VEHICLE_PHYSICS_FINDINGS.txt`
+`motor.maxPower`, `vehicle.maxSpeed`) and did nothing - see `VEHICLE_PHYSICS_FINDINGS.txt`
 in the repo root for the full wrong-vs-correct writeup, and `DEVELOPMENT.md` §5 for the
 architecture.
 
@@ -71,8 +71,8 @@ FS25_RandomWorldEvents/
 ├── guiProfiles.xml                # GUI style profiles
 ├── icon.dds                       # Mod icon
 ├── icons/
-│   ├── events.dds                 # Tab icon — Events page
-│   └── settings.dds               # Tab icon — Settings page
+│   ├── events.dds                 # Tab icon - Events page
+│   └── settings.dds               # Tab icon - Settings page
 ├── gui/
 │   ├── RandomWorldEventsScreen.lua  # TabbedMenuWithDetails screen wrapper
 │   ├── RandomWorldEventsFrame.lua   # Events/settings frame (tab 1)
@@ -87,7 +87,7 @@ FS25_RandomWorldEvents/
     ├── fieldEvents.lua              # 10 field events
     ├── animalEvents.lua             # BUG: currently duplicates specialEvents.lua
     ├── specialEvents.lua            # 10 special events (time, XP, money, trade)
-    ├── VehiclePhysics.lua           # RWEVehiclePhysics specialization — real vehicle physics
+    ├── VehiclePhysics.lua           # RWEVehiclePhysics specialization - real vehicle physics
     └── PhysicsUtils.lua             # Debug telemetry only (honest speed/surface readout)
 ```
 
@@ -136,14 +136,14 @@ Only one event can be active at a time.
 
 | # | Location | Issue |
 |---|----------|-------|
-| 1 | `utils/animalEvents.lua` | File contains `specialEvents` code verbatim — animal/wildlife events are **not implemented**. The `wildlifeEvents` toggle controls nothing. |
+| 1 | `utils/animalEvents.lua` | File contains `specialEvents` code verbatim - animal/wildlife events are **not implemented**. The `wildlifeEvents` toggle controls nothing. |
 | 2 | `modDesc.xml:90` | `<filename>` tag uses the attribute name `filename` twice: `<filename name="RandomWorldEventsScreen" filename="gui/..."/>`. The second attribute should be `filename` but the first should likely be `name`. Some parsers may reject this. |
 | 3 | `modDesc.xml` | Version field says `1.0.0.0` but Lua headers say `2.0.0.0`. |
 | 4 | `economicEvents.lua:242` + `vehicleEvents.lua:420` | Both modules monkey-patch `g_RandomWorldEvents:update` via `originalUpdate` chaining. If both run, the second module overwrites the first module's override, **silently dropping** the first module's per-tick effects. This pattern is fragile. |
-| 5 | `RandomWorldEventsScreen.lua:45–50` | Tab icons are swapped: the Events frame gets `settings.dds` and the Debug frame gets `events.dds`. |
-| 6 | `RandomWorldEvents.lua:664–673` | `keyEvent` has a redundant inner `if rweManager then` check (the outer guard already confirms it). Minor but misleading. |
-| 7 | `PhysicsUtils.lua:140–158` | `PhysicsUtils` is self-clobbered: `PhysicsUtils = PhysicsUtils:new()`. If the pending-registration path runs AND `loadEventModules` also instantiates it, there is a double-init. Both produce the same result but log confusingly. |
-| 8 | `fieldEvents.lua:99–104` | `canTrigger` checks `fieldController.fields` exists and `#fields > 0`. FS25 uses a `g_fieldManager` API, not `g_currentMission.fieldController` — this guard may never pass, causing field events to silently not fire on many maps. |
+| 5 | `RandomWorldEventsScreen.lua:45-50` | Tab icons are swapped: the Events frame gets `settings.dds` and the Debug frame gets `events.dds`. |
+| 6 | `RandomWorldEvents.lua:664-673` | `keyEvent` has a redundant inner `if rweManager then` check (the outer guard already confirms it). Minor but misleading. |
+| 7 | `PhysicsUtils.lua:140-158` | `PhysicsUtils` is self-clobbered: `PhysicsUtils = PhysicsUtils:new()`. If the pending-registration path runs AND `loadEventModules` also instantiates it, there is a double-init. Both produce the same result but log confusingly. |
+| 8 | `fieldEvents.lua:99-104` | `canTrigger` checks `fieldController.fields` exists and `#fields > 0`. FS25 uses a `g_fieldManager` API, not `g_currentMission.fieldController` - this guard may never pass, causing field events to silently not fire on many maps. |
 
 ---
 
@@ -158,7 +158,7 @@ Only one event can be active at a time.
 - **No globals**: use `local` for all module-internal tables. Only `g_RandomWorldEvents`
   is intentionally global.
 - **FS25 API**: prefer `vehicle:method()` over direct field access. Do not assume
-  `getFillUnitInformation`, `getMotor`, `addDamageAmount` exist — guard with `if vehicle.method`.
+  `getFillUnitInformation`, `getMotor`, `addDamageAmount` exist - guard with `if vehicle.method`.
 - **Settings**: never write settings directly to disk except via `g_RandomWorldEvents:saveSettings()`.
 
 ---
@@ -193,4 +193,4 @@ C:\Users\tison\Documents\My Games\FarmingSimulator2025\log.txt
 | `rweDebug on\|off` | Toggle debug mode |
 | `rweList [category]` | List registered events |
 
-Hotkeys: **F9** — force trigger event.
+Hotkeys: **F9** - force trigger event.

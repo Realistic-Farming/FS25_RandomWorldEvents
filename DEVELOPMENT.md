@@ -1,4 +1,4 @@
-# FS25_RandomWorldEvents — Developer Reference
+# FS25_RandomWorldEvents - Developer Reference
 
 ## Table of Contents
 
@@ -89,7 +89,7 @@ Every registered event is a Lua table with the following fields:
     weight       = 1,                 -- number: relative selection weight (currently unused; all events have equal chance)
     duration     = { min = 15,        -- table: duration range in in-game minutes
                      max = 60 },      --   converted to ms: value * 60000
-    minIntensity = 1,                 -- number 1–5: minimum intensity level required
+    minIntensity = 1,                 -- number 1-5: minimum intensity level required
     canTrigger   = function()         -- function() → bool: runtime eligibility check
         return g_currentMission ~= nil
     end,
@@ -141,7 +141,7 @@ The `g_RandomWorldEvents.EVENT_STATE` table holds all transient effect data:
 | `harvestMalus` | fieldEvents | Harvest amount flag |
 | `fieldSaleBonus` | fieldEvents | Field crop sale price bonus fraction |
 | `fieldSaleMalus` | fieldEvents | Field crop sale price penalty fraction |
-| `vehiclePhysics` | vehicleEvents | `{vehicle}` — vehicle with active RWEVehiclePhysics modifiers (speed/engine/steering); restored via `RWEVehiclePhysics.clearEventMods` |
+| `vehiclePhysics` | vehicleEvents | `{vehicle}` - vehicle with active RWEVehiclePhysics modifiers (speed/engine/steering); restored via `RWEVehiclePhysics.clearEventMods` |
 | `vehicleAccident` | vehicleEvents | `{vehicle, damagePercent}` table |
 | `vehicleUpgrade` | vehicleEvents | `{vehicle}` table (color tint state) |
 | `originalTimeScale` | specialEvents | Saved `missionInfo.timeScale` before time warp |
@@ -154,7 +154,7 @@ The `g_RandomWorldEvents.EVENT_STATE` table holds all transient effect data:
 | `tradeBonus` | specialEvents | Trade price flag |
 
 > **Note:** Most `EVENT_STATE` flags (e.g. `yieldBonus`, `xpBonus`) are set but never
-> actually read by any game hook. They function as observable state indicators only —
+> actually read by any game hook. They function as observable state indicators only -
 > the actual gameplay integration (hooking FS25 crop yield or XP grant callbacks) is
 > not yet implemented.
 
@@ -180,31 +180,31 @@ Settings are split into three sub-tables on the `RandomWorldEvents` instance:
 
 | Key | Type | Default | Range | Description |
 |-----|------|---------|-------|-------------|
-| `enabled` | bool | `true` | — | Master on/off switch |
-| `frequency` | int | `5` | 1–10 | Trigger chance multiplier |
-| `intensity` | int | `2` | 1–5 | Event magnitude |
-| `showNotifications` | bool | `true` | — | In-game HUD notices |
-| `showWarnings` | bool | `true` | — | Warning notifications |
-| `cooldown` | int | `30` | 1–240 | Minutes between events |
-| `weatherEvents` | bool | `false` | — | Weather category (stub) |
-| `economicEvents` | bool | `true` | — | Economic category |
-| `vehicleEvents` | bool | `true` | — | Vehicle category |
-| `fieldEvents` | bool | `true` | — | Field category |
-| `wildlifeEvents` | bool | `true` | — | Wildlife/animal category |
-| `specialEvents` | bool | `true` | — | Special category |
-| `debugLevel` | int | `1` | — | Verbosity (unused in core) |
+| `enabled` | bool | `true` | - | Master on/off switch |
+| `frequency` | int | `5` | 1-10 | Trigger chance multiplier |
+| `intensity` | int | `2` | 1-5 | Event magnitude |
+| `showNotifications` | bool | `true` | - | In-game HUD notices |
+| `showWarnings` | bool | `true` | - | Warning notifications |
+| `cooldown` | int | `30` | 1-240 | Minutes between events |
+| `weatherEvents` | bool | `false` | - | Weather category (stub) |
+| `economicEvents` | bool | `true` | - | Economic category |
+| `vehicleEvents` | bool | `true` | - | Vehicle category |
+| `fieldEvents` | bool | `true` | - | Field category |
+| `wildlifeEvents` | bool | `true` | - | Wildlife/animal category |
+| `specialEvents` | bool | `true` | - | Special category |
+| `debugLevel` | int | `1` | - | Verbosity (unused in core) |
 
 ### `self.physics`
 
 | Key | Type | Default | Range | Description |
 |-----|------|---------|-------|-------------|
-| `enabled` | bool | `true` | — | Physics layer master switch (traction governor) |
-| `wheelGripMultiplier` | float | `1.0` | 0.5–2.0 | Loose-ground traction: higher = more grip, less slowdown |
-| `showPhysicsInfo` | bool | `false` | — | Log the honest physics readout each frame |
-| `debugMode` | bool | `false` | — | Extra verbose physics logging |
-| `articulationDamping` | float | `0.5` | — | **Legacy/unused** — kept only so old save XML still loads |
-| `comStrength` | float | `1.0` | — | **Legacy/unused** — kept only so old save XML still loads |
-| `suspensionStiffness` | float | `1.0` | — | **Legacy/unused** — no script lever exists for it in FS25 |
+| `enabled` | bool | `true` | - | Physics layer master switch (traction governor) |
+| `wheelGripMultiplier` | float | `1.0` | 0.5-2.0 | Loose-ground traction: higher = more grip, less slowdown |
+| `showPhysicsInfo` | bool | `false` | - | Log the honest physics readout each frame |
+| `debugMode` | bool | `false` | - | Extra verbose physics logging |
+| `articulationDamping` | float | `0.5` | - | **Legacy/unused** - kept only so old save XML still loads |
+| `comStrength` | float | `1.0` | - | **Legacy/unused** - kept only so old save XML still loads |
+| `suspensionStiffness` | float | `1.0` | - | **Legacy/unused** - no script lever exists for it in FS25 |
 
 ### `self.debug`
 
@@ -230,7 +230,7 @@ Root XML tag: `RandomWorldEvents`. Sub-paths mirror the table hierarchy
 The physics layer was rebuilt to use only fields the GIANTS engine actually reads. The
 old version (`PhysicsUtils:applyAdvancedPhysics` + `RandomWorldEvents:updatePhysics`)
 wrote to `wheel.physics.frictionScale`, `wheel.suspension.springForce` and
-`wheel.contact.groundTypeName` — **none of which exist** — so it never affected the
+`wheel.contact.groundTypeName` - **none of which exist** - so it never affected the
 game. That dead code is gone.
 
 ### `RWEVehiclePhysics` (`utils/VehiclePhysics.lua`)
@@ -276,13 +276,13 @@ Surfaces come from the real `getSurfaceSoundAttributes()` data, never a faked fi
 ### `PhysicsUtils` (`utils/PhysicsUtils.lua`)
 
 Reduced to honest debug telemetry. `showPhysicsInfo(vehicle)` logs the real speed
-(`getLastSpeed()`, km/h — the old `lastSpeedReal * 3.6` was 1000x too small), the surface
+(`getLastSpeed()`, km/h - the old `lastSpeedReal * 3.6` was 1000x too small), the surface
 under the wheels, and any active modifiers.
 
 ### Credit
 
-> The steering technique — writing into `spec_drivable.lastInputValues.axisSteer` each
-> frame so the game steers as if the player were holding the wheel — and the approach of
+> The steering technique - writing into `spec_drivable.lastInputValues.axisSteer` each
+> frame so the game steers as if the player were holding the wheel - and the approach of
 > injecting a specialization into existing vehicle types via `TypeManager.finalizeTypes`
 > are **adapted from "RealPhysics Steering" by Tubez47**. The source header of
 > `utils/VehiclePhysics.lua` records this inline. Thank you, Tubez47.
@@ -300,7 +300,7 @@ The GUI is a standard FS25 **TabbedMenuWithDetails** with two frames:
 
 ### Opening the GUI
 
-The settings screen is not yet wired to a menu button or keyboard shortcut —
+The settings screen is not yet wired to a menu button or keyboard shortcut -
 `F3` is stubbed in the `keyEvent` handler but calls no screen-open logic.
 To open it programmatically:
 
@@ -327,7 +327,7 @@ This means XML element IDs **must** exactly match the settings key names.
 ### Trigger Event Button
 
 `RandomWorldEventsFrame` includes a `triggerEventButtonWrapper` control. Clicking it
-calls `g_RandomWorldEvents:triggerRandomEvent()` directly — useful for testing without
+calls `g_RandomWorldEvents:triggerRandomEvent()` directly - useful for testing without
 console commands.
 
 ---
@@ -375,7 +375,7 @@ is assigned to `g_RandomWorldEvents`.
 ```lua
 {
     name = "crop_insurance_payout",    -- must be globally unique
-    minI = 2,                          -- minimum intensity (1–5)
+    minI = 2,                          -- minimum intensity (1-5)
     func = function(intensity)
         local amount = 1000 * intensity
         if g_currentMission and g_currentMission.addMoney then
@@ -393,7 +393,7 @@ is assigned to `g_RandomWorldEvents`.
 
 3. The `registerXxxEvents()` loop will pick it up automatically on the next load.
    `onEnd` for the whole module clears all `EVENT_STATE` keys used by any event in
-   the module — add any new keys your event sets to that cleanup block.
+   the module - add any new keys your event sets to that cleanup block.
 4. If the event sets a state flag that needs per-tick logic, implement it in the
    module's `update` override (see §10, Bug 4 for the chaining fragility warning
    before doing this).
@@ -416,7 +416,7 @@ is assigned to `g_RandomWorldEvents`.
 
 ## 10. Known Bugs & Limitations
 
-### Bug 1 — `animalEvents.lua` contains `specialEvents` code
+### Bug 1 - `animalEvents.lua` contains `specialEvents` code
 `utils/animalEvents.lua` is a verbatim copy of `utils/specialEvents.lua`. This means:
 - Animal/wildlife events are **not implemented**.
 - `specialEvents` are double-registered (once from each file), creating duplicate event
@@ -424,10 +424,10 @@ is assigned to `g_RandomWorldEvents`.
   the first (Lua table key collision).
 - The `wildlifeEvents` toggle in settings controls nothing.
 - **Fix**: Write actual animal events in `animalEvents.lua` using the `"wildlife"`
-  category (or `"animal"` — then update `canTrigger` to check for animal husbandry
+  category (or `"animal"` - then update `canTrigger` to check for animal husbandry
   structures and update the setting key to `animalEvents` for consistency).
 
-### Bug 2 — `modDesc.xml` duplicate attribute on `<filename>` tag
+### Bug 2 - `modDesc.xml` duplicate attribute on `<filename>` tag
 ```xml
 <filename name="RandomWorldEventsScreen" filename="gui/RandomWorldEventsScreen.xml"/>
 ```
@@ -435,37 +435,37 @@ The `name` attribute is used twice as `name` and `filename`. Depending on the FS
 XML parser this may load incorrectly or be ignored.
 - **Fix**: Verify the correct attribute names from the FS25 SDK and correct the tag.
 
-### Bug 3 — `modDesc.xml` version mismatch
+### Bug 3 - `modDesc.xml` version mismatch
 The `<version>` element says `1.0.0.0`; all Lua headers say `2.0.0.0`.
 - **Fix**: Synchronize to `2.0.0.0`.
 
-### Bug 4 — Fragile `originalUpdate` chaining in event modules
+### Bug 4 - Fragile `originalUpdate` chaining in event modules
 `economicEvents.lua` and `vehicleEvents.lua` both inject per-tick logic by
 overwriting `g_RandomWorldEvents:update` and saving the previous function as
-`originalUpdate`. If both modules run this at load time (which they do not — the
+`originalUpdate`. If both modules run this at load time (which they do not - the
 guard `if g_RandomWorldEvents` prevents it since `g_RandomWorldEvents` does not yet
 exist at load time), the second would lose the first module's chain. Currently both
 guards evaluate false, so neither per-tick function runs at all.
 - **Fix**: Implement `applyActiveEventEffects()` in the core and dispatch per-tick
   work there, or use a registered listener list instead of monkey-patching `:update`.
 
-### Bug 5 — GUI tab icons swapped
+### Bug 5 - GUI tab icons swapped
 In `RandomWorldEventsScreen:setupPages()`, the Events frame receives `settings.dds`
 and the Debug/Physics frame receives `events.dds`.
 - **Fix**: Swap the icon strings.
 
-### Bug 6 — `fieldEvents` `canTrigger` may never pass
+### Bug 6 - `fieldEvents` `canTrigger` may never pass
 `g_currentMission.fieldController.fields` is not the canonical FS25 field API.
 - **Fix**: Use `g_fieldManager` or simply `g_currentMission ~= nil` as the guard.
 
-### Bug 7 — EVENT_STATE flags are never consumed
+### Bug 7 - EVENT_STATE flags are never consumed
 Most `EVENT_STATE` entries (`yieldBonus`, `xpBonus`, `marketBonus`, etc.) are set but
 no game hooks read them to actually apply the effects. The events fire, the
 notification shows, the flag is set, but gameplay is unchanged.
 - **Fix**: Hook the relevant FS25 callbacks (sell point price calculation, crop yield
   calculation, XP award) to check and apply the flag.
 
-### Bug 8 — Frequency chance is per-frame, not per-minute
+### Bug 8 - Frequency chance is per-frame, not per-minute
 With `frequency = 5`, the probability per frame is `0.5%`. At 60 Hz this is roughly
 once every 3 seconds of real time (with a 30-minute cooldown). At `frequency = 10`
 events fire almost every cooldown period. The UX label should clarify this is a
