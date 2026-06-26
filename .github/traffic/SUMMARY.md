@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-06-26T00:08:11Z
-**Days tracked:** 73 | **Download snapshots:** 246 (hourly)
+**Last updated:** 2026-06-26T12:10:16Z
+**Days tracked:** 73 | **Download snapshots:** 247 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 96 | 49 |
-| Git Clones | 730 | 240 |
+| Page Views | 96 | 48 |
+| Git Clones | 785 | 251 |
 
-> **Engagement:** 1.9 pages per visitor (14-day avg)
+> **Engagement:** 2.0 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 513 of 49 visitors cloned or downloaded (**1046.9%**)
+> **14-day conversion:** 524 of 48 visitors cloned or downloaded (**1091.6%**)
 >
-> Unique cloners: 240 | Release downloads: 273
+> Unique cloners: 251 | Release downloads: 273
 
 ---
 
@@ -43,8 +43,8 @@
 | Channel | Count |
 |---------|-------|
 | Zip Downloads | 273 |
-| Git Clones (14-day) | 730 |
-| **Total Acquisitions** | **1003** |
+| Git Clones (14-day) | 785 |
+| **Total Acquisitions** | **1058** |
 
 ---
 
@@ -54,7 +54,7 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 65 | 35 |
+| github.com | 66 | 34 |
 | Google | 23 | 11 |
 
 ---
@@ -75,10 +75,10 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 49 | 29 |
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 20 | 18 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 12 | 8 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 7 | 4 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 48 | 28 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 21 | 19 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 11 | 7 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 8 | 5 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases` | 4 | 2 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 1 | 1 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues` | 1 | 1 |
