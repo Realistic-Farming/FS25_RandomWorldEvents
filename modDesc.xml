@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="106">
     <author>TisonK</author>
-    <version>2.1.6.4</version>
+    <version>2.1.7.0</version>
     <modName>FS25_RandomWorldEvents</modName>
     <title>
         <en>Random World Events</en>
@@ -16,8 +16,11 @@
         <ru>Случайные мировые события</ru>
         <da>Random World Events</da>
     </title>
+    <!-- Vehicle "steering pull" and the way the physics layer attaches to vehicles are
+         adapted from "RealPhysics Steering" by Tubez47. Credit recorded in the source
+         header of utils/VehiclePhysics.lua, README.md and DEVELOPMENT.md. -->
     <description>
-        <en>Adds random events, physics overhaul, and configurable settings.</en>
+        <en>Adds random events, real vehicle-physics effects, and configurable settings. The vehicle "steering pull" effect uses a technique adapted from RealPhysics Steering by Tubez47 - thank you!</en>
         <de>Fügt zufällige Ereignisse, Physik-Überarbeitung und konfigurierbare Einstellungen hinzu.</de>
         <fr>Ajoute des événements aléatoires, une refonte de la physique et des paramètres configurables.</fr>
         <pl>Dodaje losowe wydarzenia, przebudowę fizyki i konfigurowalne ustawienia.</pl>
@@ -52,6 +55,9 @@
         <sourceFile filename="gui/RWEEventHUD.lua"/>
         <sourceFile filename="gui/RWESettingsIntegration.lua"/>
         <sourceFile filename="utils/EffectHooks.lua"/>
+        <!-- Vehicle physics controller (specialization) must load before the
+             vehicle events that drive it, and installs its type hook on load. -->
+        <sourceFile filename="utils/VehiclePhysics.lua"/>
         <sourceFile filename="utils/economicEvents.lua"/>
         <sourceFile filename="utils/vehicleEvents.lua"/>
         <sourceFile filename="utils/fieldEvents.lua"/>

@@ -58,28 +58,28 @@ end
 -- =====================
 
 --- Apply a set of runtime modifiers to a vehicle and track it for auto-restore.
---- Supported modifier keys:
----   speedMultiplier  (number) — scale factor on speedLimit and maxSpeed
----   fuelMultiplier   (number) — scale factor on fuel consumption (if supported)
+--- Routes through RWEVehiclePhysics so only real, engine-read fields are
+--- touched (vehicle.speedLimit, motor.maxForwardSpeed, accelerationLimit,
+--- steering input). Supported modifier keys:
+---   speedMultiplier  (number) — scales the km/h cap and physical top speed
+---   accelMultiplier  (number) — scales acceleration (engine feel)
+---   steerPull        (number) — -1..1 continuous steering bias
 ---@param vehicle table   FS25 vehicle object
 ---@param modifiers table  Key-value modifier table
 function RWEVehicleAPI:applyVehicleModifier(vehicle, modifiers)
     if not vehicle or type(modifiers) ~= "table" then return end
-
-    local record = { vehicle = vehicle, original = {} }
-
-    if modifiers.speedMultiplier and vehicle.setSpeedLimit then
-        record.original.speedLimit = vehicle.speedLimit or 100
-        record.original.maxSpeed   = vehicle.maxSpeed
-        vehicle.speedLimit = (vehicle.speedLimit or 100) * modifiers.speedMultiplier
-        vehicle:setSpeedLimit(vehicle.speedLimit)
-        if vehicle.maxSpeed then
-            vehicle.maxSpeed = vehicle.maxSpeed * modifiers.speedMultiplier
-        end
-        record.speedMultiplierApplied = true
+    if not RWEVehiclePhysics then
+        Logging.warning("[RWEVehicleAPI] RWEVehiclePhysics controller unavailable; modifier ignored")
+        return
     end
 
-    table.insert(self._modifiedVehicles, record)
+    local mods = {}
+    if modifiers.speedMultiplier then mods.speedScale = modifiers.speedMultiplier end
+    if modifiers.accelMultiplier then mods.accelScale = modifiers.accelMultiplier end
+    if modifiers.steerPull       then mods.steerPull  = modifiers.steerPull       end
+
+    RWEVehiclePhysics.applyEventMods(vehicle, mods)
+    table.insert(self._modifiedVehicles, { vehicle = vehicle })
 
     Logging.info(string.format("[RWEVehicleAPI] Modifier applied to vehicle (speedMult=%s)",
         tostring(modifiers.speedMultiplier)))
@@ -88,15 +88,10 @@ end
 --- Restore all vehicles modified during this event.
 --- Called automatically on event end via _onEndCleanup.
 function RWEVehicleAPI:_restoreModifiedVehicles()
-    for _, record in ipairs(self._modifiedVehicles) do
-        local v = record.vehicle
-        if v and record.original then
-            if record.speedMultiplierApplied and v.setSpeedLimit then
-                v.speedLimit = record.original.speedLimit
-                v:setSpeedLimit(v.speedLimit)
-                if record.original.maxSpeed ~= nil then
-                    v.maxSpeed = record.original.maxSpeed
-                end
+    if RWEVehiclePhysics then
+        for _, record in ipairs(self._modifiedVehicles) do
+            if record.vehicle then
+                RWEVehiclePhysics.clearEventMods(record.vehicle)
             end
         end
     end

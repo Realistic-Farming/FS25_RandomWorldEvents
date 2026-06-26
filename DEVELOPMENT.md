@@ -22,8 +22,9 @@
 FS25_RandomWorldEvents adds:
 - A **probabilistic event engine** that fires timed world events (economic, vehicle,
   field, special) with configurable frequency, intensity, and cooldown.
-- A **physics override layer** that applies terrain-aware wheel grip, suspension
-  stiffness, and articulation damping to the player-controlled vehicle each frame.
+- A **real vehicle-physics layer** (`RWEVehiclePhysics`, a vehicle specialization) that
+  drives speed, top speed, acceleration and steering through the engine's own fields,
+  plus a loose-ground traction governor. See §5.
 - An **in-game settings screen** (tabbed GUI) for toggling categories and tuning all
   parameters without restarting the game.
 - **Per-savegame persistence** so each farm's settings survive restarts.
@@ -47,7 +48,8 @@ FS25 engine boots
 │   utils/fieldEvents.lua         ← queues pendingRegistrations
 │   utils/animalEvents.lua        ← queues pendingRegistrations (see Bug #1)
 │   utils/specialEvents.lua       ← queues pendingRegistrations
-│   utils/PhysicsUtils.lua        ← queues pendingRegistrations
+│   utils/VehiclePhysics.lua      ← installs TypeManager.finalizeTypes hook on load
+│   utils/PhysicsUtils.lua        ← debug telemetry only (queues pendingRegistrations)
 │
 ├─ Mission00.load fires
 │   ├─ RandomWorldEvents:new(mission)
@@ -64,7 +66,8 @@ FS25 engine boots
 │       ├─ Event timer check → triggerRandomEvent() if chance fires
 │       ├─ Active event tick → applyActiveEventEffects()
 │       ├─ Event expiry check → event.onEnd()
-│       └─ Physics update → PhysicsUtils:applyAdvancedPhysics(vehicle)
+│       └─ (optional) debug readout → PhysicsUtils:showPhysicsInfo(vehicle)
+│         Real physics runs per-vehicle in the RWEVehiclePhysics spec, not here.
 │
 └─ FSBaseMission.delete fires on exit/unload
     ├─ saveSettings()
@@ -138,10 +141,9 @@ The `g_RandomWorldEvents.EVENT_STATE` table holds all transient effect data:
 | `harvestMalus` | fieldEvents | Harvest amount flag |
 | `fieldSaleBonus` | fieldEvents | Field crop sale price bonus fraction |
 | `fieldSaleMalus` | fieldEvents | Field crop sale price penalty fraction |
-| `vehicleSpeedBoost` | vehicleEvents | `{vehicle, multiplier}` table |
+| `vehiclePhysics` | vehicleEvents | `{vehicle}` — vehicle with active RWEVehiclePhysics modifiers (speed/engine/steering); restored via `RWEVehiclePhysics.clearEventMods` |
 | `vehicleAccident` | vehicleEvents | `{vehicle, damagePercent}` table |
 | `vehicleUpgrade` | vehicleEvents | `{vehicle}` table (color tint state) |
-| `engineTrouble` | vehicleEvents | `{vehicle, motor, originalPower}` table |
 | `originalTimeScale` | specialEvents | Saved `missionInfo.timeScale` before time warp |
 | `xpBonus` | specialEvents | XP gain multiplier bonus |
 | `xpMalus` | specialEvents | XP gain multiplier penalty |
@@ -196,13 +198,13 @@ Settings are split into three sub-tables on the `RandomWorldEvents` instance:
 
 | Key | Type | Default | Range | Description |
 |-----|------|---------|-------|-------------|
-| `enabled` | bool | `true` | — | Physics override master switch |
-| `wheelGripMultiplier` | float | `1.0` | 0.1–5.0 | Base grip scale |
-| `articulationDamping` | float | `0.5` | 0.1–5.0 | Articulation damping (not yet wired to FS25 API) |
-| `comStrength` | float | `1.0` | 0.1–5.0 | Center-of-mass strength (not yet wired) |
-| `suspensionStiffness` | float | `1.0` | 0.1–5.0 | Spring force multiplier |
-| `showPhysicsInfo` | bool | `false` | — | Log physics data each frame |
+| `enabled` | bool | `true` | — | Physics layer master switch (traction governor) |
+| `wheelGripMultiplier` | float | `1.0` | 0.5–2.0 | Loose-ground traction: higher = more grip, less slowdown |
+| `showPhysicsInfo` | bool | `false` | — | Log the honest physics readout each frame |
 | `debugMode` | bool | `false` | — | Extra verbose physics logging |
+| `articulationDamping` | float | `0.5` | — | **Legacy/unused** — kept only so old save XML still loads |
+| `comStrength` | float | `1.0` | — | **Legacy/unused** — kept only so old save XML still loads |
+| `suspensionStiffness` | float | `1.0` | — | **Legacy/unused** — no script lever exists for it in FS25 |
 
 ### `self.debug`
 
@@ -225,40 +227,65 @@ Root XML tag: `RandomWorldEvents`. Sub-paths mirror the table hierarchy
 
 ## 5. Physics System
 
-`PhysicsUtils` (`utils/PhysicsUtils.lua`) is a class instantiated once and stored as
-the global `PhysicsUtils` (overwriting the class table with an instance — intentional
-but unconventional).
+The physics layer was rebuilt to use only fields the GIANTS engine actually reads. The
+old version (`PhysicsUtils:applyAdvancedPhysics` + `RandomWorldEvents:updatePhysics`)
+wrote to `wheel.physics.frictionScale`, `wheel.suspension.springForce` and
+`wheel.contact.groundTypeName` — **none of which exist** — so it never affected the
+game. That dead code is gone.
 
-### Terrain Grip Table
+### `RWEVehiclePhysics` (`utils/VehiclePhysics.lua`)
+
+A **vehicle specialization** injected into every `drivable` + `motorized` + `wheels`
+type via a `TypeManager.finalizeTypes` hook (matched against `g_vehicleTypeManager`).
+It owns all real vehicle-physics changes and restores them cleanly.
+
+Real, engine-respected levers:
+
+| Lever | Field / call | Used for |
+|-------|--------------|----------|
+| Speed cap | `vehicle.speedLimit` (km/h, read by `Vehicle:getRawSpeedLimit`) | speed boost / slow-down |
+| Top speed | `motor.maxForwardSpeed` (restore from `motor.maxForwardSpeedOrigin`) | true turbo above gear cap |
+| Acceleration | `motor:setAccelerationLimit()` | engine sluggishness / limp home |
+| Steering | `spec_drivable.lastInputValues.axisSteer` (per frame) | steering pull |
+| Surface (read) | `wheel.physics:getSurfaceSoundAttributes()` | traction governor |
+
+Per-vehicle state lives on `vehicle._rwePhysics` (event scales + captured baselines), so
+the event API can reach it even on a vehicle that did not receive the spec. Baselines are
+captured lazily on first update. Enforcement runs in `onUpdate`/`onPreUpdate` on the
+server, and only writes when a value actually deviates, so untouched parked machines are
+never modified. Restore happens on `clearEventMods`, `onLeaveVehicle` and `onDelete`.
+
+### Public API (used by events / `RWEVehicleAPI`)
 
 ```lua
-PhysicsUtils.TERRAIN_CURVES = {
-    asphalt = { grip = 1.1 },
-    dirt    = { grip = 0.95 },
-    field   = { grip = 0.85 },
-    grass   = { grip = 0.9 },
-    snow    = { grip = 0.7 },
-    default = { grip = 1.0 },
-}
+RWEVehiclePhysics.applyEventMods(vehicle, {
+    speedScale = 1.4,   -- km/h cap multiplier
+    topScale   = 1.4,   -- physical top-speed multiplier
+    accelScale = 0.5,   -- acceleration multiplier (engine feel)
+    steerPull  = 0.10,  -- -1..1 continuous steering bias
+})
+RWEVehiclePhysics.clearEventMods(vehicle)  -- restore baselines
 ```
 
-Terrain type is read from `wheel.contact.groundTypeName`. The final
-`frictionScale` applied to each wheel is:
+### Traction governor
 
-```
-frictionScale = physics.wheelGripMultiplier * terrainGrip
-```
+When `physics.enabled` is on, the spec eases speed/acceleration for the *controlled*
+vehicle on loose ground (field, mud, snow), scaled by the `wheelGripMultiplier` setting.
+Surfaces come from the real `getSurfaceSoundAttributes()` data, never a faked field.
 
-### `applyAdvancedPhysics(vehicle)` — per-frame call
+### `PhysicsUtils` (`utils/PhysicsUtils.lua`)
 
-Called every frame for the controlled vehicle. Performs:
-1. `applyTerrainResponse(vehicle)` — sets `wheel.physics.frictionScale` per wheel.
-2. Suspension stiffness — multiplies `wheel.suspension.springForce` by
-   `physics.suspensionStiffness` (caches original force in `originalSpringForce`).
-3. If `showPhysicsInfo` is enabled, logs vehicle name, speed, and all multipliers.
+Reduced to honest debug telemetry. `showPhysicsInfo(vehicle)` logs the real speed
+(`getLastSpeed()`, km/h — the old `lastSpeedReal * 3.6` was 1000x too small), the surface
+under the wheels, and any active modifiers.
 
-> `articulationDamping` and `comStrength` are stored in settings and shown in the GUI
-> but are not yet wired to any FS25 physics API call.
+### Credit
+
+> The steering technique — writing into `spec_drivable.lastInputValues.axisSteer` each
+> frame so the game steers as if the player were holding the wheel — and the approach of
+> injecting a specialization into existing vehicle types via `TypeManager.finalizeTypes`
+> are **adapted from "RealPhysics Steering" by Tubez47**. The source header of
+> `utils/VehiclePhysics.lua` records this inline. Thank you, Tubez47.
 
 ---
 
@@ -451,8 +478,9 @@ relative scale, not events-per-hour.
 `modDesc.xml` declares `multiplayer supported="true"`. However:
 - `g_currentMission.addMoney` is client-authoritative on the calling client only;
   funds are not synchronized to other clients without a network event.
-- Physics overrides (`frictionScale`, `suspension.springForce`) are local-only and will
-  diverge between clients.
+- Vehicle-physics changes (`RWEVehiclePhysics`) are enforced server-side and applied to
+  the locally controlled vehicle, matching the pre-existing single-vehicle event scope;
+  there is no dedicated network event syncing them to other clients yet.
 - No `FSCareerMissionInfo` or network synchronization code exists in the mod.
 - **Recommendation**: Set `multiplayer supported="false"` until network sync is
   implemented, or document clearly that effects are visual/local only in multiplayer.
@@ -481,10 +509,12 @@ Key log lines to verify successful load:
 [RandomWorldEvents] Core initialized successfully
 [RWE] Processing N pending registrations
 [EconomicEvents] Registered 15 economic events
-[VehicleEvents] Registered 8 vehicle events
+[VehicleEvents] Registered 10 vehicle events
 [FieldEvents] Registered 10 field events
 [SpecialEvents] Registered 10 special events
-[PhysicsUtils] Initialized
+[RWEVehiclePhysics] Type hook installed
+[RWEVehiclePhysics] Registered for N vehicle types
+[PhysicsUtils] Initialized (debug telemetry)
 [RWE] GUI loading complete
 [RandomWorldEvents] Initialized successfully with N events
 ```
