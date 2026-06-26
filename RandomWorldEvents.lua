@@ -1064,6 +1064,17 @@ installInputHooks = function()
                 Logging.info("[RWE] HUD drag registered in VEHICLE context")
             end
 
+            local vDragOk, vDragId = binding:registerActionEvent(
+                InputAction.RWE_HUD_DRAG, mgr,
+                mgr.onHUDDragInput,
+                false, true, false, true
+            )
+            if vDragOk and vDragId then
+                mgr.hudDragVehicleEventId = vDragId
+                binding:setActionEventTextVisibility(vDragId, false)
+                Logging.debug("[RWE] HUD drag registered in VEHICLE context")
+            end
+
             binding:endActionEventsModification()
 
             _rweVehicleHookActive = false
