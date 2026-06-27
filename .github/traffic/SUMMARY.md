@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-06-26T12:10:16Z
-**Days tracked:** 73 | **Download snapshots:** 247 (hourly)
+**Last updated:** 2026-06-27T06:51:32Z
+**Days tracked:** 74 | **Download snapshots:** 253 (hourly)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 96 | 48 |
-| Git Clones | 785 | 251 |
+| Page Views | 111 | 55 |
+| Git Clones | 833 | 264 |
 
 > **Engagement:** 2.0 pages per visitor (14-day avg)
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 524 of 48 visitors cloned or downloaded (**1091.6%**)
+> **14-day conversion:** 544 of 55 visitors cloned or downloaded (**989.0%**)
 >
-> Unique cloners: 251 | Release downloads: 273
+> Unique cloners: 264 | Release downloads: 280
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 273 |
-| Git Clones (14-day) | 785 |
-| **Total Acquisitions** | **1058** |
+| Zip Downloads | 280 |
+| Git Clones (14-day) | 833 |
+| **Total Acquisitions** | **1113** |
 
 ---
 
@@ -54,8 +54,8 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 66 | 34 |
-| Google | 23 | 11 |
+| github.com | 69 | 36 |
+| Google | 21 | 12 |
 
 ---
 
@@ -75,15 +75,16 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 48 | 28 |
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 21 | 19 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 11 | 7 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 42 | 25 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 29 | 27 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 9 | 5 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0` | 8 | 6 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 8 | 5 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents/releases` | 4 | 2 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pull/24` | 3 | 2 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 2 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 1 | 1 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues` | 1 | 1 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues/20` | 1 | 1 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents/tree/development` | 1 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/edit/v2.1.7.0` | 1 | 1 |
 
 ---
 
