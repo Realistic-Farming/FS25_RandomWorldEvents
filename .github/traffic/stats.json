@@ -15239,51 +15239,51 @@
     "watchers": 2
   },
   {
-    "timestamp": "2026-06-30T00:05:15Z",
+    "timestamp": "2026-06-30T12:07:40Z",
     "date": "2026-06-30",
     "views": {
-      "count": 157,
-      "uniques": 61
+      "count": 170,
+      "uniques": 68
     },
     "clones": {
-      "count": 833,
+      "count": 834,
       "uniques": 261
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 96,
-        "uniques": 37
+        "count": 102,
+        "uniques": 40
       },
       {
         "referrer": "Google",
-        "count": 20,
-        "uniques": 10
+        "count": 25,
+        "uniques": 13
       },
       {
         "referrer": "kingmods.net",
-        "count": 10,
-        "uniques": 7
+        "count": 11,
+        "uniques": 8
       }
     ],
     "popular_paths": [
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents",
         "title": "Overview",
-        "count": 50,
-        "uniques": 39
+        "count": 61,
+        "uniques": 49
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents",
         "title": "Overview",
-        "count": 33,
-        "uniques": 17
+        "count": 31,
+        "uniques": 15
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0",
         "title": "/releases/tag/v2.1.7.0",
-        "count": 19,
-        "uniques": 14
+        "count": 21,
+        "uniques": 16
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4",
@@ -15298,15 +15298,15 @@
         "uniques": 5
       },
       {
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases",
+        "title": "/releases",
+        "count": 4,
+        "uniques": 4
+      },
+      {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/issues",
         "title": "/issues",
         "count": 4,
-        "uniques": 3
-      },
-      {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases",
-        "title": "/releases",
-        "count": 3,
         "uniques": 3
       },
       {
@@ -15322,17 +15322,17 @@
         "uniques": 1
       },
       {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/blob/master/DEVELOPMENT.md",
-        "title": "/blob/master/DEVELOPMENT.md",
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/blob/master/modDesc.xml",
+        "title": "/blob/master/modDesc.xml",
         "count": 2,
-        "uniques": 1
+        "uniques": 2
       }
     ],
     "releases": [
       {
         "assets": [
           {
-            "downloads": 21,
+            "downloads": 24,
             "name": "FS25_RandomWorldEvents.zip"
           }
         ],
