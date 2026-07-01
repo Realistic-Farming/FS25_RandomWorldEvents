@@ -1189,6 +1189,22 @@ FSBaseMission.draw       = Utils.appendedFunction(FSBaseMission.draw,       draw
 FSBaseMission.mouseEvent = Utils.prependedFunction(FSBaseMission.mouseEvent, mouseEvent)
 FSBaseMission.delete     = Utils.appendedFunction(FSBaseMission.delete,     delete)
 
+-- Persist RWE state (settings + active-event snapshot) on the game's save cycle.
+-- Without this, saveSettings only ran on settings changes and on shutdown, so an
+-- in-game save (or a crash after one) could lose the active event. The server owns
+-- the savegame, so this runs server-only.
+if FSCareerMissionInfo and FSCareerMissionInfo.saveToXMLFile then
+    FSCareerMissionInfo.saveToXMLFile = Utils.appendedFunction(
+        FSCareerMissionInfo.saveToXMLFile,
+        function(missionInfo)
+            if rweManager and g_currentMission and g_currentMission:getIsServer() then
+                rweManager:saveSettings()
+            end
+        end
+    )
+    Logging.info("[RandomWorldEvents] Save hook installed on FSCareerMissionInfo:saveToXMLFile")
+end
+
 Logging.info("========================================")
 Logging.info("   FS25 Random World Events v" .. modVersion .. "   ")
 Logging.info("           Successfully Loaded          ")
