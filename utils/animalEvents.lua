@@ -13,6 +13,14 @@
 
 local animalEvents = {}
 
+-- Server-authoritative money. addMoney must run only on the server in multiplayer,
+-- or every client applies the change (desync); the engine syncs the balance back.
+local function rweAddMoney(...)
+    if g_currentMission and g_currentMission:getIsServer() then
+        g_currentMission:addMoney(...)
+    end
+end
+
 -- =====================
 -- HELPERS
 -- =====================
@@ -139,7 +147,7 @@ animalEvents.eventList = {
             local farmId = animalEvents.getFarmId()
             local penalty = 2000 * intensity
             if g_currentMission and g_currentMission.addMoney and farmId > 0 then
-                g_currentMission:addMoney(-penalty, farmId, MoneyType.OTHER, true)
+                rweAddMoney(-penalty, farmId, MoneyType.OTHER, true)
             end
             if g_RandomWorldEvents then
                 g_RandomWorldEvents.EVENT_STATE.animalProductMalus = 0.10 * intensity
@@ -163,7 +171,7 @@ animalEvents.eventList = {
             local farmId = animalEvents.getFarmId()
             local amount = 1500 + intensity * 1000
             if g_currentMission and g_currentMission.addMoney and farmId > 0 then
-                g_currentMission:addMoney(amount, farmId, MoneyType.OTHER, true)
+                rweAddMoney(amount, farmId, MoneyType.OTHER, true)
             end
             return string.format("Animal welfare subsidy paid out! +€%d from the scheme.", amount)
         end,
@@ -217,7 +225,7 @@ local function animalTickHandler(rwe)
     end
 
     if amount ~= 0 and g_currentMission.addMoney then
-        g_currentMission:addMoney(amount, farmId, MoneyType.OTHER, false)
+        rweAddMoney(amount, farmId, MoneyType.OTHER, false)
     end
 end
 

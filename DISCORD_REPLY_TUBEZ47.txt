@@ -1,0 +1,9 @@
+Hey Tubez, sorry for the wait, scorcher of a day haha.
+
+To be clear: I'm not using your code directly and I didn't find any flaws in your mod. The stuff I "fixed" is in MY mod, RWE. My old physics wrote to fields that don't exist in FS25, so it did nothing. Your mod just showed me the right way to do it.
+
+Two things I'm adapting from your approach:
+1. Feeding a value into spec_drivable.lastInputValues.axisSteer each frame so the game steers as if the player is holding the wheel. I use it for a "steering pull" event. My own code, just the technique.
+2. Attaching a specialization to vehicle types via TypeManager.finalizeTypes, to add my physics controller to all drivable vehicles.
+
+That's it. Everything else (speed, engine, top speed) I do through basegame fields directly. Credit is already in the modDesc, README, dev docs and the source header. Happy to tweak the wording if you want.

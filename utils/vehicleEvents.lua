@@ -13,6 +13,14 @@
 
 local vehicleEvents = {}
 
+-- Server-authoritative money. addMoney must run only on the server in multiplayer,
+-- or every client applies the change (desync); the engine syncs the balance back.
+local function rweAddMoney(...)
+    if g_currentMission and g_currentMission:getIsServer() then
+        g_currentMission:addMoney(...)
+    end
+end
+
 vehicleEvents.getFarmId = function()
     -- FS25: the player's farm comes from g_localPlayer, not the old
     -- g_currentMission.player (nil here) - which returned 0 and sent every
@@ -159,7 +167,7 @@ vehicleEvents.repairVehicleDamage = function(vehicle)
     local repairCost = math.random(500, 2000)
     local farmId = vehicleEvents.getFarmId()
     if farmId > 0 and g_currentMission and g_currentMission.addMoney then
-        g_currentMission:addMoney(-repairCost, farmId, MoneyType.VEHICLE_REPAIR, true, true)
+        rweAddMoney(-repairCost, farmId, MoneyType.VEHICLE_REPAIR, true, true)
     end
     return repairCost
 end
@@ -243,7 +251,7 @@ vehicleEvents.eventList = {
                 local repairCost = math.random(500, 1500) * intensity
                 local farmId = vehicleEvents.getFarmId()
                 if farmId > 0 and g_currentMission and g_currentMission.addMoney then
-                    g_currentMission:addMoney(-repairCost, farmId, MoneyType.VEHICLE_REPAIR, true, true)
+                    rweAddMoney(-repairCost, farmId, MoneyType.VEHICLE_REPAIR, true, true)
                 end
                 if g_RandomWorldEvents then
                     g_RandomWorldEvents.EVENT_STATE.vehicleAccident = { vehicle = vehicle, damagePercent = damagePercent }

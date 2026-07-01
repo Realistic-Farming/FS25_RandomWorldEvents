@@ -188,10 +188,10 @@ This is a ground-up rewrite for FS25. FS22 savegame settings will not transfer -
 
 ---
 
-## 📬 Support
+## 📬 SupportRe
 
 Found a bug or have a feature request?
-Open an issue on GitHub:
+Open an issue on Git
 
 👉 https://github.com/TheCodingDad-TisonK/FS25_RandomWorldEvents/issues
 

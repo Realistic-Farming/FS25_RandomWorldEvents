@@ -8,6 +8,14 @@
 
 local economicEvents = {}
 
+-- Server-authoritative money. addMoney must run only on the server in multiplayer,
+-- or every client applies the change (desync); the engine syncs the balance back.
+local function rweAddMoney(...)
+    if g_currentMission and g_currentMission:getIsServer() then
+        g_currentMission:addMoney(...)
+    end
+end
+
 economicEvents.getFarmId = function()
     return g_currentMission and g_currentMission.player and g_currentMission.player.farmId or 0
 end
@@ -30,7 +38,7 @@ economicEvents.eventList = {
         func=function(intensity)
             local amount = 5000 + intensity * 2500
             if g_currentMission and g_currentMission.addMoney then
-                g_currentMission:addMoney(amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
+                rweAddMoney(amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
             end
             return string.format("Government subsidy! +€%d landed in your account.", amount)
         end,
@@ -80,7 +88,7 @@ economicEvents.eventList = {
         func=function(intensity)
             local amount = 2000 + 1000 * intensity
             if g_currentMission and g_currentMission.addMoney then
-                g_currentMission:addMoney(-amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
+                rweAddMoney(-amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
             end
             return string.format("Unexpected expense! -€%d deducted.", amount)
         end,
@@ -91,7 +99,7 @@ economicEvents.eventList = {
         func=function(intensity)
             local amount = 1000 * intensity
             if g_currentMission and g_currentMission.addMoney then
-                g_currentMission:addMoney(amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
+                rweAddMoney(amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
             end
             return string.format("Neighbour donated €%d — community spirit!", amount)
         end,
@@ -170,7 +178,7 @@ economicEvents.eventList = {
         func=function(intensity)
             local amount = 3000 + intensity * 1000
             if g_currentMission and g_currentMission.addMoney then
-                g_currentMission:addMoney(amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
+                rweAddMoney(amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
             end
             return string.format("Insurance payout! +€%d deposited.", amount)
         end,
@@ -182,7 +190,7 @@ economicEvents.eventList = {
             local farmMoney = economicEvents.getFarmMoney()
             local refundAmount = math.min(farmMoney * 0.05 * intensity, 10000)
             if refundAmount > 100 and g_currentMission and g_currentMission.addMoney then
-                g_currentMission:addMoney(refundAmount, economicEvents.getFarmId(), MoneyType.OTHER, true)
+                rweAddMoney(refundAmount, economicEvents.getFarmId(), MoneyType.OTHER, true)
                 return string.format("Tax refund processed! +€%d", math.floor(refundAmount))
             end
             return "Small tax adjustment posted — check your account."
@@ -213,7 +221,7 @@ economicEvents.eventList = {
             local farmMoney = economicEvents.getFarmMoney()
             local interest = farmMoney * 0.02 * intensity
             if interest > 100 and g_currentMission and g_currentMission.addMoney then
-                g_currentMission:addMoney(-interest, economicEvents.getFarmId(), MoneyType.LOAN_INTEREST, true)
+                rweAddMoney(-interest, economicEvents.getFarmId(), MoneyType.LOAN_INTEREST, true)
                 return string.format("Loan interest due! -€%d withdrawn.", math.floor(interest))
             end
             return "Loan statement arrived — minimal interest charged this period."
@@ -309,7 +317,7 @@ local function economicTickHandler(rwe)
     end
 
     if amount ~= 0 and g_currentMission.addMoney then
-        g_currentMission:addMoney(amount, farmId, MoneyType.OTHER, false)
+        rweAddMoney(amount, farmId, MoneyType.OTHER, false)
     end
 end
 

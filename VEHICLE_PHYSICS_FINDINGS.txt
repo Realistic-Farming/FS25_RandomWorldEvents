@@ -1,0 +1,199 @@
+============================================================
+FS25 Vehicle Physics - Wrong code vs. Correct code
+RandomWorldEvents : vehicle events / physics override
+============================================================
+
+Every "correct" version below was verified against the GIANTS
+engine source (VehicleMotor.lua, Vehicle.lua, and the Wheels /
+Drivable / Motorized specializations). The "wrong" versions write
+to fields the engine never reads, so they do nothing in-game.
+
+Line references are to the GIANTS source for proof.
+
+
+------------------------------------------------------------
+1) WHEEL GRIP
+------------------------------------------------------------
+WRONG (PhysicsUtils.lua + RandomWorldEvents:updatePhysics):
+
+    for _, wheel in pairs(vehicle.wheels) do
+        local terrain = wheel.contact.groundTypeName   -- no such field
+        wheel.physics.frictionScale = grip             -- no such field
+    end
+
+WHY IT FAILS:
+  * There is no wheel.contact table.
+  * wheel.physics has no frictionScale field. Tire friction is set
+    inside the C engine, not via a Lua scalar.
+  The real surface name comes from the physics object:
+
+CORRECT (read the real surface; you cannot set a friction scalar):
+
+    -- vehicle.spec_wheels.wheels is the real wheel array
+    for _, wheel in ipairs(vehicle.spec_wheels.wheels) do
+        if wheel.physics ~= nil then
+            local surfaceName = wheel.physics:getSurfaceSoundAttributes()
+            -- surfaceName e.g. "asphalt" / "dirt" / "field"
+        end
+    end
+
+  Since grip itself is not a settable Lua value, the honest way to
+  simulate "low grip" is to govern SPEED / ACCELERATION on bad
+  surfaces (see sections 3 and 4), not to fake a friction field.
+
+
+------------------------------------------------------------
+2) SUSPENSION STIFFNESS
+------------------------------------------------------------
+WRONG:
+
+    wheel.suspension.springForce =
+        wheel.suspension.originalSpringForce * stiffness   -- no such field
+
+WHY IT FAILS:
+  * There is no wheel.suspension table. Suspension data lives under
+    wheel.physics.netInfo (e.g. netInfo.suspensionLength) and
+    wheel.physics.deltaY, and is consumed by the engine - it is not
+    a runtime-settable spring-force scalar from Lua.
+
+CORRECT:
+  There is no supported Lua lever to rescale suspension spring force
+  at runtime. This effect cannot be done the way the old code tried;
+  it should be removed rather than left as a silent no-op.
+
+
+------------------------------------------------------------
+3) ENGINE POWER ("engine trouble")
+------------------------------------------------------------
+WRONG (vehicleEvents.lua):
+
+    local motor = vehicle:getMotor()
+    motor.originalPower = motor.maxPower or 100   -- maxPower is nil
+    motor.maxPower = motor.originalPower * 0.9    -- nothing reads this
+
+WHY IT FAILS:
+  * VehicleMotor has NO maxPower field. (It has peakMotorPower and
+    peakMotorTorque, which are derived, not inputs.)
+  * Torque delivered to the physics comes from the torque curve via
+    Motorized:updateMotorProperties() -> setMotorProperties().
+    Setting motor.maxPower changes nothing.
+
+CORRECT (real, restorable "sluggish/limp" engine):
+
+    local motor = vehicle:getMotor()
+    if motor ~= nil then
+        -- accelerationLimit defaults to 2.0 m/s^2 and IS used by the
+        -- physics. Lowering it makes the engine feel weak.
+        motor._rweAccelOrig = motor._rweAccelOrig or motor.accelerationLimit
+        motor:setAccelerationLimit(motor._rweAccelOrig * 0.5)
+    end
+    -- Optionally also cap top speed (section 4) for a true limp-home.
+
+  Restore:
+    motor:setAccelerationLimit(motor._rweAccelOrig)
+
+  NOTE: vehicle damage ALREADY reduces engine torque automatically -
+  getTorqueCurveValue() multiplies by (1 - damage * DAMAGE_TORQUE_REDUCTION)
+  (VehicleMotor.lua getTorqueCurveValue). So an "accident" event that
+  adds damage genuinely weakens the engine for free.
+
+
+------------------------------------------------------------
+4) SPEED BOOST / SPEED LIMIT
+------------------------------------------------------------
+WRONG (vehicleEvents.lua):
+
+    function applyVehicleSpeedBoost(vehicle, multiplier)
+        if not vehicle or not vehicle.setSpeedLimit then return end  -- DEAD
+        ...
+        vehicle:setSpeedLimit(vehicle.speedLimit)
+        vehicle.maxSpeed = vehicle.maxSpeed * multiplier   -- no such field
+    end
+
+WHY IT FAILS:
+  * setSpeedLimit exists on the MOTOR, not on the vehicle, so
+    "vehicle.setSpeedLimit" is nil and the function returns
+    immediately every time - the boost never runs.
+  * The vehicle has no maxSpeed field.
+  * Even the motor's speed limit is recomputed every frame from
+    getSpeedLimit() + cruise control, so a one-shot set is wiped.
+
+CORRECT (use the real raw field the engine reads every frame):
+
+    -- Vehicle:getSpeedLimit() -> getRawSpeedLimit() returns
+    -- self.speedLimit (km/h). It persists and feeds the motor.
+    vehicle._rweSpeedOrig = vehicle._rweSpeedOrig or vehicle.speedLimit
+    vehicle.speedLimit = vehicle._rweSpeedOrig * multiplier   -- down OR up
+
+    -- To exceed the gear-capped top speed (true turbo), also scale
+    -- the motor's max forward speed (m/s):
+    local motor = vehicle:getMotor()
+    if motor ~= nil then
+        motor.maxForwardSpeed = motor.maxForwardSpeedOrigin * multiplier
+    end
+
+  Restore:
+    vehicle.speedLimit   = vehicle._rweSpeedOrig
+    motor.maxForwardSpeed = motor.maxForwardSpeedOrigin
+
+  Proof: Vehicle.lua getSpeedLimit/getRawSpeedLimit read self.speedLimit;
+  VehicleMotor.new stores maxForwardSpeedOrigin; the motor's per-frame
+  speed cap uses these.
+
+
+------------------------------------------------------------
+5) SPEED -> km/h CONVERSION (display bug)
+------------------------------------------------------------
+WRONG (PhysicsUtils:showPhysicsInfo):
+
+    local speedKmh = vehicle.lastSpeedReal * 3.6   -- 1000x too small
+
+WHY IT FAILS:
+  * lastSpeedReal is in m/ms (metres per millisecond), not m/s.
+    The engine converts with * 3600 everywhere (VehicleMotor.lua
+    uses lastSpeedReal*3600).
+
+CORRECT:
+
+    local speedKmh = vehicle:getLastSpeed()          -- already km/h
+    -- or, from the raw field:
+    local speedKmh = vehicle.lastSpeedReal * 3600
+
+
+------------------------------------------------------------
+6) STEERING (how to actually influence it)
+------------------------------------------------------------
+There is no "steer the wheels" setter. The engine consumes steering
+input from the Drivable spec each frame:
+
+    vehicle.spec_drivable.lastInputValues.axisSteer   -- -1..1
+
+To nudge steering (e.g. crosswind pull, mud pull, blowout), write
+that value in an onUpdate/onPreUpdate hook. The remembered steering
+angle itself is vehicle.rotatedTime, clamped by vehicle.maxRotTime
+(right) and vehicle.minRotTime (left); scaling those changes the max
+steering angle.
+
+  (Technique credit: "RealPhysics Steering" by Tubez47, which feeds
+   lastInputValues.axisSteer back into Drivable.)
+
+
+------------------------------------------------------------
+SUMMARY
+------------------------------------------------------------
+Real, engine-respected vehicle levers from Lua:
+  * vehicle.speedLimit ............ km/h cap, read every frame
+  * motor.maxForwardSpeed ......... true top speed (restore from
+                                    motor.maxForwardSpeedOrigin)
+  * motor:setAccelerationLimit() .. sluggish / weak engine feel
+  * vehicle:addDamageAmount() ..... real, auto-reduces torque + speed
+  * wheel.physics:getSurfaceSoundAttributes() .. real surface (read)
+  * spec_drivable.lastInputValues.axisSteer .... steering input
+  * vehicle:getLastSpeed() ........ km/h (don't use lastSpeedReal*3.6)
+
+Not settable from Lua (remove rather than fake):
+  * wheel friction / grip scalar
+  * wheel suspension spring force
+  * motor.maxPower  (does not exist)
+  * vehicle.maxSpeed (does not exist)
+============================================================
