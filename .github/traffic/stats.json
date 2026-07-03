@@ -15941,7 +15941,7 @@
     "watchers": 2
   },
   {
-    "timestamp": "2026-07-03T06:31:48Z",
+    "timestamp": "2026-07-03T12:11:07Z",
     "date": "2026-07-03",
     "views": {
       "count": 175,
@@ -16031,6 +16031,15 @@
       }
     ],
     "releases": [
+      {
+        "assets": [
+          {
+            "downloads": 0,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.7.1"
+      },
       {
         "assets": [
           {
