@@ -1,25 +1,31 @@
 # TODO: FS25_RandomWorldEvents
 
 > Ecosystem role: **World and NPCs** · Part of the Realistic Farming connected suite
-> Status: TEMPLATE (working checklist). Fill from the ecosystem audit/baseline, then keep it current.
+> Status: FILLED from the ecosystem audit/baseline, kept current.
 > Convention: `[ ]` open · `[~]` in progress · `[x]` done · `[!]` blocked. Newest at the top of each section.
 
 ## From the ecosystem audit (Arissani)
-_Action items that come out of the audit/baseline go here first so nothing is missed._
-- [ ] _audit item_
+- [ ] Fast-track F17: the event id is `geopolitical`, not `geopolitical_crisis`. Correct it wherever referenced.
+- [ ] Add a save hook so state is crash-safe (today it saves only on delete()).
+- [ ] Remove the RWESettingsIntegration ESC injection (19 settings) and the FSBaseMission draw + mouseEvent hooks; keep the Shift+O RWESettingsPanel.
 
 ## Bugs
-- [ ] _bug_
+- [!] CRITICAL (MP): `economicEvents.lua` calls `addMoney()` in 6+ handlers with no `getIsServer()` guard, so effects apply per client. Add one guard at `applyActiveEventEffects()`.
+- [!] Crash data loss: settings and active event state save only on delete(); a crash loses them.
 
 ## Features / enhancements
-- [ ] _feature_
+- [ ] Bedrock migration per Point 1-5.
 
 ## Cross-mod integration
-_Wiring to StateLedger / NetworkSync / MasterHUD / SettingsHub / FarmTablet / peer mods._
-- [ ] _integration task_
+- [ ] StateLedger: `RandomWorldEvents_Settings` (26 keys) + `RandomWorldEvents_EventState` (4 keys), with a save hook.
+- [ ] NetworkSync: `RandomWorldEvents_Sync`.
+- [ ] MasterHUD: 2 panels (EventHUD + SettingsPanel).
+- [ ] SettingsHub: register the 19 settings.
+- [x] Companion surface: `RWEEconomicAPI` subsystem (getPriceModifier) is consumed by MarketDynamics; top-level reads defined.
 
 ## Docs / localization
-- [ ] _doc or translation task (remember all 26 languages)_
+- [ ] Keep all 26 languages in step for any new setting.
+- [ ] Update README/version on each release.
 
 ## Blocked / waiting on
-- [!] _blocked item + what it waits on_
+- [!] Vehicle-event server-gate exemption decision (waits on: audit answer, whether physics events skip the getIsServer gate since they are local-player physics, not farm balance).

@@ -1,7 +1,7 @@
 # Roadmap: FS25_RandomWorldEvents
 
 > Ecosystem role: **World and NPCs** · Part of the Realistic Farming connected suite
-> Status: TEMPLATE (complete after the ecosystem audit/baseline).
+> Status: FILLED from the ecosystem audit/baseline.
 > Forward-looking only. Shipped history lives in CHANGELOG.md and the releases.
 
 ## How to use this file
@@ -10,23 +10,27 @@
 - Keep it honest: near-term is committed, mid-term is intended, long-term is aspirational.
 
 ## Current baseline
-- Version at baseline: _modDesc version_
-- Audit reference: _link to audit doc / CLAUDE-LOG entry_
-- Baseline date: _..._
+- Version at baseline: confirm from modDesc.xml
+- Audit reference: ecosystem-dev-tracking Point 1-5 (FS25_RandomWorldEvents, 2026-06-30)
+- Baseline date: 2026-06-30
 
 ## Near-term (next release cycle)
-- [ ] _item_
+- [ ] Fix the multiplayer money bug: add a `getIsServer()` gate at `applyActiveEventEffects()` so the 6+ economicEvents `addMoney()` calls apply once, not per client.
+- [ ] Crash-safe save: add a save hook (StateLedger) so event state and settings persist mid-session, not only on delete().
+- [ ] Correct the event id `geopolitical` (not `geopolitical_crisis`) wherever it is referenced.
 
 ## Mid-term (this season)
-- [ ] _item_
+- [ ] StateLedger split: `RandomWorldEvents_Settings` (26 keys) + `RandomWorldEvents_EventState` (4 keys); preserve the remaining-ms to absolute-timestamp conversion on load.
+- [ ] NetworkSync channel `RandomWorldEvents_Sync`.
+- [ ] MasterHUD: 2 panels (EventHUD + Shift+O SettingsPanel); remove the FSBaseMission.draw and mouseEvent hooks.
+- [ ] SettingsHub: register the 19 settings; remove the RWESettingsIntegration ESC injection.
 
 ## Long-term / aspirational
-- [ ] _item_
+- [ ] Richer event catalogue and categories without breaking the economic subsystem API.
 
 ## Cross-mod / ecosystem dependencies
-_Roadmap items that depend on a peer mod or a core-API bedrock mod._
-- [ ] _item (blocks on: which mod / which bedrock engine)_
+- [ ] Read by MarketDynamics (`getPriceModifier` via the economic subsystem).
+- [ ] All four bedrock migrations (blocks on: StateLedger, NetworkSync, MasterHUD, SettingsHub).
 
 ## Deferred / parked
-_Ideas intentionally not scheduled, each with a one-line reason._
-- _..._
+- Event scheduling / prediction API: parked by design. Events are probabilistic; peers read active state and cooldown only.
