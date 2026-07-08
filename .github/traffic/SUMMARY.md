@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-07-06T00:04:54Z
-**Days tracked:** 83 | **Download snapshots:** 289 (hourly)
+**Last updated:** 2026-07-08T00:07:15Z
+**Days tracked:** 84 | **Download snapshots:** 293 (hourly)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 199 | 84 |
-| Git Clones | 722 | 228 |
+| Page Views | 205 | 87 |
+| Git Clones | 673 | 210 |
 
 > **Engagement:** 2.3 pages per visitor (14-day avg)
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 545 of 84 visitors cloned or downloaded (**648.8%**)
+> **14-day conversion:** 530 of 87 visitors cloned or downloaded (**609.1%**)
 >
-> Unique cloners: 228 | Release downloads: 317
+> Unique cloners: 210 | Release downloads: 320
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 317 |
-| Git Clones (14-day) | 722 |
-| **Total Acquisitions** | **1039** |
+| Zip Downloads | 320 |
+| Git Clones (14-day) | 673 |
+| **Total Acquisitions** | **993** |
 
 ---
 
@@ -54,9 +54,9 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 118 | 48 |
-| Google | 23 | 13 |
-| kingmods.net | 19 | 11 |
+| github.com | 114 | 47 |
+| Google | 24 | 14 |
+| kingmods.net | 22 | 13 |
 
 ---
 
@@ -76,16 +76,16 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 100 | 75 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0` | 37 | 28 |
-| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 11 | 3 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 8 | 5 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 105 | 77 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0` | 39 | 29 |
+| `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 12 | 4 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 6 | 5 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 4 | 3 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4` | 4 | 3 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/tree/master` | 3 | 3 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/pull/24` | 3 | 2 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/tree/development` | 3 | 2 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/blob/master/RandomWorldEvents.lua` | 2 | 2 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/blob/master/modDesc.xml` | 2 | 2 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/tree/master` | 2 | 2 |
 
 ---
 
