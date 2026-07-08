@@ -16913,26 +16913,26 @@
     "watchers": 2
   },
   {
-    "timestamp": "2026-07-08T00:06:57Z",
+    "timestamp": "2026-07-08T12:20:42Z",
     "date": "2026-07-08",
     "views": {
       "count": 205,
       "uniques": 87
     },
     "clones": {
-      "count": 673,
-      "uniques": 210
+      "count": 650,
+      "uniques": 204
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 114,
-        "uniques": 47
+        "count": 115,
+        "uniques": 49
       },
       {
         "referrer": "Google",
-        "count": 24,
-        "uniques": 14
+        "count": 23,
+        "uniques": 13
       },
       {
         "referrer": "kingmods.net",
@@ -16950,8 +16950,8 @@
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0",
         "title": "/releases/tag/v2.1.7.0",
-        "count": 39,
-        "uniques": 29
+        "count": 41,
+        "uniques": 31
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents",
@@ -16968,12 +16968,6 @@
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/issues",
         "title": "/issues",
-        "count": 4,
-        "uniques": 3
-      },
-      {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.6.4",
-        "title": "/releases/tag/v2.1.6.4",
         "count": 4,
         "uniques": 3
       },
@@ -17000,6 +16994,12 @@
         "title": "/blob/master/RandomWorldEvents.lua",
         "count": 2,
         "uniques": 2
+      },
+      {
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/blob/master/modDesc.xml",
+        "title": "/blob/master/modDesc.xml",
+        "count": 2,
+        "uniques": 2
       }
     ],
     "releases": [
@@ -17015,7 +17015,7 @@
       {
         "assets": [
           {
-            "downloads": 38,
+            "downloads": 39,
             "name": "FS25_RandomWorldEvents.zip"
           }
         ],
