@@ -15,7 +15,7 @@
 - Baseline date: 2026-06-30
 
 ## Near-term (next release cycle)
-- [ ] Fix the multiplayer money bug: add a `getIsServer()` gate at `applyActiveEventEffects()` so the 6+ economicEvents `addMoney()` calls apply once, not per client.
+- [x] MP money bug (F16): DONE in v2.1.7.1. Money routes through `rweAddMoney`, gated on `getIsServer` (confirmed by the 2026-07-09 money-authority sweep).
 - [ ] Crash-safe save: add a save hook (StateLedger) so event state and settings persist mid-session, not only on delete().
 - [ ] Correct the event id `geopolitical` (not `geopolitical_crisis`) wherever it is referenced.
 

@@ -10,7 +10,7 @@
 - [ ] Remove the RWESettingsIntegration ESC injection (19 settings) and the FSBaseMission draw + mouseEvent hooks; keep the Shift+O RWESettingsPanel.
 
 ## Bugs
-- [!] CRITICAL (MP): `economicEvents.lua` calls `addMoney()` in 6+ handlers with no `getIsServer()` guard, so effects apply per client. Add one guard at `applyActiveEventEffects()`.
+- [x] MP money bug (F16): RESOLVED in v2.1.7.1. Money now routes through `rweAddMoney`, which gates on `getIsServer` across all five event files (confirmed by the 2026-07-09 ecosystem money-authority sweep).
 - [!] Crash data loss: settings and active event state save only on delete(); a crash loses them.
 
 ## Features / enhancements
