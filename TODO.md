@@ -5,7 +5,7 @@
 > Convention: `[ ]` open · `[~]` in progress · `[x]` done · `[!]` blocked. Newest at the top of each section.
 
 ## From the ecosystem audit (Arissani)
-- [ ] Fast-track F17: the event id is `geopolitical`, not `geopolitical_crisis`. Correct it wherever referenced.
+- [x] Fast-track F17: MISATTRIBUTED to RandomWorldEvents. The `geopolitical` event id belongs to MarketDynamics (GeopoliticalEvent.lua:14, correct in source); RWE defines no such event. The wrong `geopolitical_crisis` appears only in the DairyCore BUILD-BRIEF. No RWE code change; handed to Arissani to correct the brief (ledger 2026-07-09).
 - [ ] Add a save hook so state is crash-safe (today it saves only on delete()).
 - [ ] Remove the RWESettingsIntegration ESC injection (19 settings) and the FSBaseMission draw + mouseEvent hooks; keep the Shift+O RWESettingsPanel.
 
