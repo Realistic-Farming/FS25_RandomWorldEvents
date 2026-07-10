@@ -1084,7 +1084,13 @@ installInputHooks = function()
 end
 
 local function draw(mission)
-    if rweManager then
+    -- When MasterHUD is present it drives RWEMasterHUDBridge.drawStack in its own
+    -- suspend-aware loop, so this fallback hook stands down to avoid a double draw.
+    -- The draw body lives in drawStack so the two paths can never diverge.
+    if RWEMasterHUDBridge and RWEMasterHUDBridge.active then return end
+    if RWEMasterHUDBridge then
+        RWEMasterHUDBridge.drawStack()
+    elseif rweManager then
         -- HUD only draws when no GUI/menu is open
         if g_gui and not g_gui:getIsGuiVisible() then
             if rweManager.eventHUD then
@@ -1148,6 +1154,22 @@ local function loadFinished(mission, ...)
             end
 
             g_inputBinding:endActionEventsModification()
+        end
+
+        -- ── Bedrock core-API bridges (delegate-when-present) ──────────────────
+        -- Register with the shared ecosystem engines when they are installed.
+        -- Each no-ops safely when its engine is absent, leaving RWE's own path
+        -- (own XML, own draw hook) unchanged. StateLedger, when present, is the
+        -- load source of truth for the active-event snapshot: applyState overwrites
+        -- the _saved* fields imported from the own XML, and the restore block just
+        -- below then reconstructs EVENT_STATE from them (single restore path).
+        if RWESettingsHubBridge then RWESettingsHubBridge.register(rweManager) end
+        if RWEMasterHUDBridge   then RWEMasterHUDBridge.register(rweManager)   end
+        if RWEStateLedgerBridge then
+            RWEStateLedgerBridge.register(rweManager)
+            if RWEStateLedgerBridge.hasState() then
+                RWEStateLedgerBridge.applyState(rweManager)
+            end
         end
 
         -- Restore active event state saved before this session ended.

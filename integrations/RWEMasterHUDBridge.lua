@@ -1,0 +1,74 @@
+-- =========================================================
+-- Random World Events - MasterHUD bridge
+-- =========================================================
+-- Author: TisonK
+-- =========================================================
+-- Optional bridge to FS25_MasterHUD (bedrock). RWE ships standalone, so this is
+-- strictly delegate-when-present, mirroring SoilFertilizer / TaxMod:
+--   * MasterHUD installed -> RWE registers its self-drawn HUD stack (the event
+--     notification HUD overlay and the custom in-world settings panel) as a
+--     subscribe() element. MasterHUD then owns the single suspend-aware draw loop
+--     and cross-mod ordering, so RWE's HUD stacks cleanly with the rest of the
+--     ecosystem instead of every mod hooking FSBaseMission.draw independently.
+--   * MasterHUD absent -> RWE's own FSBaseMission.draw hook runs the exact same
+--     stack, exactly as before.
+--
+-- drawStack() is the single source of the draw body, shared with the fallback
+-- hook so the two paths can never diverge. It reproduces the own hook's guards
+-- byte-for-byte: the event HUD only draws while no GUI/menu is open, the settings
+-- panel draws whenever open (it has its own isOpen guard and rebuilds hitboxes
+-- each frame).
+--
+-- Mouse routing stays on the mod's own FSBaseMission.mouseEvent hook (MasterHUD
+-- owns draw ordering + suspend, not input). The ESC > Settings injection
+-- (RWESettingsIntegration) is g_gui-managed and stays there; it is not a HUD.
+--
+-- The cross-mod handle is g_currentMission.masterHUD (published in Mission00.load).
+-- =========================================================
+
+RWEMasterHUDBridge = {}
+
+RWEMasterHUDBridge.HUD_ID = "RandomWorldEvents_HUD"
+RWEMasterHUDBridge.active = false   -- MasterHUD present and we registered
+
+-- The full RWE HUD draw body. Byte-for-byte the same as the standalone
+-- FSBaseMission.draw hook. Resolves the manager from the canonical global so it
+-- can be driven either by MasterHUD's loop or by RWE's own hook.
+function RWEMasterHUDBridge.drawStack()
+    local mgr = g_RandomWorldEvents
+    if mgr == nil then return end
+
+    -- Event HUD only draws when no GUI/menu is open.
+    if g_gui and not g_gui:getIsGuiVisible() then
+        if mgr.eventHUD then mgr.eventHUD:draw() end
+    end
+
+    -- Settings panel draws independently — it has its own isOpen guard and must
+    -- always render when open so hitboxes are rebuilt each frame.
+    if mgr.settingsPanel then mgr.settingsPanel:draw() end
+end
+
+-- Register with MasterHUD if present. Called from loadFinished
+-- (loadMission00Finished), after the HUD has published its g_currentMission handle.
+function RWEMasterHUDBridge.register(mgr)
+    RWEMasterHUDBridge.active = false
+
+    local hud = (g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD
+    if hud == nil then
+        Logging.info("[RWE] MasterHUD not detected; RWE HUD uses its own draw hook")
+        return
+    end
+
+    local ok, err = pcall(function()
+        hud:subscribe(RWEMasterHUDBridge.HUD_ID, {
+            draw = RWEMasterHUDBridge.drawStack,
+        })
+    end)
+
+    if ok then
+        RWEMasterHUDBridge.active = true
+        Logging.info("[RWE] Registered RWE HUD with MasterHUD (single draw loop + menu-suspend)")
+    else
+        Logging.warning("[RWE] MasterHUD registration failed: %s (using own draw hook)", tostring(err))
+    end
+end
