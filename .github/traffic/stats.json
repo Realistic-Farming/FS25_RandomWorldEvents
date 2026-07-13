@@ -17642,57 +17642,57 @@
     "watchers": 2
   },
   {
-    "timestamp": "2026-07-13T06:17:04Z",
+    "timestamp": "2026-07-13T18:42:29Z",
     "date": "2026-07-13",
     "views": {
-      "count": 146,
-      "uniques": 84
+      "count": 142,
+      "uniques": 83
     },
     "clones": {
-      "count": 491,
-      "uniques": 134
+      "count": 495,
+      "uniques": 133
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 90,
-        "uniques": 54
+        "count": 89,
+        "uniques": 57
       },
       {
         "referrer": "Google",
-        "count": 19,
+        "count": 21,
         "uniques": 12
       },
       {
         "referrer": "kingmods.net",
-        "count": 15,
-        "uniques": 9
+        "count": 13,
+        "uniques": 7
       }
     ],
     "popular_paths": [
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents",
         "title": "Overview",
-        "count": 94,
+        "count": 92,
         "uniques": 75
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0",
         "title": "/releases/tag/v2.1.7.0",
-        "count": 28,
-        "uniques": 24
+        "count": 25,
+        "uniques": 21
       },
       {
         "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents",
         "title": "Overview",
-        "count": 10,
-        "uniques": 5
+        "count": 11,
+        "uniques": 4
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases",
         "title": "/releases",
-        "count": 4,
-        "uniques": 4
+        "count": 5,
+        "uniques": 5
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/tree/master",
@@ -17719,14 +17719,14 @@
         "uniques": 1
       },
       {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/issues",
-        "title": "/issues",
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.0.0.4",
+        "title": "/releases/tag/v2.0.0.4",
         "count": 1,
         "uniques": 1
       },
       {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.0.0.4",
-        "title": "/releases/tag/v2.0.0.4",
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.1",
+        "title": "/releases/tag/v2.1.7.1",
         "count": 1,
         "uniques": 1
       }
@@ -17744,7 +17744,7 @@
       {
         "assets": [
           {
-            "downloads": 44,
+            "downloads": 45,
             "name": "FS25_RandomWorldEvents.zip"
           }
         ],
