@@ -82,6 +82,8 @@ RandomWorldEvents = {
 
 RandomWorldEvents.EVENT_STATE = {
     activeEvent = nil,
+    activeIntensity = nil,  -- intensity (1-5) the active event was triggered at (companion read API)
+    activeCategory = nil,   -- category of the active event (companion read API)
     eventStartTime = 0,
     eventDuration = 0,
     eventData = {},
@@ -213,6 +215,7 @@ function RandomWorldEvents:createSettingsManager()
                 -- Load saved event state (temp fields; applied in loadFinished when g_currentMission.time is valid)
                 local savedEvent = xml:getString(manager.XMLTAG..".eventState.activeEvent", "")
                 settingsObject._savedActiveEvent = savedEvent ~= "" and savedEvent or nil
+                settingsObject._savedActiveIntensity = xml:getInt(manager.XMLTAG..".eventState.intensity", 0)
                 settingsObject._savedRemainingMs = xml:getFloat(manager.XMLTAG..".eventState.remainingMs", 0)
                 settingsObject._savedCooldownRemainingMs = xml:getFloat(manager.XMLTAG..".eventState.cooldownRemainingMs", 0)
                 settingsObject._savedMidpointFired = xml:getBool(manager.XMLTAG..".eventState.midpointFired", false)
@@ -286,6 +289,7 @@ function RandomWorldEvents:createSettingsManager()
                 local remaining = math.max(0, (es.eventStartTime + (es.eventDuration or 0)) - g_currentMission.time)
                 xml:setFloat(manager.XMLTAG..".eventState.remainingMs", remaining)
                 xml:setBool(manager.XMLTAG..".eventState.midpointFired", es.midpointFired or false)
+                xml:setInt(manager.XMLTAG..".eventState.intensity", es.activeIntensity or 0)
             else
                 xml:setString(manager.XMLTAG..".eventState.activeEvent", "")
             end
@@ -343,6 +347,36 @@ end
 
 function RandomWorldEvents:getVehicle()
     return g_currentMission and g_currentMission.controlledVehicle or nil
+end
+
+-- =====================
+-- COMPANION READ API
+-- Read-only surface for companion mods (e.g. DairyCore) reached via
+-- g_currentMission.randomWorldEvents. RWE runs at most one event at a time and
+-- is server-authoritative; these read the server-side event state.
+-- =====================
+
+--- The currently active world event, or nil when none is active.
+--- @return table|nil  A fresh copy: { name, intensity (1-5), category, remainingMs }.
+function RandomWorldEvents:getActiveEvent()
+    local es = self.EVENT_STATE
+    if es == nil or es.activeEvent == nil then return nil end
+    local now = g_currentMission and g_currentMission.time or 0
+    return {
+        name        = es.activeEvent,
+        intensity   = es.activeIntensity or self.events.intensity or 1,
+        category    = es.activeCategory,
+        remainingMs = math.max(0, (es.eventStartTime + (es.eventDuration or 0)) - now),
+    }
+end
+
+--- Intensity (1-5) of the currently active event, or 0 when none is active.
+--- Falls back to the configured global intensity if an event is active but its
+--- stored intensity is missing (e.g. a pre-upgrade save).
+function RandomWorldEvents:getEventIntensity()
+    local es = self.EVENT_STATE
+    if es == nil or es.activeEvent == nil then return 0 end
+    return es.activeIntensity or self.events.intensity or 1
 end
 
 function RandomWorldEvents:registerEvent(eventData)
@@ -467,9 +501,11 @@ function RandomWorldEvents:_activateEvent(event, intensity)
         duration = math.random(event.duration.min, event.duration.max) * 60000
     end
 
-    self.EVENT_STATE.activeEvent    = event.name
-    self.EVENT_STATE.eventStartTime = g_currentMission.time
-    self.EVENT_STATE.eventDuration  = duration
+    self.EVENT_STATE.activeEvent     = event.name
+    self.EVENT_STATE.activeIntensity = intensity
+    self.EVENT_STATE.activeCategory  = event.category
+    self.EVENT_STATE.eventStartTime  = g_currentMission.time
+    self.EVENT_STATE.eventDuration   = duration
 
     -- Reset per-event immersion state
     self.EVENT_STATE.midpointFired   = false
@@ -590,7 +626,9 @@ function RandomWorldEvents:update(dt)
                 self:notifyEvent(message, event and event.category, nil)
             end
             Logging.info("[RWE] Event ended: " .. tostring(self.EVENT_STATE.activeEvent))
-            self.EVENT_STATE.activeEvent = nil
+            self.EVENT_STATE.activeEvent     = nil
+            self.EVENT_STATE.activeIntensity = nil
+            self.EVENT_STATE.activeCategory  = nil
         end
     end
     
@@ -720,7 +758,9 @@ function RandomWorldEvents:consoleCommandEnd()
         self:notifyEvent(message, event and event.category, nil)
     end
     
-    self.EVENT_STATE.activeEvent = nil
+    self.EVENT_STATE.activeEvent     = nil
+    self.EVENT_STATE.activeIntensity = nil
+    self.EVENT_STATE.activeCategory  = nil
     return "Event ended"
 end
 
@@ -1187,15 +1227,18 @@ local function loadFinished(mission, ...)
             if savedEvent ~= nil and savedEvent.category == "vehicle" then
                 Logging.info("[RWE] Not resuming transient vehicle event from save: " .. tostring(savedName))
             else
-                es.activeEvent    = savedName
-                es.eventStartTime = g_currentMission.time
-                es.eventDuration  = mgr._savedRemainingMs or 0
-                es.midpointFired  = mgr._savedMidpointFired or false
-                es.cooldownUntil  = g_currentMission.time + (mgr._savedCooldownRemainingMs or 0)
+                es.activeEvent     = savedName
+                es.activeIntensity = (mgr._savedActiveIntensity and mgr._savedActiveIntensity > 0) and mgr._savedActiveIntensity or nil
+                es.activeCategory  = savedEvent and savedEvent.category or nil
+                es.eventStartTime  = g_currentMission.time
+                es.eventDuration   = mgr._savedRemainingMs or 0
+                es.midpointFired   = mgr._savedMidpointFired or false
+                es.cooldownUntil   = g_currentMission.time + (mgr._savedCooldownRemainingMs or 0)
                 Logging.info("[RWE] Resumed active event from save: " .. tostring(savedName))
             end
 
             mgr._savedActiveEvent         = nil
+            mgr._savedActiveIntensity     = nil
             mgr._savedRemainingMs         = nil
             mgr._savedCooldownRemainingMs = nil
             mgr._savedMidpointFired       = nil
