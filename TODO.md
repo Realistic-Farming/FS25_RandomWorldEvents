@@ -6,21 +6,21 @@
 
 ## From the ecosystem audit (Arissani)
 - [x] Fast-track F17: MISATTRIBUTED to RandomWorldEvents. The `geopolitical` event id belongs to MarketDynamics (GeopoliticalEvent.lua:14, correct in source); RWE defines no such event. The wrong `geopolitical_crisis` appears only in the DairyCore BUILD-BRIEF. No RWE code change; handed to Arissani to correct the brief (ledger 2026-07-09).
-- [ ] Add a save hook so state is crash-safe (today it saves only on delete()).
-- [ ] Remove the RWESettingsIntegration ESC injection (19 settings) and the FSBaseMission draw + mouseEvent hooks; keep the Shift+O RWESettingsPanel.
+- [x] Add a save hook so state is crash-safe. DONE: event state persists on the game save cycle (server-only), not just on delete().
+- [~] SettingsHub + MasterHUD bridged; removing the RWESettingsIntegration ESC injection (19 settings) and the FSBaseMission draw + mouseEvent hooks is deferred (kept as the standalone fallback; Shift+O RWESettingsPanel retained).
 
 ## Bugs
 - [x] MP money bug (F16): RESOLVED in v2.1.7.1. Money now routes through `rweAddMoney`, which gates on `getIsServer` across all five event files (confirmed by the 2026-07-09 ecosystem money-authority sweep).
-- [!] Crash data loss: settings and active event state save only on delete(); a crash loses them.
+- [x] Crash data loss RESOLVED: event state now persists on the game save cycle (server-only), not only on delete().
 
 ## Features / enhancements
-- [ ] Bedrock migration per Point 1-5.
+- [x] Bedrock migration DONE: StateLedger + SettingsHub + MasterHUD bridged (NetworkSync N/A by design).
 
 ## Cross-mod integration
-- [ ] StateLedger: `RandomWorldEvents_Settings` (26 keys) + `RandomWorldEvents_EventState` (4 keys), with a save hook.
-- [ ] NetworkSync: `RandomWorldEvents_Sync`.
-- [ ] MasterHUD: 2 panels (EventHUD + SettingsPanel).
-- [ ] SettingsHub: register the 19 settings.
+- [x] StateLedger: `RandomWorldEvents_Settings` + `RandomWorldEvents_EventState` bridge live, with the game-save-cycle save hook (delegate-when-present).
+- [x] NetworkSync: N/A by design (server-authoritative event state; no per-frame sync channel needed).
+- [x] MasterHUD: EventHUD + settings panel bridged (own draw stands down when active).
+- [x] SettingsHub: 19 settings registered (selfPersisted). ESC injection retained as the standalone fallback.
 - [x] Companion surface: `RWEEconomicAPI` subsystem (getPriceModifier) is consumed by MarketDynamics; top-level reads defined.
 
 ## Docs / localization

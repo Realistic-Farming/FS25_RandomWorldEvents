@@ -16,21 +16,21 @@
 
 ## Near-term (next release cycle)
 - [x] MP money bug (F16): DONE in v2.1.7.1. Money routes through `rweAddMoney`, gated on `getIsServer` (confirmed by the 2026-07-09 money-authority sweep).
-- [ ] Crash-safe save: add a save hook (StateLedger) so event state and settings persist mid-session, not only on delete().
-- [ ] Correct the event id `geopolitical` (not `geopolitical_crisis`) wherever it is referenced.
+- [x] Crash-safe save: event state persists on the game save cycle (server-only), not only on delete(). DONE.
+- [x] Event id `geopolitical`: N/A for RWE. It was misattributed - the id belongs to MarketDynamics (correct in source); the wrong `geopolitical_crisis` was only in the DairyCore brief (handed to Arissani). No RWE change.
 
 ## Mid-term (this season)
-- [ ] StateLedger split: `RandomWorldEvents_Settings` (26 keys) + `RandomWorldEvents_EventState` (4 keys); preserve the remaining-ms to absolute-timestamp conversion on load.
-- [ ] NetworkSync channel `RandomWorldEvents_Sync`.
-- [ ] MasterHUD: 2 panels (EventHUD + Shift+O SettingsPanel); remove the FSBaseMission.draw and mouseEvent hooks.
-- [ ] SettingsHub: register the 19 settings; remove the RWESettingsIntegration ESC injection.
+- [x] StateLedger split: `RandomWorldEvents_Settings` + `RandomWorldEvents_EventState` bridged (remaining-ms to absolute-timestamp conversion preserved on load).
+- [x] NetworkSync: N/A by design (server-authoritative event state).
+- [~] MasterHUD: EventHUD + settings panel bridged (own draw stands down); removing the FSBaseMission.draw and mouseEvent hooks is deferred (kept as fallback).
+- [~] SettingsHub: 19 settings registered (selfPersisted); removing the RWESettingsIntegration ESC injection is deferred (kept as fallback).
 
 ## Long-term / aspirational
 - [ ] Richer event catalogue and categories without breaking the economic subsystem API.
 
 ## Cross-mod / ecosystem dependencies
 - [ ] Read by MarketDynamics (`getPriceModifier` via the economic subsystem).
-- [ ] All four bedrock migrations (blocks on: StateLedger, NetworkSync, MasterHUD, SettingsHub).
+- [x] Bedrock migrations DONE: StateLedger + SettingsHub + MasterHUD bridged (NetworkSync N/A by design).
 
 ## Deferred / parked
 - Event scheduling / prediction API: parked by design. Events are probabilistic; peers read active state and cooldown only.
