@@ -221,7 +221,9 @@ local function specialTickHandler(rwe)
         rweAddMoney(amount, farmId, MoneyType.OTHER, false)
     end
 
-    if (s.xpBonus or s.xpMalus) and g_farmManager then
+    -- Server-authoritative reputation: like rweAddMoney above, rep writes must
+    -- only run on the server or clients would apply the change locally too.
+    if (s.xpBonus or s.xpMalus) and g_farmManager and g_currentMission:getIsServer() then
         local farm = g_farmManager:getFarmById(farmId)
         if farm and farm.repPoints ~= nil then
             if s.xpBonus then
