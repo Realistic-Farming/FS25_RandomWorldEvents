@@ -10,12 +10,13 @@
 - Keep it honest: near-term is committed, mid-term is intended, long-term is aspirational.
 
 ## Current baseline
-- Version at baseline: confirm from modDesc.xml
+- Version at baseline: v2.1.7.1
 - Audit reference: ecosystem-dev-tracking Point 1-5 (FS25_RandomWorldEvents, 2026-06-30)
-- Baseline date: 2026-06-30
+- Baseline date: 2026-06-30 (updated 2026-07-25)
 
 ## Near-term (next release cycle)
 - [x] MP money bug (F16): DONE in v2.1.7.1. Money routes through `rweAddMoney`, gated on `getIsServer` (confirmed by the 2026-07-09 money-authority sweep).
+- [x] Server-gate the special-event reputation write (7b076c4) and remove the last `Logging.debug` nil-call crash in the vehicle input hook (#20, a49fcbc). DONE.
 - [x] Crash-safe save: event state persists on the game save cycle (server-only), not only on delete(). DONE.
 - [x] Event id `geopolitical`: N/A for RWE. It was misattributed - the id belongs to MarketDynamics (correct in source); the wrong `geopolitical_crisis` was only in the DairyCore brief (handed to Arissani). No RWE change.
 
