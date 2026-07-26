@@ -591,16 +591,19 @@ function RandomWorldEvents:update(dt)
 
     -- Event system update
     if self.events.enabled then
+        if g_server == nil then return end
         if g_currentMission.time > (self.EVENT_STATE.cooldownUntil or 0) then
             local chance = self.events.frequency * 0.001
             local roll = math.random()
             if roll <= chance then
                 self:dbg(string.format("roll %.4f <= chance %.4f — attempting trigger", roll, chance), 2)
-                self:triggerRandomEvent()
+                local triggered = self:triggerRandomEvent()
                 local cooldownMs = self.events.cooldown * 60000
                 local frequencyFactor = (11 - self.events.frequency) / 10
-                self.EVENT_STATE.cooldownUntil = g_currentMission.time + (cooldownMs * frequencyFactor)
-                self:dbg(string.format("cooldown set: %.1f min", (cooldownMs * frequencyFactor) / 60000), 2)
+                if triggered then
+                    self.EVENT_STATE.cooldownUntil = g_currentMission.time + (cooldownMs * frequencyFactor)
+                    self:dbg(string.format("cooldown set: %.1f min", (cooldownMs * frequencyFactor) / 60000), 2)
+                end
             end
         else
             -- Only log cooldown at level 3 (very verbose)
@@ -1091,17 +1094,6 @@ installInputHooks = function()
                 mgr.settingsVehicleEventId = vSpId
                 binding:setActionEventTextVisibility(vSpId, false)
                 Logging.info("[RWE] Settings toggle registered in VEHICLE context")
-            end
-
-            local vDragOk, vDragId = binding:registerActionEvent(
-                InputAction.RWE_HUD_DRAG, mgr,
-                mgr.onHUDDragInput,
-                false, true, false, true
-            )
-            if vDragOk and vDragId then
-                mgr.hudDragVehicleEventId = vDragId
-                binding:setActionEventTextVisibility(vDragId, false)
-                Logging.info("[RWE] HUD drag registered in VEHICLE context")
             end
 
             local vDragOk, vDragId = binding:registerActionEvent(

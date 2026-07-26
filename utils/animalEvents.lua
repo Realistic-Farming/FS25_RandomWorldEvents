@@ -256,7 +256,7 @@ local function registerAnimalEvents()
                     s.animalProductMalus = nil
                     s.woolBonusSeason    = nil
                     s.diseaseScare       = nil
-                    s.yieldMalus         = s.yieldMalus  -- only clear if this event set it
+                    s.yieldMalus         = 0
                     s.lastAnimalTick     = nil
                 end
                 return nil
