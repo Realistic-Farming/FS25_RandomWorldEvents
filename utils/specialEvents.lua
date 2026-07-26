@@ -8,6 +8,14 @@
 
 local specialEvents = {}
 
+-- Server-authoritative money. addMoney must run only on the server in multiplayer,
+-- or every client applies the change (desync); the engine syncs the balance back.
+local function rweAddMoney(...)
+    if g_currentMission and g_currentMission:getIsServer() then
+        g_currentMission:addMoney(...)
+    end
+end
+
 specialEvents.eventList = {
     {
         name="time_acceleration", minI=1,
@@ -210,10 +218,12 @@ local function specialTickHandler(rwe)
     if s.moneyMalus then amount = amount - math.floor(400 * s.moneyMalus) end
 
     if amount ~= 0 and g_currentMission.addMoney then
-        g_currentMission:addMoney(amount, farmId, MoneyType.OTHER, false)
+        rweAddMoney(amount, farmId, MoneyType.OTHER, false)
     end
 
-    if (s.xpBonus or s.xpMalus) and g_farmManager then
+    -- Server-authoritative reputation: like rweAddMoney above, rep writes must
+    -- only run on the server or clients would apply the change locally too.
+    if (s.xpBonus or s.xpMalus) and g_farmManager and g_currentMission:getIsServer() then
         local farm = g_farmManager:getFarmById(farmId)
         if farm and farm.repPoints ~= nil then
             if s.xpBonus then

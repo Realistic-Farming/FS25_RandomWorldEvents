@@ -82,6 +82,8 @@ RandomWorldEvents = {
 
 RandomWorldEvents.EVENT_STATE = {
     activeEvent = nil,
+    activeIntensity = nil,  -- intensity (1-5) the active event was triggered at (companion read API)
+    activeCategory = nil,   -- category of the active event (companion read API)
     eventStartTime = 0,
     eventDuration = 0,
     eventData = {},
@@ -213,6 +215,7 @@ function RandomWorldEvents:createSettingsManager()
                 -- Load saved event state (temp fields; applied in loadFinished when g_currentMission.time is valid)
                 local savedEvent = xml:getString(manager.XMLTAG..".eventState.activeEvent", "")
                 settingsObject._savedActiveEvent = savedEvent ~= "" and savedEvent or nil
+                settingsObject._savedActiveIntensity = xml:getInt(manager.XMLTAG..".eventState.intensity", 0)
                 settingsObject._savedRemainingMs = xml:getFloat(manager.XMLTAG..".eventState.remainingMs", 0)
                 settingsObject._savedCooldownRemainingMs = xml:getFloat(manager.XMLTAG..".eventState.cooldownRemainingMs", 0)
                 settingsObject._savedMidpointFired = xml:getBool(manager.XMLTAG..".eventState.midpointFired", false)
@@ -286,6 +289,7 @@ function RandomWorldEvents:createSettingsManager()
                 local remaining = math.max(0, (es.eventStartTime + (es.eventDuration or 0)) - g_currentMission.time)
                 xml:setFloat(manager.XMLTAG..".eventState.remainingMs", remaining)
                 xml:setBool(manager.XMLTAG..".eventState.midpointFired", es.midpointFired or false)
+                xml:setInt(manager.XMLTAG..".eventState.intensity", es.activeIntensity or 0)
             else
                 xml:setString(manager.XMLTAG..".eventState.activeEvent", "")
             end
@@ -343,6 +347,36 @@ end
 
 function RandomWorldEvents:getVehicle()
     return g_currentMission and g_currentMission.controlledVehicle or nil
+end
+
+-- =====================
+-- COMPANION READ API
+-- Read-only surface for companion mods (e.g. DairyCore) reached via
+-- g_currentMission.randomWorldEvents. RWE runs at most one event at a time and
+-- is server-authoritative; these read the server-side event state.
+-- =====================
+
+--- The currently active world event, or nil when none is active.
+--- @return table|nil  A fresh copy: { name, intensity (1-5), category, remainingMs }.
+function RandomWorldEvents:getActiveEvent()
+    local es = self.EVENT_STATE
+    if es == nil or es.activeEvent == nil then return nil end
+    local now = g_currentMission and g_currentMission.time or 0
+    return {
+        name        = es.activeEvent,
+        intensity   = es.activeIntensity or self.events.intensity or 1,
+        category    = es.activeCategory,
+        remainingMs = math.max(0, (es.eventStartTime + (es.eventDuration or 0)) - now),
+    }
+end
+
+--- Intensity (1-5) of the currently active event, or 0 when none is active.
+--- Falls back to the configured global intensity if an event is active but its
+--- stored intensity is missing (e.g. a pre-upgrade save).
+function RandomWorldEvents:getEventIntensity()
+    local es = self.EVENT_STATE
+    if es == nil or es.activeEvent == nil then return 0 end
+    return es.activeIntensity or self.events.intensity or 1
 end
 
 function RandomWorldEvents:registerEvent(eventData)
@@ -467,9 +501,11 @@ function RandomWorldEvents:_activateEvent(event, intensity)
         duration = math.random(event.duration.min, event.duration.max) * 60000
     end
 
-    self.EVENT_STATE.activeEvent    = event.name
-    self.EVENT_STATE.eventStartTime = g_currentMission.time
-    self.EVENT_STATE.eventDuration  = duration
+    self.EVENT_STATE.activeEvent     = event.name
+    self.EVENT_STATE.activeIntensity = intensity
+    self.EVENT_STATE.activeCategory  = event.category
+    self.EVENT_STATE.eventStartTime  = g_currentMission.time
+    self.EVENT_STATE.eventDuration   = duration
 
     -- Reset per-event immersion state
     self.EVENT_STATE.midpointFired   = false
@@ -555,16 +591,19 @@ function RandomWorldEvents:update(dt)
 
     -- Event system update
     if self.events.enabled then
+        if g_server == nil then return end
         if g_currentMission.time > (self.EVENT_STATE.cooldownUntil or 0) then
             local chance = self.events.frequency * 0.001
             local roll = math.random()
             if roll <= chance then
                 self:dbg(string.format("roll %.4f <= chance %.4f — attempting trigger", roll, chance), 2)
-                self:triggerRandomEvent()
+                local triggered = self:triggerRandomEvent()
                 local cooldownMs = self.events.cooldown * 60000
                 local frequencyFactor = (11 - self.events.frequency) / 10
-                self.EVENT_STATE.cooldownUntil = g_currentMission.time + (cooldownMs * frequencyFactor)
-                self:dbg(string.format("cooldown set: %.1f min", (cooldownMs * frequencyFactor) / 60000), 2)
+                if triggered then
+                    self.EVENT_STATE.cooldownUntil = g_currentMission.time + (cooldownMs * frequencyFactor)
+                    self:dbg(string.format("cooldown set: %.1f min", (cooldownMs * frequencyFactor) / 60000), 2)
+                end
             end
         else
             -- Only log cooldown at level 3 (very verbose)
@@ -590,7 +629,9 @@ function RandomWorldEvents:update(dt)
                 self:notifyEvent(message, event and event.category, nil)
             end
             Logging.info("[RWE] Event ended: " .. tostring(self.EVENT_STATE.activeEvent))
-            self.EVENT_STATE.activeEvent = nil
+            self.EVENT_STATE.activeEvent     = nil
+            self.EVENT_STATE.activeIntensity = nil
+            self.EVENT_STATE.activeCategory  = nil
         end
     end
     
@@ -720,7 +761,9 @@ function RandomWorldEvents:consoleCommandEnd()
         self:notifyEvent(message, event and event.category, nil)
     end
     
-    self.EVENT_STATE.activeEvent = nil
+    self.EVENT_STATE.activeEvent     = nil
+    self.EVENT_STATE.activeIntensity = nil
+    self.EVENT_STATE.activeCategory  = nil
     return "Event ended"
 end
 
@@ -1064,17 +1107,6 @@ installInputHooks = function()
                 Logging.info("[RWE] HUD drag registered in VEHICLE context")
             end
 
-            local vDragOk, vDragId = binding:registerActionEvent(
-                InputAction.RWE_HUD_DRAG, mgr,
-                mgr.onHUDDragInput,
-                false, true, false, true
-            )
-            if vDragOk and vDragId then
-                mgr.hudDragVehicleEventId = vDragId
-                binding:setActionEventTextVisibility(vDragId, false)
-                Logging.debug("[RWE] HUD drag registered in VEHICLE context")
-            end
-
             binding:endActionEventsModification()
 
             _rweVehicleHookActive = false
@@ -1084,7 +1116,13 @@ installInputHooks = function()
 end
 
 local function draw(mission)
-    if rweManager then
+    -- When MasterHUD is present it drives RWEMasterHUDBridge.drawStack in its own
+    -- suspend-aware loop, so this fallback hook stands down to avoid a double draw.
+    -- The draw body lives in drawStack so the two paths can never diverge.
+    if RWEMasterHUDBridge and RWEMasterHUDBridge.active then return end
+    if RWEMasterHUDBridge then
+        RWEMasterHUDBridge.drawStack()
+    elseif rweManager then
         -- HUD only draws when no GUI/menu is open
         if g_gui and not g_gui:getIsGuiVisible() then
             if rweManager.eventHUD then
@@ -1150,6 +1188,22 @@ local function loadFinished(mission, ...)
             g_inputBinding:endActionEventsModification()
         end
 
+        -- ── Bedrock core-API bridges (delegate-when-present) ──────────────────
+        -- Register with the shared ecosystem engines when they are installed.
+        -- Each no-ops safely when its engine is absent, leaving RWE's own path
+        -- (own XML, own draw hook) unchanged. StateLedger, when present, is the
+        -- load source of truth for the active-event snapshot: applyState overwrites
+        -- the _saved* fields imported from the own XML, and the restore block just
+        -- below then reconstructs EVENT_STATE from them (single restore path).
+        if RWESettingsHubBridge then RWESettingsHubBridge.register(rweManager) end
+        if RWEMasterHUDBridge   then RWEMasterHUDBridge.register(rweManager)   end
+        if RWEStateLedgerBridge then
+            RWEStateLedgerBridge.register(rweManager)
+            if RWEStateLedgerBridge.hasState() then
+                RWEStateLedgerBridge.applyState(rweManager)
+            end
+        end
+
         -- Restore active event state saved before this session ended.
         -- g_currentMission.time is valid here; we use remaining-time offsets
         -- instead of absolute timestamps so reloads work correctly.
@@ -1165,15 +1219,18 @@ local function loadFinished(mission, ...)
             if savedEvent ~= nil and savedEvent.category == "vehicle" then
                 Logging.info("[RWE] Not resuming transient vehicle event from save: " .. tostring(savedName))
             else
-                es.activeEvent    = savedName
-                es.eventStartTime = g_currentMission.time
-                es.eventDuration  = mgr._savedRemainingMs or 0
-                es.midpointFired  = mgr._savedMidpointFired or false
-                es.cooldownUntil  = g_currentMission.time + (mgr._savedCooldownRemainingMs or 0)
+                es.activeEvent     = savedName
+                es.activeIntensity = (mgr._savedActiveIntensity and mgr._savedActiveIntensity > 0) and mgr._savedActiveIntensity or nil
+                es.activeCategory  = savedEvent and savedEvent.category or nil
+                es.eventStartTime  = g_currentMission.time
+                es.eventDuration   = mgr._savedRemainingMs or 0
+                es.midpointFired   = mgr._savedMidpointFired or false
+                es.cooldownUntil   = g_currentMission.time + (mgr._savedCooldownRemainingMs or 0)
                 Logging.info("[RWE] Resumed active event from save: " .. tostring(savedName))
             end
 
             mgr._savedActiveEvent         = nil
+            mgr._savedActiveIntensity     = nil
             mgr._savedRemainingMs         = nil
             mgr._savedCooldownRemainingMs = nil
             mgr._savedMidpointFired       = nil
@@ -1188,6 +1245,22 @@ FSBaseMission.update     = Utils.appendedFunction(FSBaseMission.update,     upda
 FSBaseMission.draw       = Utils.appendedFunction(FSBaseMission.draw,       draw)
 FSBaseMission.mouseEvent = Utils.prependedFunction(FSBaseMission.mouseEvent, mouseEvent)
 FSBaseMission.delete     = Utils.appendedFunction(FSBaseMission.delete,     delete)
+
+-- Persist RWE state (settings + active-event snapshot) on the game's save cycle.
+-- Without this, saveSettings only ran on settings changes and on shutdown, so an
+-- in-game save (or a crash after one) could lose the active event. The server owns
+-- the savegame, so this runs server-only.
+if FSCareerMissionInfo and FSCareerMissionInfo.saveToXMLFile then
+    FSCareerMissionInfo.saveToXMLFile = Utils.appendedFunction(
+        FSCareerMissionInfo.saveToXMLFile,
+        function(missionInfo)
+            if rweManager and g_currentMission and g_currentMission:getIsServer() then
+                rweManager:saveSettings()
+            end
+        end
+    )
+    Logging.info("[RandomWorldEvents] Save hook installed on FSCareerMissionInfo:saveToXMLFile")
+end
 
 Logging.info("========================================")
 Logging.info("   FS25 Random World Events v" .. modVersion .. "   ")
