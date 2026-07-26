@@ -19,6 +19,7 @@
 - [x] Server-gate the special-event reputation write (7b076c4) and remove the last `Logging.debug` nil-call crash in the vehicle input hook (#20, a49fcbc). DONE.
 - [x] Crash-safe save: event state persists on the game save cycle (server-only), not only on delete(). DONE.
 - [x] Event id `geopolitical`: N/A for RWE. It was misattributed - the id belongs to MarketDynamics (correct in source); the wrong `geopolitical_crisis` was only in the DairyCore brief (handed to Arissani). No RWE change.
+- [x] 2026-07-26 bug sweep: RWE-001 (server-only event guard), RWE-002 (duplicate HUD drag), RWE-003 (cooldown only on fire), RWE-004 (yieldMalus self-assignment) fixed and merged to main.
 
 ## Mid-term (this season)
 - [x] StateLedger split: `RandomWorldEvents_Settings` + `RandomWorldEvents_EventState` bridged (remaining-ms to absolute-timestamp conversion preserved on load).

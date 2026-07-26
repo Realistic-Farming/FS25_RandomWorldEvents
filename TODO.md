@@ -14,6 +14,7 @@
 - [x] Logging.debug nil-call crash (#20, a49fcbc): the last `Logging.debug` nil call in the vehicle input hook removed.
 - [x] MP money bug (F16): RESOLVED in v2.1.7.1. Money now routes through `rweAddMoney`, which gates on `getIsServer` across all five event files (confirmed by the 2026-07-09 ecosystem money-authority sweep).
 - [x] Crash data loss RESOLVED: event state now persists on the game save cycle (server-only), not only on delete().
+- [x] RWE-001 / RWE-002 / RWE-003 / RWE-004: additional RandomWorldEvents bugs fixed in 2026-07-26 bug sweep, merged to main.
 
 ## Features / enhancements
 - [x] Bedrock migration DONE: StateLedger + SettingsHub + MasterHUD bridged (NetworkSync N/A by design).
