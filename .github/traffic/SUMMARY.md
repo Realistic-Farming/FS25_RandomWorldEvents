@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-07-28T00:01:10Z
-**Days tracked:** 98 | **Download snapshots:** 342 (hourly)
+**Last updated:** 2026-07-28T12:52:34Z
+**Days tracked:** 98 | **Download snapshots:** 343 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 134 | 67 |
-| Git Clones | 276 | 56 |
+| Page Views | 134 | 70 |
+| Git Clones | 275 | 59 |
 
-> **Engagement:** 2.0 pages per visitor (14-day avg)
+> **Engagement:** 1.9 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 400 of 67 visitors cloned or downloaded (**597.0%**)
+> **14-day conversion:** 403 of 70 visitors cloned or downloaded (**575.7%**)
 >
-> Unique cloners: 56 | Release downloads: 344
+> Unique cloners: 59 | Release downloads: 344
 
 ---
 
@@ -43,8 +43,8 @@
 | Channel | Count |
 |---------|-------|
 | Zip Downloads | 344 |
-| Git Clones (14-day) | 276 |
-| **Total Acquisitions** | **620** |
+| Git Clones (14-day) | 275 |
+| **Total Acquisitions** | **619** |
 
 ---
 
@@ -55,7 +55,7 @@
 | Source | Views | Unique |
 |--------|-------|--------|
 | github.com | 77 | 46 |
-| Google | 17 | 9 |
+| Google | 20 | 11 |
 | kingmods.net | 5 | 2 |
 | search.brave.com | 4 | 2 |
 
@@ -77,8 +77,8 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 78 | 61 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0` | 23 | 17 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 81 | 65 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0` | 20 | 17 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 8 | 8 |
 | `/TheCodingDad-TisonK/FS25_RandomWorldEvents` | 7 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 5 | 3 |
