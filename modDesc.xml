@@ -51,6 +51,7 @@
 
     <extraSourceFiles>
         <sourceFile filename="RandomWorldEvents.lua"/>
+        <sourceFile filename="ReleaseGate.lua"/>
         <!-- Bedrock core-API bridges (optional, delegate-when-present). Each no-ops
              safely when its engine mod is absent, leaving RWE's own path unchanged. -->
         <sourceFile filename="integrations/RWEStateLedgerBridge.lua"/>
