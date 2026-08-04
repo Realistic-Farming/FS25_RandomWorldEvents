@@ -15,6 +15,7 @@
 - Baseline date: 2026-06-30 (updated 2026-07-25)
 
 ## Near-term (next release cycle)
+- [x] Release gate mechanism (2026-08-04): wired per Arissani's 2026-08-03 lock set (EMPTY for RWE - the redesign is unbuilt; only bug fixes have shipped, and fixes flow free). `ReleaseGate.lua` with an empty registry, `experimentalSystems` opt-in (default false, orthogonal to difficulty) through settings/persistence/SettingsHub/panel, and the `rweRelease` status command. Nothing gated today.
 - [x] MP money bug (F16): DONE in v2.1.7.1. Money routes through `rweAddMoney`, gated on `getIsServer` (confirmed by the 2026-07-09 money-authority sweep).
 - [x] Server-gate the special-event reputation write (7b076c4) and remove the last `Logging.debug` nil-call crash in the vehicle input hook (#20, a49fcbc). DONE.
 - [x] Crash-safe save: event state persists on the game save cycle (server-only), not only on delete(). DONE.
@@ -25,7 +26,7 @@
 - [x] StateLedger split: `RandomWorldEvents_Settings` + `RandomWorldEvents_EventState` bridged (remaining-ms to absolute-timestamp conversion preserved on load).
 - [x] NetworkSync: N/A by design (server-authoritative event state).
 - [~] MasterHUD: EventHUD + settings panel bridged (own draw stands down); removing the FSBaseMission.draw and mouseEvent hooks is deferred (kept as fallback).
-- [~] SettingsHub: 19 settings registered (selfPersisted); removing the RWESettingsIntegration ESC injection is deferred (kept as fallback).
+- [~] SettingsHub: 20 settings registered (selfPersisted); removing the RWESettingsIntegration ESC injection is deferred (kept as fallback).
 
 ## Long-term / aspirational
 - [ ] Richer event catalogue and categories without breaking the economic subsystem API.
