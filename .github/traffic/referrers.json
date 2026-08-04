@@ -2136,22 +2136,27 @@
   "2026-08-04": [
     {
       "referrer": "github.com",
-      "count": 68,
-      "uniques": 45
+      "count": 65,
+      "uniques": 43
     },
     {
       "referrer": "Google",
-      "count": 19,
-      "uniques": 10
+      "count": 22,
+      "uniques": 15
     },
     {
       "referrer": "kingmods.net",
-      "count": 8,
-      "uniques": 4
+      "count": 7,
+      "uniques": 3
     },
     {
-      "referrer": "search.brave.com",
+      "referrer": "alice.yandex.ru",
       "count": 3,
+      "uniques": 1
+    },
+    {
+      "referrer": "Bing",
+      "count": 1,
       "uniques": 1
     }
   ]

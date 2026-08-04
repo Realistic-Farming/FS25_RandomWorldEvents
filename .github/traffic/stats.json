@@ -21585,35 +21585,40 @@
     "watchers": 2
   },
   {
-    "timestamp": "2026-08-04T00:12:59Z",
+    "timestamp": "2026-08-04T18:26:03Z",
     "date": "2026-08-04",
     "views": {
-      "count": 114,
+      "count": 115,
       "uniques": 67
     },
     "clones": {
-      "count": 245,
-      "uniques": 52
+      "count": 244,
+      "uniques": 49
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 68,
-        "uniques": 45
+        "count": 65,
+        "uniques": 43
       },
       {
         "referrer": "Google",
-        "count": 19,
-        "uniques": 10
+        "count": 22,
+        "uniques": 15
       },
       {
         "referrer": "kingmods.net",
-        "count": 8,
-        "uniques": 4
+        "count": 7,
+        "uniques": 3
       },
       {
-        "referrer": "search.brave.com",
+        "referrer": "alice.yandex.ru",
         "count": 3,
+        "uniques": 1
+      },
+      {
+        "referrer": "Bing",
+        "count": 1,
         "uniques": 1
       }
     ],
@@ -21621,26 +21626,26 @@
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents",
         "title": "Overview",
-        "count": 77,
-        "uniques": 64
+        "count": 83,
+        "uniques": 65
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0",
         "title": "/releases/tag/v2.1.7.0",
-        "count": 17,
-        "uniques": 15
+        "count": 16,
+        "uniques": 13
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases",
         "title": "/releases",
-        "count": 7,
+        "count": 8,
         "uniques": 7
       },
       {
-        "path": "/TheCodingDad-TisonK/FS25_RandomWorldEvents",
-        "title": "Overview",
-        "count": 7,
-        "uniques": 1
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/issues",
+        "title": "/issues",
+        "count": 3,
+        "uniques": 2
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/blob/master/modDesc.xml",
@@ -21655,14 +21660,8 @@
         "uniques": 1
       },
       {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/compare/master...development",
-        "title": "/compare/master...development",
-        "count": 1,
-        "uniques": 1
-      },
-      {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/issues",
-        "title": "/issues",
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/issues/13",
+        "title": "/issues/13",
         "count": 1,
         "uniques": 1
       },
@@ -21673,8 +21672,8 @@
         "uniques": 1
       },
       {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/tree/development",
-        "title": "/tree/development",
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.1",
+        "title": "/releases/tag/v2.1.7.1",
         "count": 1,
         "uniques": 1
       }
@@ -21683,7 +21682,16 @@
       {
         "assets": [
           {
-            "downloads": 9,
+            "downloads": 6,
+            "name": "FS25_RandomWorldEvents.zip"
+          }
+        ],
+        "tag": "v2.1.8.0"
+      },
+      {
+        "assets": [
+          {
+            "downloads": 10,
             "name": "FS25_RandomWorldEvents.zip"
           }
         ],
