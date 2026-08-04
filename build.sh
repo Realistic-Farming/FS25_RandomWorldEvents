@@ -20,6 +20,7 @@ out_zip = os.environ.get('OUT_ZIP', 'FS25_RandomWorldEvents.zip')
 root_files = [
     'modDesc.xml',
     'RandomWorldEvents.lua',
+    'ReleaseGate.lua',
     'guiProfiles.xml',
     'icon.dds',
     'README.md',

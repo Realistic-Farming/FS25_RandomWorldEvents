@@ -149,6 +149,7 @@ Open the in-game console (`` ` `` key) and type any of these:
 
 | Version | Date | Notes |
 |---------|------|-------|
+| **v2.1.8.0** | 2026-08 | Release gate: new experimental systems ship locked until deliberately released. Turn them on under the mod's settings, independent of difficulty. Mechanism wired in; no systems gated yet. |
 | **v2.1.7.0** | 2026-06 | Vehicle event category rebuilt on real basegame physics (speed, acceleration, engine, steering pull, traction); fixed fuel and repair-bill events (correct FillUnit + farm APIs); steering technique credited to RealPhysics Steering by Tubez47 |
 | **v2.0.0.0** | 2026-02 | Full FS25 rewrite - new event engine, physics layer, tabbed GUI, per-savegame settings |
 
