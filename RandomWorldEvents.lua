@@ -167,7 +167,9 @@ function RandomWorldEvents:createSettingsManager()
                 suspensionStiffness = 1.0,
                 showPhysicsInfo = false,
                 debugMode = false
-            }
+            },
+            -- Release-gate opt-in (default false), orthogonal to difficulty. See ReleaseGate.lua.
+            experimentalSystems = false
         }
     }
     
@@ -212,6 +214,8 @@ function RandomWorldEvents:createSettingsManager()
                 settingsObject.physics.showPhysicsInfo = xml:getBool(manager.XMLTAG..".physics.showPhysicsInfo", manager.defaultConfig.physics.showPhysicsInfo)
                 settingsObject.physics.debugMode = xml:getBool(manager.XMLTAG..".physics.debugMode", manager.defaultConfig.physics.debugMode)
 
+                settingsObject.experimentalSystems = xml:getBool(manager.XMLTAG..".experimentalSystems", manager.defaultConfig.experimentalSystems)
+
                 -- Load saved event state (temp fields; applied in loadFinished when g_currentMission.time is valid)
                 local savedEvent = xml:getString(manager.XMLTAG..".eventState.activeEvent", "")
                 settingsObject._savedActiveEvent = savedEvent ~= "" and savedEvent or nil
@@ -230,6 +234,7 @@ function RandomWorldEvents:createSettingsManager()
         settingsObject.debug    = {}
         settingsObject.physics  = {}
         settingsObject.hudScale = manager.defaultConfig.hudScale
+        settingsObject.experimentalSystems = manager.defaultConfig.experimentalSystems
 
         for k, v in pairs(manager.defaultConfig.events) do
             settingsObject.events[k] = v
@@ -282,6 +287,8 @@ function RandomWorldEvents:createSettingsManager()
             xml:setBool(manager.XMLTAG..".physics.showPhysicsInfo", settingsObject.physics.showPhysicsInfo)
             xml:setBool(manager.XMLTAG..".physics.debugMode", settingsObject.physics.debugMode)
 
+            xml:setBool(manager.XMLTAG..".experimentalSystems", settingsObject.experimentalSystems == true)
+
             -- Save active event state as remaining time so timers survive reload
             local es = settingsObject.EVENT_STATE
             if es and es.activeEvent then
@@ -333,8 +340,21 @@ function RandomWorldEvents:registerConsoleCommands()
     addConsoleCommand("rweDebug", "Toggle debug mode", "consoleCommandDebug", self)
     addConsoleCommand("rweList", "List available events", "consoleCommandList", self)
     addConsoleCommand("rweSettings", "Open settings screen", "consoleCommandSettings", self)
+    addConsoleCommand("rweRelease", "Release gate: show STABLE vs experimental-LOCKED systems", "consoleCommandRelease", self)
     
     self:dbg("Console commands registered")
+end
+
+--- Release-gate opt-in. True when the player has explicitly enabled experimental
+--- (LOCKED) systems. Orthogonal to difficulty: the two locks stack, see ReleaseGate.lua.
+---@return boolean
+function RandomWorldEvents:allowsExperimentalSystems()
+    return self.experimentalSystems == true
+end
+
+function RandomWorldEvents:consoleCommandRelease()
+    if not ReleaseGate then return "Release gate not loaded" end
+    return ReleaseGate.status(self.experimentalSystems == true)
 end
 
 -- =====================

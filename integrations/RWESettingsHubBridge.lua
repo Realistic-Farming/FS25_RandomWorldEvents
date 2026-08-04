@@ -54,6 +54,7 @@ local SETTINGS = {
     { id = "suspensionStiffness", section = "physics", key = "suspensionStiffness", type = "float", admin = true,  min = 0.5, max = 2.0, l10n = "rwe_suspension_short" },
     { id = "showPhysicsInfo",     section = "physics", key = "showPhysicsInfo",     type = "bool",  admin = false, l10n = "rwe_physics_info_short" },
     { id = "debugMode",           section = "debug",   key = "enabled",             type = "bool",  admin = false, l10n = "rwe_debug_short" },
+    { id = "experimentalSystems", section = "top",     key = "experimentalSystems", type = "bool",  admin = true,  l10n = "rwe_experimental_short" },
 }
 
 local BY_ID = {}
