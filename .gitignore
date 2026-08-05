@@ -5,3 +5,6 @@ VEHICLE_PHYSICS_FINDINGS.txt
 
 # Built mod zip - never committed; ships only as a GitHub release asset
 FS25_RandomWorldEvents.zip
+
+# Pre-commit gate deps (tools/test/ - installed by npm, never shipped)
+node_modules/
