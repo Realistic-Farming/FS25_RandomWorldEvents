@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-08-06T00:02:19Z
-**Days tracked:** 105 | **Download snapshots:** 370 (hourly)
+**Last updated:** 2026-08-06T12:54:54Z
+**Days tracked:** 105 | **Download snapshots:** 372 (hourly)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 136 | 80 |
-| Git Clones | 264 | 61 |
+| Page Views | 140 | 80 |
+| Git Clones | 274 | 65 |
 
 > **Engagement:** 1.7 pages per visitor (14-day avg)
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 434 of 80 visitors cloned or downloaded (**542.5%**)
+> **14-day conversion:** 439 of 80 visitors cloned or downloaded (**548.7%**)
 >
-> Unique cloners: 61 | Release downloads: 373
+> Unique cloners: 65 | Release downloads: 374
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 373 |
-| Git Clones (14-day) | 264 |
-| **Total Acquisitions** | **637** |
+| Zip Downloads | 374 |
+| Git Clones (14-day) | 274 |
+| **Total Acquisitions** | **648** |
 
 ---
 
@@ -54,9 +54,9 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 74 | 47 |
+| github.com | 79 | 47 |
 | Google | 22 | 15 |
-| kingmods.net | 17 | 11 |
+| kingmods.net | 18 | 12 |
 | alice.yandex.ru | 3 | 1 |
 | Bing | 1 | 1 |
 
@@ -78,10 +78,10 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 100 | 77 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 103 | 77 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0` | 15 | 12 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 8 | 7 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 3 | 3 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 7 | 6 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 5 | 4 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/blob/master/README.md` | 2 | 2 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 2 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/blob/master/modDesc.xml` | 1 | 1 |
