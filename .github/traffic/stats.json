@@ -22627,25 +22627,25 @@
     "watchers": 2
   },
   {
-    "timestamp": "2026-08-08T12:44:34Z",
+    "timestamp": "2026-08-08T18:35:07Z",
     "date": "2026-08-08",
     "views": {
-      "count": 146,
-      "uniques": 78
+      "count": 148,
+      "uniques": 77
     },
     "clones": {
-      "count": 274,
-      "uniques": 66
+      "count": 294,
+      "uniques": 73
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 83,
-        "uniques": 45
+        "count": 84,
+        "uniques": 44
       },
       {
         "referrer": "Google",
-        "count": 24,
+        "count": 25,
         "uniques": 15
       },
       {
@@ -22668,8 +22668,8 @@
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents",
         "title": "Overview",
-        "count": 107,
-        "uniques": 75
+        "count": 109,
+        "uniques": 74
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0",
@@ -22678,14 +22678,14 @@
         "uniques": 12
       },
       {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases",
-        "title": "/releases",
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0",
+        "title": "/releases/tag/v2.1.8.0",
         "count": 7,
         "uniques": 6
       },
       {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0",
-        "title": "/releases/tag/v2.1.8.0",
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases",
+        "title": "/releases",
         "count": 6,
         "uniques": 5
       },
