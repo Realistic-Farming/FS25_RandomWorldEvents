@@ -22889,25 +22889,25 @@
     "watchers": 2
   },
   {
-    "timestamp": "2026-08-09T12:47:00Z",
+    "timestamp": "2026-08-09T18:38:05Z",
     "date": "2026-08-09",
     "views": {
-      "count": 148,
-      "uniques": 77
+      "count": 151,
+      "uniques": 82
     },
     "clones": {
-      "count": 294,
-      "uniques": 73
+      "count": 300,
+      "uniques": 76
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 84,
-        "uniques": 44
+        "count": 88,
+        "uniques": 48
       },
       {
         "referrer": "Google",
-        "count": 25,
+        "count": 26,
         "uniques": 15
       },
       {
@@ -22924,32 +22924,37 @@
         "referrer": "Bing",
         "count": 1,
         "uniques": 1
+      },
+      {
+        "referrer": "yandex.ru",
+        "count": 1,
+        "uniques": 1
       }
     ],
     "popular_paths": [
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents",
         "title": "Overview",
-        "count": 109,
-        "uniques": 74
+        "count": 116,
+        "uniques": 78
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0",
         "title": "/releases/tag/v2.1.7.0",
-        "count": 15,
-        "uniques": 12
+        "count": 11,
+        "uniques": 9
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0",
         "title": "/releases/tag/v2.1.8.0",
-        "count": 7,
-        "uniques": 6
+        "count": 8,
+        "uniques": 7
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases",
         "title": "/releases",
-        "count": 6,
-        "uniques": 5
+        "count": 5,
+        "uniques": 4
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/issues",
@@ -22992,7 +22997,7 @@
       {
         "assets": [
           {
-            "downloads": 18,
+            "downloads": 19,
             "name": "FS25_RandomWorldEvents.zip"
           }
         ],
