@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-08-09T18:38:25Z
-**Days tracked:** 108 | **Download snapshots:** 384 (hourly)
+**Last updated:** 2026-08-10T18:55:34Z
+**Days tracked:** 109 | **Download snapshots:** 385 (hourly)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 151 | 82 |
-| Git Clones | 300 | 76 |
+| Page Views | 152 | 82 |
+| Git Clones | 323 | 82 |
 
 > **Engagement:** 1.8 pages per visitor (14-day avg)
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 456 of 82 visitors cloned or downloaded (**556.0%**)
+> **14-day conversion:** 462 of 82 visitors cloned or downloaded (**563.4%**)
 >
-> Unique cloners: 76 | Release downloads: 380
+> Unique cloners: 82 | Release downloads: 380
 
 ---
 
@@ -43,8 +43,8 @@
 | Channel | Count |
 |---------|-------|
 | Zip Downloads | 380 |
-| Git Clones (14-day) | 300 |
-| **Total Acquisitions** | **680** |
+| Git Clones (14-day) | 323 |
+| **Total Acquisitions** | **703** |
 
 ---
 
@@ -54,10 +54,11 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 88 | 48 |
+| github.com | 90 | 48 |
 | Google | 26 | 15 |
 | kingmods.net | 18 | 12 |
 | alice.yandex.ru | 3 | 1 |
+| DuckDuckGo | 2 | 1 |
 | Bing | 1 | 1 |
 | yandex.ru | 1 | 1 |
 
@@ -79,16 +80,16 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 116 | 78 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0` | 11 | 9 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 8 | 7 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 5 | 4 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 118 | 79 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 10 | 9 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0` | 9 | 7 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 6 | 5 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 3 | 2 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/blob/master/README.md` | 2 | 2 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/blob/master/modDesc.xml` | 1 | 1 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/compare/524af7f41f26...7c2bf94d8f95` | 1 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/issues/13` | 1 | 1 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/pull/30` | 1 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pull/31` | 1 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.1` | 1 | 1 |
 
 ---
 
