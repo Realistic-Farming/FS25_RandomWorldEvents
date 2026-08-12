@@ -35,6 +35,9 @@ RWEMasterHUDBridge.active = false   -- MasterHUD present and we registered
 -- FSBaseMission.draw hook. Resolves the manager from the canonical global so it
 -- can be driven either by MasterHUD's loop or by RWE's own hook.
 function RWEMasterHUDBridge.drawStack()
+    -- Suite hide: MasterHUD # key. No-op when MasterHUD absent.
+    local mh = (g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD
+    if mh ~= nil and mh.areHudsHidden ~= nil and mh:areHudsHidden() then return end
     local mgr = g_RandomWorldEvents
     if mgr == nil then return end
 
@@ -68,6 +71,21 @@ function RWEMasterHUDBridge.register(mgr)
     if ok then
         RWEMasterHUDBridge.active = true
         Logging.info("[RWE] Registered RWE HUD with MasterHUD (single draw loop + menu-suspend)")
+        if hud.registerEditListener ~= nil then
+            hud:registerEditListener(RWEMasterHUDBridge.HUD_ID, {
+                enter = function()
+                    if mgr ~= nil and mgr.eventHUD ~= nil and mgr.eventHUD.enterEditMode ~= nil then
+                        mgr.eventHUD:enterEditMode()
+                    end
+                end,
+                exit = function()
+                    if mgr ~= nil and mgr.eventHUD ~= nil and mgr.eventHUD.editMode
+                        and mgr.eventHUD.exitEditMode ~= nil then
+                        mgr.eventHUD:exitEditMode()
+                    end
+                end,
+            })
+        end
     else
         Logging.warning("[RWE] MasterHUD registration failed: %s (using own draw hook)", tostring(err))
     end
