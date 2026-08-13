@@ -31,6 +31,29 @@ RWEMasterHUDBridge = {}
 RWEMasterHUDBridge.HUD_ID = "RandomWorldEvents_HUD"
 RWEMasterHUDBridge.active = false   -- MasterHUD present and we registered
 
+--- Does RWE currently own the whole screen?
+---
+--- Passed to MasterHUD as the subscribe spec's isFullscreen so that while our
+--- settings panel is open, EVERY other companion's HUD stands down too. Without
+--- it, their text renders before our panel and reads straight through it,
+--- because an overlay does not cover text already drawn underneath.
+---
+--- This is the cross-mod half only, and it has an effect only when MasterHUD is
+--- present, since MasterHUD owns cross-mod ordering. RWE's own event HUD is
+--- handled inside drawStack.
+---
+--- isOpen is a FIELD on this panel, not a method (RWESettingsPanel.lua:23,
+--- flipped by toggle() at :83), so it is read rather than called.
+---
+--- Called every frame from MasterHUD's draw loop, so it stays a plain read.
+---@return boolean
+function RWEMasterHUDBridge.isFullscreen()
+    local mgr = g_RandomWorldEvents
+    if mgr == nil then return false end
+    local panel = mgr.settingsPanel
+    return panel ~= nil and panel.isOpen == true
+end
+
 -- The full RWE HUD draw body. Byte-for-byte the same as the standalone
 -- FSBaseMission.draw hook. Resolves the manager from the canonical global so it
 -- can be driven either by MasterHUD's loop or by RWE's own hook.
@@ -78,6 +101,10 @@ function RWEMasterHUDBridge.register(mgr)
     local ok, err = pcall(function()
         hud:subscribe(RWEMasterHUDBridge.HUD_ID, {
             draw = RWEMasterHUDBridge.drawStack,
+            -- Stand every OTHER companion's HUD down while our panel owns the
+            -- screen. Optional on MasterHUD's side, so an older MasterHUD ignores
+            -- it and behaves exactly as before.
+            isFullscreen = RWEMasterHUDBridge.isFullscreen,
         })
     end)
 
