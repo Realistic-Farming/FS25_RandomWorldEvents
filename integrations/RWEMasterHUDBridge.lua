@@ -41,14 +41,27 @@ function RWEMasterHUDBridge.drawStack()
     local mgr = g_RandomWorldEvents
     if mgr == nil then return end
 
-    -- Event HUD only draws when no GUI/menu is open.
-    if g_gui and not g_gui:getIsGuiVisible() then
+    -- THE SETTINGS PANEL OWNS THE SCREEN WHILE IT IS OPEN, so the event HUD
+    -- stands down for it exactly as it already stands down for a GUI menu.
+    --
+    -- A panel background is an OVERLAY, and an overlay does not cover text that
+    -- was already rendered underneath it. The event HUD draws first, so its text
+    -- read straight THROUGH the panel. A HUD cannot be hidden by drawing the
+    -- panel on top of it; it has to not draw.
+    --
+    -- isOpen is a FIELD on this panel, not a method (RWESettingsPanel.lua:23,
+    -- flipped by toggle() at :83), so it is read rather than called.
+    local panel = mgr.settingsPanel
+    local panelOpen = panel ~= nil and panel.isOpen == true
+
+    -- Event HUD only draws when no GUI/menu and no panel is open.
+    if not panelOpen and g_gui and not g_gui:getIsGuiVisible() then
         if mgr.eventHUD then mgr.eventHUD:draw() end
     end
 
-    -- Settings panel draws independently — it has its own isOpen guard and must
-    -- always render when open so hitboxes are rebuilt each frame.
-    if mgr.settingsPanel then mgr.settingsPanel:draw() end
+    -- The panel still draws every frame while open, unchanged: it rebuilds its
+    -- own hitboxes during draw, so skipping it would break its clicks.
+    if panel then panel:draw() end
 end
 
 -- Register with MasterHUD if present. Called from loadFinished
