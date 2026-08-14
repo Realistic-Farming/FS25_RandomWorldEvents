@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Lua 5.1 pre-commit gate. Excluded from the mod zip with the rest of tools/.",
   "devDependencies": {
+    "fengari": "^0.1.4",
     "luaparse": "^0.3.1"
   }
 }

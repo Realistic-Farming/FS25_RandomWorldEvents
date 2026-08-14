@@ -79,70 +79,6 @@ vehicleEvents.restoreTrackedPhysics = function()
 end
 
 -- =====================
--- VEHICLE FUEL SYSTEM (real FS25 FillUnit API)
--- The old code used getFillUnitInformation()/setFillUnitFillLevel() which do
--- not exist in FS25 - the events did nothing. The correct path (per the game's
--- own VehicleSystem) is getConsumerFillUnitIndex() to find the fuel tank, then
--- addFillUnitFillLevel(farmId, index, delta, fillType, toolType, ...).
--- =====================
-
--- Collect the vehicle's fuel/consumable fill-unit indices (diesel / electric /
--- methane / DEF). Returns a list of fill-unit indices.
-vehicleEvents.getFuelFillUnits = function(vehicle)
-    local units = {}
-    if not vehicle or vehicle.getConsumerFillUnitIndex == nil then return units end
-    local fuelTypes = { FillType.DIESEL, FillType.ELECTRICCHARGE, FillType.METHANE, FillType.DEF }
-    for _, ft in ipairs(fuelTypes) do
-        if ft ~= nil then
-            local idx = vehicle:getConsumerFillUnitIndex(ft)
-            if idx ~= nil then
-                table.insert(units, idx)
-            end
-        end
-    end
-    return units
-end
-
-vehicleEvents.fillVehicleFuel = function(vehicle)
-    if not vehicle then return 0 end
-    local farmId = vehicleEvents.getFarmId()
-    if farmId <= 0 then return 0 end
-    local filled = 0
-    for _, idx in ipairs(vehicleEvents.getFuelFillUnits(vehicle)) do
-        local capacity = vehicle:getFillUnitCapacity(idx)
-        local level    = vehicle:getFillUnitFillLevel(idx)
-        local fillType = vehicle:getFillUnitFirstSupportedFillType(idx)
-        if capacity and level and fillType and fillType ~= FillType.UNKNOWN then
-            local toFill = capacity - level
-            if toFill > 0 then
-                vehicle:addFillUnitFillLevel(farmId, idx, toFill, fillType, ToolType.UNDEFINED, nil)
-                filled = filled + toFill
-            end
-        end
-    end
-    return filled
-end
-
-vehicleEvents.drainVehicleFuel = function(vehicle, percentage)
-    if not vehicle then return 0 end
-    local farmId = vehicleEvents.getFarmId()
-    if farmId <= 0 then return 0 end
-    local drained = 0
-    for _, idx in ipairs(vehicleEvents.getFuelFillUnits(vehicle)) do
-        local level    = vehicle:getFillUnitFillLevel(idx)
-        local fillType = vehicle:getFillUnitFirstSupportedFillType(idx)
-        if level and fillType and fillType ~= FillType.UNKNOWN then
-            local toDrain = level * (percentage / 100)
-            if toDrain > 0 then
-                vehicle:addFillUnitFillLevel(farmId, idx, -toDrain, fillType, ToolType.UNDEFINED, nil)
-                drained = drained + toDrain
-            end
-        end
-    end
-    return drained
-end
-
--- =====================
 -- VEHICLE DAMAGE SYSTEM (real: Wearable API)
 -- Note: vehicle damage also reduces engine torque and top speed natively
 -- (getTorqueCurveValue / getSpeedLimit apply a damage factor), so an
@@ -179,6 +115,7 @@ vehicleEvents.eventList = {
     {
         name = "vehicle_speed_boost",
         minI = 1,
+        gate = "arcadePhysics",
         func = function(intensity)
             local vehicle = vehicleEvents.getVehicle()
             if vehicle and RWEVehiclePhysics then
@@ -200,43 +137,6 @@ vehicleEvents.eventList = {
             "The engine note is higher than usual - everything feels responsive today.",
             "You're covering ground fast. The fields won't know what hit them.",
             "Neighbours are asking what you put in the tank. It's a good day to work.",
-        },
-    },
-
-    {
-        name = "vehicle_fuel_bonus",
-        minI = 1,
-        func = function(intensity)
-            local vehicle = vehicleEvents.getVehicle()
-            if vehicle then
-                local filledAmount = vehicleEvents.fillVehicleFuel(vehicle)
-                if filledAmount > 0 then
-                    return string.format("Mystery fuel delivery! Tanks topped up (+%.1fL).", filledAmount)
-                end
-                return "Free fuel - tanks were already full."
-            end
-            return "Free fuel waiting - get in a vehicle!"
-        end,
-    },
-
-    {
-        name = "vehicle_fuel_penalty",
-        minI = 1,
-        func = function(intensity)
-            local vehicle = vehicleEvents.getVehicle()
-            if vehicle then
-                local drainPercent = 20 + (intensity * 10)
-                local drainedAmount = vehicleEvents.drainVehicleFuel(vehicle, drainPercent)
-                if drainedAmount > 0 then
-                    return string.format("Fuel leak! %.0fL drained - check your tank connections.", drainedAmount)
-                end
-                return "Fuel leak warning - but the tank was already low."
-            end
-            return "Fuel leak detected, but no vehicle is running."
-        end,
-        ambientMsgs = {
-            "You can smell diesel. Something's dripping under the machine.",
-            "The fuel gauge is dropping faster than it should.",
         },
     },
 
@@ -291,53 +191,9 @@ vehicleEvents.eventList = {
     },
 
     {
-        name = "vehicle_free_upgrade",
-        minI = 1,
-        func = function(intensity)
-            local vehicle = vehicleEvents.getVehicle()
-            if vehicle and vehicle.getColor and vehicle.setColor then
-                if not vehicle.originalColor then
-                    vehicle.originalColor = { vehicle:getColor() }
-                end
-                local r, g, b = unpack(vehicle.originalColor)
-                vehicle:setColor(r * 1.2, g * 1.1, b * 0.9)
-                if g_RandomWorldEvents then
-                    g_RandomWorldEvents.EVENT_STATE.vehicleUpgrade = { vehicle = vehicle }
-                end
-                return "Showroom shine! Your machine got a fresh golden coat."
-            end
-            return "Free upgrade kit arrived - get in a vehicle!"
-        end,
-        ambientMsgs = {
-            "Heads are turning as you drive past. The paint job looks immaculate.",
-            "Someone asked if it was a new model. Close enough.",
-        },
-    },
-
-    {
-        name = "vehicle_cleaning_bonus",
-        minI = 1,
-        func = function(intensity)
-            local vehicles = vehicleEvents.getAllVehicles()
-            local cleanedCount = 0
-            for _, vehicle in ipairs(vehicles) do
-                if vehicle and vehicle.getDirtAmount then
-                    if (vehicle:getDirtAmount() or 0) > 0 then
-                        vehicle:setDirtAmount(0)
-                        cleanedCount = cleanedCount + 1
-                    end
-                end
-            end
-            if cleanedCount > 0 then
-                return string.format("Pressure wash crew showed up! %d machine%s spotless.", cleanedCount, cleanedCount > 1 and "s" or "")
-            end
-            return "Cleaning crew arrived - machines were already gleaming."
-        end,
-    },
-
-    {
         name = "vehicle_engine_trouble",
         minI = 2,
+        gate = "arcadePhysics",
         func = function(intensity)
             local vehicle = vehicleEvents.getVehicle()
             if vehicle and RWEVehiclePhysics then
@@ -361,57 +217,6 @@ vehicleEvents.eventList = {
         },
     },
 
-    {
-        name = "vehicle_steering_pull",
-        minI = 2,
-        -- Short event; the pull itself comes in periodic eased tugs, not a
-        -- constant lean (see RWEVehiclePhysics.onPreUpdate).
-        dur = { min = 2, max = 4 },
-        func = function(intensity)
-            local vehicle = vehicleEvents.getVehicle()
-            if vehicle and RWEVehiclePhysics then
-                local side = (math.random() < 0.5) and -1 or 1
-                local pull = side * math.min(0.40, 0.12 + 0.04 * intensity)
-                RWEVehiclePhysics.applyEventMods(vehicle, { steerPull = pull })
-                vehicleEvents.trackPhysics(vehicle)
-                local dir = side < 0 and "left" or "right"
-                return string.format("Loose front axle! The wheel keeps tugging to the %s.", dir)
-            end
-            return "Steering feels off, but no vehicle is running."
-        end,
-        onMid = function(intensity)
-            return "Still tugging every so often - keep a hand on the wheel."
-        end,
-        ambientMsgs = {
-            "Every now and then the wheel jerks to one side.",
-            "That tie rod really needs looking at.",
-        },
-    },
-
-    {
-        name = "vehicle_slippery_roads",
-        minI = 1,
-        func = function(intensity)
-            local vehicle = vehicleEvents.getVehicle()
-            if vehicle and RWEVehiclePhysics then
-                -- Greasy, low-traction conditions: calmer throttle and a
-                -- lower safe speed so the machine is easier to keep straight.
-                local accelScale = math.max(0.4, 1 - (0.10 * intensity))
-                local speedScale = math.max(0.55, 1 - (0.08 * intensity))
-                RWEVehiclePhysics.applyEventMods(vehicle, { accelScale = accelScale, speedScale = speedScale })
-                vehicleEvents.trackPhysics(vehicle)
-                return "Slippery going! Easy on the throttle until the roads dry out."
-            end
-            return "Roads are greasy out there - mind your footing."
-        end,
-        onMid = function(intensity)
-            return "Surfaces are still slick. Take it steady."
-        end,
-        ambientMsgs = {
-            "The tyres are scrabbling for grip on every pull-away.",
-            "A light film of mud on the road has everything sliding.",
-        },
-    },
 }
 
 -- =====================
@@ -438,19 +243,9 @@ local function registerVehicleEvents()
                 if g_RandomWorldEvents then
                     local d = g_RandomWorldEvents.EVENT_STATE
 
-                    -- Restore any vehicle physics modifiers (speed / engine /
-                    -- steering) applied by this event.
+                    -- Restore any vehicle physics modifiers (speed / engine)
+                    -- applied by this event.
                     vehicleEvents.restoreTrackedPhysics()
-
-                    if d.vehicleUpgrade then
-                        local v = d.vehicleUpgrade.vehicle
-                        if v and v.originalColor and v.setColor then
-                            local r, g, b = unpack(v.originalColor)
-                            v:setColor(r, g, b)
-                            v.originalColor = nil
-                        end
-                        d.vehicleUpgrade = nil
-                    end
 
                     d.vehicleAccident = nil
                 end

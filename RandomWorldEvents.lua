@@ -37,6 +37,11 @@ RandomWorldEvents = {
         showHUD = true,
         cooldown = 30,
 
+        -- Arcade-physics opt-in (default OFF). When ON, the retained physics
+        -- events (speed boost, engine trouble, equipment durability) may fire,
+        -- scoped to the player's own vehicle and out of the economy.
+        arcadePhysics = false,
+
         weatherEvents = false,
         economicEvents = true,
         vehicleEvents = true,
@@ -145,6 +150,7 @@ function RandomWorldEvents:createSettingsManager()
                 showWarnings = true,
                 showHUD = true,
                 cooldown = 30,
+                arcadePhysics = false,
                 weatherEvents = false,
                 economicEvents = true,
                 vehicleEvents = true,
@@ -193,6 +199,7 @@ function RandomWorldEvents:createSettingsManager()
                 settingsObject.events.showWarnings = xml:getBool(manager.XMLTAG..".events.showWarnings", manager.defaultConfig.events.showWarnings)
                 settingsObject.events.showHUD = xml:getBool(manager.XMLTAG..".events.showHUD", manager.defaultConfig.events.showHUD)
                 settingsObject.events.cooldown = xml:getInt(manager.XMLTAG..".events.cooldown", manager.defaultConfig.events.cooldown)
+                settingsObject.events.arcadePhysics = xml:getBool(manager.XMLTAG..".events.arcadePhysics", manager.defaultConfig.events.arcadePhysics)
                 settingsObject.hudScale = xml:getFloat(manager.XMLTAG..".hudScale", manager.defaultConfig.hudScale)
                 settingsObject.events.weatherEvents = xml:getBool(manager.XMLTAG..".events.weatherEvents", manager.defaultConfig.events.weatherEvents)
                 settingsObject.events.economicEvents = xml:getBool(manager.XMLTAG..".events.economicEvents", manager.defaultConfig.events.economicEvents)
@@ -264,6 +271,7 @@ function RandomWorldEvents:createSettingsManager()
             xml:setBool(manager.XMLTAG..".events.showWarnings", settingsObject.events.showWarnings)
             xml:setBool(manager.XMLTAG..".events.showHUD", settingsObject.events.showHUD)
             xml:setInt(manager.XMLTAG..".events.cooldown", settingsObject.events.cooldown)
+            xml:setBool(manager.XMLTAG..".events.arcadePhysics", settingsObject.events.arcadePhysics == true)
             xml:setFloat(manager.XMLTAG..".hudScale", settingsObject.hudScale or 1.0)
             xml:setBool(manager.XMLTAG..".events.weatherEvents", settingsObject.events.weatherEvents)
             xml:setBool(manager.XMLTAG..".events.economicEvents", settingsObject.events.economicEvents)
@@ -352,6 +360,67 @@ function RandomWorldEvents:allowsExperimentalSystems()
     return self.experimentalSystems == true
 end
 
+--- Arcade-physics opt-in (redesign): the retained vehicle-physics events
+--- (speed boost, engine trouble, equipment durability) only fire when this is
+--- ON. Default OFF. Always scoped to the player's own vehicle, never an NPC
+--- machine, never the economy. Admin key RandomWorldEvents.arcadePhysics.
+---@return boolean
+function RandomWorldEvents:allowsArcadePhysics()
+    return self.events.arcadePhysics == true
+end
+
+-- =====================
+-- DIFFICULTY (Option-Scaling Spine)
+-- Difficulty rides the spine: the World-events dial scales event frequency
+-- and base intensity; the Economy dial scales economic magnitude. When the
+-- spine (or its profile) is absent every read is neutral, meaning RWE falls
+-- back to its own configured frequency/intensity untouched.
+-- =====================
+
+--- Read the Option-Scaling Spine profile (if present) and resolve the two dials
+--- RWE rides on. Neutral (nil) when the spine is absent or its profile is not
+--- registered. Each factor is a multiplier around 1.0 (0.4 relaxed .. 1.7
+--- punishing on the canonical World-events curve).
+---@return table|nil  { worldEvents = number, economy = number }
+function RandomWorldEvents:getDifficulty()
+    if OptionScalingResolver == nil or OptionScalingResolver.readProfile == nil then
+        return nil
+    end
+    local hub = (g_currentMission ~= nil and g_currentMission.settingsHub) or g_settingsHub
+    local profile = OptionScalingResolver.readProfile(hub)
+    if profile == nil then return nil end
+    return {
+        worldEvents = OptionScalingResolver.resolve({ dial = "worldEvents", base = 1.0, neutral = 1.0 }, profile),
+        economy     = OptionScalingResolver.resolve({ dial = "economy",     base = 1.0, neutral = 1.0 }, profile),
+    }
+end
+
+--- Difficulty factor for one dial (1.0 = neutral, spine absent or dial off).
+---@param dial string  "worldEvents" or "economy"
+---@return number
+function RandomWorldEvents:getDifficultyFactor(dial)
+    local d = self:getDifficulty()
+    if d == nil or d[dial] == nil then return 1.0 end
+    return d[dial]
+end
+
+--- Spine-scaled event frequency (1-10). Neutral when the spine is absent.
+---@return number
+function RandomWorldEvents:getEffectiveFrequency()
+    local f = tonumber(self.events.frequency) or 5
+    local scaled = f * self:getDifficultyFactor("worldEvents")
+    return math.max(1, math.min(10, math.floor(scaled)))
+end
+
+--- Spine-scaled base intensity (1-5) used to trigger and scale events.
+--- Neutral when the spine is absent.
+---@return number
+function RandomWorldEvents:getBaseIntensity()
+    local i = tonumber(self.events.intensity) or 2
+    local scaled = i * self:getDifficultyFactor("worldEvents")
+    return math.max(1, math.min(5, math.floor(scaled)))
+end
+
 function RandomWorldEvents:consoleCommandRelease()
     if not ReleaseGate then return "Release gate not loaded" end
     return ReleaseGate.status(self.experimentalSystems == true)
@@ -396,6 +465,44 @@ end
 function RandomWorldEvents:getEventIntensity()
     local es = self.EVENT_STATE
     if es == nil or es.activeEvent == nil then return 0 end
+    return es.activeIntensity or self.events.intensity or 1
+end
+
+--- True while a world event is active.
+---@return boolean
+function RandomWorldEvents:isEventActive()
+    local es = self.EVENT_STATE
+    return es ~= nil and es.activeEvent ~= nil
+end
+
+--- Progress through the active event (0.0 -> 1.0), or 0 when none is active.
+---@return number
+function RandomWorldEvents:getProgress()
+    if not self:isEventActive() then return 0 end
+    local s = self.EVENT_STATE
+    if s.eventDuration == nil or s.eventDuration <= 0 then return 1 end
+    local elapsed = (g_currentMission and g_currentMission.time or 0) - (s.eventStartTime or 0)
+    return math.max(0, math.min(1, elapsed / s.eventDuration))
+end
+
+--- Seconds remaining in the active event, or 0 when none is active.
+---@return number
+function RandomWorldEvents:getRemainingTime()
+    if not self:isEventActive() then return 0 end
+    local s = self.EVENT_STATE
+    if s.eventDuration == nil then return 0 end
+    local now = g_currentMission and g_currentMission.time or 0
+    local remainingMs = math.max(0, (s.eventStartTime or 0) + s.eventDuration - now)
+    return math.floor(remainingMs / 1000)
+end
+
+--- Intensity (1-5) of the currently active event, or nil when none is active.
+--- Neutral is nil (nothing active), matching the redesign read contract; use
+--- getEventIntensity() if a numeric 0-when-inactive is preferred.
+---@return number|nil
+function RandomWorldEvents:getIntensity()
+    local es = self.EVENT_STATE
+    if es == nil or es.activeEvent == nil then return nil end
     return es.activeIntensity or self.events.intensity or 1
 end
 
@@ -452,14 +559,22 @@ function RandomWorldEvents:triggerRandomEvent()
         return false
     end
     
+    local baseIntensity = self:getBaseIntensity()
     local available = {}
     for eventId, event in pairs(self.EVENTS) do
         local categoryKey = event.category .. "Events"
         local categoryEnabled = self.events[categoryKey]
         local canTrigger = event.canTrigger()
-        local intensityOk = self.events.intensity >= (event.minIntensity or 1)
-        
-        if categoryEnabled and canTrigger and intensityOk then
+        local intensityOk = baseIntensity >= (event.minIntensity or 1)
+
+        -- Opt-in gate for the retained arcade-physics events (redesign):
+        -- they only enter the pool when the arcadePhysics toggle is ON.
+        local gateOk = true
+        if event.gate == "arcadePhysics" then
+            gateOk = self:allowsArcadePhysics()
+        end
+
+        if categoryEnabled and canTrigger and intensityOk and gateOk then
             table.insert(available, eventId)
         end
     end
@@ -486,7 +601,7 @@ function RandomWorldEvents:triggerRandomEvent()
         end
     end
     local event = self.EVENTS[eventId]
-    self:_activateEvent(event, self.events.intensity)
+    self:_activateEvent(event, self:getBaseIntensity())
     return true
 end
 
@@ -613,7 +728,7 @@ function RandomWorldEvents:update(dt)
     if self.events.enabled then
         if g_server == nil then return end
         if g_currentMission.time > (self.EVENT_STATE.cooldownUntil or 0) then
-            local chance = self.events.frequency * 0.001
+            local chance = self:getEffectiveFrequency() * 0.001
             local roll = math.random()
             if roll <= chance then
                 self:dbg(string.format("roll %.4f <= chance %.4f — attempting trigger", roll, chance), 2)
@@ -694,7 +809,10 @@ function RandomWorldEvents:_tickImmersion()
     if not s.midpointFired and duration > 0 and elapsed >= duration * 0.50 then
         s.midpointFired = true
         if event.onMid then
-            local ok, msg = pcall(event.onMid, self.events.intensity)
+            -- Midpoint narrative must mirror the intensity the event was
+            -- actually activated at (spine-scaled), not the raw setting.
+            local midIntensity = s.activeIntensity or self:getBaseIntensity()
+            local ok, msg = pcall(event.onMid, midIntensity)
             if ok and msg then
                 self:notifyEvent(msg, event.category, "warn")
                 self:dbg("Midpoint fired for: " .. s.activeEvent)
@@ -744,17 +862,21 @@ function RandomWorldEvents:consoleCommandStatus()
     local status = string.format(
         "=== RWE Status ===\n" ..
         "Events enabled: %s\n" ..
-        "Frequency: %d/10\n" ..
-        "Intensity: %d/5\n" ..
+        "Frequency: %d/10 (spine %d)\n" ..
+        "Intensity: %d/5 (spine %d)\n" ..
         "Active event: %s\n" ..
         "Cooldown active: %s\n" ..
+        "Arcade physics: %s\n" ..
         "Physics enabled: %s\n" ..
         "=========================",
         tostring(self.events.enabled),
-        self.events.frequency,
-        self.events.intensity,
+        self.events.frequency or 5,
+        self:getEffectiveFrequency(),
+        self.events.intensity or 2,
+        self:getBaseIntensity(),
         self.EVENT_STATE.activeEvent or "None",
         tostring(g_currentMission.time < self.EVENT_STATE.cooldownUntil),
+        tostring(self:allowsArcadePhysics()),
         tostring(self.physics.enabled)
     )
     print(status)
