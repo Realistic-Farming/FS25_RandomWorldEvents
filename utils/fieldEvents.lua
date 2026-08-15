@@ -194,33 +194,14 @@ fieldEvents.eventList = {
 }
 
 -- =====================
--- TICK HANDLER
--- =====================
-local function fieldTickHandler(rwe)
-    if not g_currentMission then return end
-    local s = rwe.EVENT_STATE
-    local t = g_currentMission.time
-    local lastTick = s.lastFieldTick or 0
-    if t - lastTick < 60000 then return end
-    s.lastFieldTick = t
-
-    local farmId = g_currentMission.player and g_currentMission.player.farmId or 0
-    if farmId == 0 then return end
-
-    local amount = 0
-    if s.fertilizerBonus then amount = amount + math.floor(500 * s.fertilizerBonus) end
-    if s.fertilizerMalus then amount = amount - math.floor(400 * s.fertilizerMalus) end
-    if s.seedBonus       then amount = amount + math.floor(300 * s.seedBonus)       end
-    if s.seedMalus       then amount = amount - math.floor(250 * s.seedMalus)       end
-
-    if amount ~= 0 and g_currentMission.addMoney then
-        rweAddMoney(amount, farmId, MoneyType.OTHER, false)
-    end
-end
-
--- =====================
 -- REGISTER FIELD EVENTS
 -- =====================
+-- The crop/fertilizer/seed-growth events are PULL read-signals in the redesign:
+-- RWE sets the EVENT_STATE flags and the owning sim system (SoilFertilizer /
+-- CropDisease) reads them via getActiveEvent / getSubsystem("field") and applies
+-- its own model. The old per-60-second money trickle for these flags is CUT
+-- (cash-from-nowhere); harvest and field-sale price effects stay in EffectHooks
+-- until the MarketDynamics re-home lands (the gated price half).
 local function registerFieldEvents()
     if not g_RandomWorldEvents or not g_RandomWorldEvents.registerEvent then
         Logging.warning("[FieldEvents] g_RandomWorldEvents not available yet")
@@ -257,14 +238,11 @@ local function registerFieldEvents()
                     s.harvestMalus    = nil
                     s.fieldSaleBonus  = nil
                     s.fieldSaleMalus  = nil
-                    s.lastFieldTick   = nil
                 end
                 return nil
             end
         })
     end
-
-    g_RandomWorldEvents:registerTickHandler("fieldEvents", fieldTickHandler)
 
     Logging.info("[FieldEvents] Registered " .. #fieldEvents.eventList .. " field events")
     return true

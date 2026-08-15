@@ -18,112 +18,6 @@ end
 
 specialEvents.eventList = {
     {
-        name="time_acceleration", minI=1,
-        func=function(intensity)
-            if not g_RandomWorldEvents then return "Time is moving faster!" end
-            if not g_RandomWorldEvents.EVENT_STATE.originalTimeScale then
-                g_RandomWorldEvents.EVENT_STATE.originalTimeScale = g_currentMission.missionInfo.timeScale
-            end
-            g_currentMission.missionInfo.timeScale = g_RandomWorldEvents.EVENT_STATE.originalTimeScale * (5 * intensity)
-            return string.format("Time warp! The clock is running %.0fx faster.", 5 * intensity)
-        end,
-        onMid = function(intensity)
-            return string.format("Still in fast-forward — time running at %.0fx. Plan ahead.", 5 * intensity)
-        end,
-        ambientMsgs = {
-            "The hours are blurring together. Sunrises come fast.",
-            "Day and night are cycling like a strobe. Get as much done as you can.",
-        },
-    },
-
-    {
-        name="time_slowdown", minI=1,
-        func=function(intensity)
-            if not g_RandomWorldEvents then return "Time is slowing down!" end
-            if not g_RandomWorldEvents.EVENT_STATE.originalTimeScale then
-                g_RandomWorldEvents.EVENT_STATE.originalTimeScale = g_currentMission.missionInfo.timeScale
-            end
-            g_currentMission.missionInfo.timeScale = g_RandomWorldEvents.EVENT_STATE.originalTimeScale / (2 * intensity)
-            return string.format("Time dilation! Every hour feels like %.0f.", 2 * intensity)
-        end,
-        onMid = function(intensity)
-            return "Time is still crawling. Plenty of hours left — make them count."
-        end,
-        ambientMsgs = {
-            "The sun seems to hang in the sky for ages today.",
-            "You can hear every insect in the field. Time feels stretched.",
-        },
-    },
-
-    {
-        name="bonus_xp", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.xpBonus = 0.1 * intensity
-            end
-            return string.format("Reputation surge! +%.0f%% rep gain.", (0.1 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return string.format("Still earning reputation faster — +%.0f%% ongoing.", (0.1 * intensity) * 100)
-        end,
-        ambientMsgs = {
-            "Word's getting around about your operation. People are impressed.",
-            "The local paper mentioned your farm. Good publicity.",
-        },
-    },
-
-    {
-        name="malus_xp", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.xpMalus = 0.1 * intensity
-            end
-            return string.format("Reputation dip! -%.0f%% rep gain for a while.", (0.1 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return "Reputation still recovering — keep your head down and work hard."
-        end,
-        ambientMsgs = {
-            "Someone complained to the co-op. Best keep a low profile.",
-            "A dispute with a neighbour is doing the rounds in town.",
-        },
-    },
-
-    {
-        name="money_bonus", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.moneyBonus = 0.1 * intensity
-            end
-            return string.format("Cash flowing! +€%d extra income per minute.", math.floor(500 * 0.1 * intensity))
-        end,
-        onMid = function(intensity)
-            return string.format("Income boost still active — +€%d/min trickling in.", math.floor(500 * 0.1 * intensity))
-        end,
-        ambientMsgs = {
-            "The farm account is ticking upward. A good stretch.",
-            "Contracts and side deals are paying out today.",
-        },
-    },
-
-    {
-        name="money_malus", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.moneyMalus = 0.1 * intensity
-            end
-            return string.format("Unexpected costs! -€%d per minute for a while.", math.floor(400 * 0.1 * intensity))
-        end,
-        onMid = function(intensity)
-            return string.format("Costs still bleeding — -€%d/min. Sit tight.", math.floor(400 * 0.1 * intensity))
-        end,
-        ambientMsgs = {
-            "Administration fees, permit renewals... it adds up fast.",
-            "The accountant flagged a few unexpected charges this period.",
-        },
-    },
-
-    {
         name="special_event_festival", minI=1,
         func=function(intensity)
             if g_RandomWorldEvents then
@@ -147,7 +41,7 @@ specialEvents.eventList = {
     },
 
     {
-        name="equipment_durability_boost", minI=1,
+        name="equipment_durability_boost", minI=1, gate="arcadePhysics",
         func=function(intensity)
             if g_RandomWorldEvents then
                 g_RandomWorldEvents.EVENT_STATE.durabilityBoost = 0.15 + 0.05 * intensity
@@ -164,7 +58,7 @@ specialEvents.eventList = {
     },
 
     {
-        name="equipment_durability_drop", minI=1,
+        name="equipment_durability_drop", minI=1, gate="arcadePhysics",
         func=function(intensity)
             if g_RandomWorldEvents then
                 g_RandomWorldEvents.EVENT_STATE.durabilityMalus = 0.15 + 0.05 * intensity
@@ -213,26 +107,14 @@ local function specialTickHandler(rwe)
     local farmId = g_currentMission.player and g_currentMission.player.farmId or 0
     if farmId == 0 then return end
 
+    -- The harvest festival's income trickle is the only money this handler
+    -- carries now (money_bonus/money_malus and the reputation events are cut;
+    -- reputation belongs to NPCFavor). Gated server-side as before.
     local amount = 0
     if s.moneyBonus then amount = amount + math.floor(500 * s.moneyBonus) end
-    if s.moneyMalus then amount = amount - math.floor(400 * s.moneyMalus) end
 
     if amount ~= 0 and g_currentMission.addMoney then
         rweAddMoney(amount, farmId, MoneyType.OTHER, false)
-    end
-
-    -- Server-authoritative reputation: like rweAddMoney above, rep writes must
-    -- only run on the server or clients would apply the change locally too.
-    if (s.xpBonus or s.xpMalus) and g_farmManager and g_currentMission:getIsServer() then
-        local farm = g_farmManager:getFarmById(farmId)
-        if farm and farm.repPoints ~= nil then
-            if s.xpBonus then
-                farm.repPoints = farm.repPoints + math.floor(10 * s.xpBonus)
-            end
-            if s.xpMalus then
-                farm.repPoints = math.max(0, farm.repPoints - math.floor(8 * s.xpMalus))
-            end
-        end
     end
 end
 
@@ -259,14 +141,7 @@ local function registerSpecialEvents()
             onEnd = function()
                 if g_RandomWorldEvents then
                     local s = g_RandomWorldEvents.EVENT_STATE
-                    if s.originalTimeScale then
-                        g_currentMission.missionInfo.timeScale = s.originalTimeScale
-                        s.originalTimeScale = nil
-                    end
-                    s.xpBonus         = nil
-                    s.xpMalus         = nil
                     s.moneyBonus      = nil
-                    s.moneyMalus      = nil
                     s.durabilityBoost = nil
                     s.durabilityMalus = nil
                     s.tradeBonus      = nil
