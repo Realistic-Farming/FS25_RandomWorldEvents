@@ -1197,6 +1197,18 @@ installInputHooks = function()
             if _rweVehicleHookActive then return end
             if not g_RandomWorldEvents then return end
 
+            -- BUILD 17:45: the engine calls this constantly while the player is in a
+            -- cab. When all three vehicle slots are already live there is nothing to repair,
+            -- so the remove and re-register is skipped outright. A partial set still takes
+            -- the full path, because that is the case the teardown exists for. The return is
+            -- deliberately BEFORE the re-entrancy flag is set, so the skip cannot wedge the
+            -- hook shut.
+            if g_RandomWorldEvents.hudVehicleEventId ~= nil
+                and g_RandomWorldEvents.settingsVehicleEventId ~= nil
+                and g_RandomWorldEvents.hudDragVehicleEventId ~= nil then
+                return
+            end
+
             _rweVehicleHookActive = true
 
             -- Only remove vehicle-context IDs. Player-context IDs were registered
@@ -1224,7 +1236,6 @@ installInputHooks = function()
             if vHudOk and vHudId then
                 mgr.hudVehicleEventId = vHudId
                 binding:setActionEventText(vHudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
-                Logging.info("[RWE] HUD toggle registered in VEHICLE context")
             end
 
             local vSpOk, vSpId = binding:registerActionEvent(
@@ -1235,7 +1246,6 @@ installInputHooks = function()
             if vSpOk and vSpId then
                 mgr.settingsVehicleEventId = vSpId
                 binding:setActionEventTextVisibility(vSpId, false)
-                Logging.info("[RWE] Settings toggle registered in VEHICLE context")
             end
 
             local vDragOk, vDragId = binding:registerActionEvent(
@@ -1246,7 +1256,6 @@ installInputHooks = function()
             if vDragOk and vDragId then
                 mgr.hudDragVehicleEventId = vDragId
                 binding:setActionEventTextVisibility(vDragId, false)
-                Logging.info("[RWE] HUD drag registered in VEHICLE context")
             end
 
             binding:endActionEventsModification()
