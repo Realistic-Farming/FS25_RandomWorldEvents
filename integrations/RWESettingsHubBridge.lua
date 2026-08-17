@@ -40,6 +40,7 @@ local SETTINGS = {
     { id = "frequency",           section = "events",  key = "frequency",           type = "int",   admin = true,  min = 1,   max = 10,  l10n = "rwe_frequency_short" },
     { id = "intensity",           section = "events",  key = "intensity",           type = "int",   admin = true,  min = 1,   max = 5,   l10n = "rwe_intensity_short" },
     { id = "cooldown",            section = "events",  key = "cooldown",            type = "int",   admin = true,  min = 5,   max = 240, l10n = "rwe_cooldown_short" },
+    { id = "arcadePhysics",       section = "events",  key = "arcadePhysics",       type = "bool",  admin = true,  l10n = "rwe_arcade_physics_short" },
     { id = "showNotifications",   section = "events",  key = "showNotifications",   type = "bool",  admin = false, l10n = "rwe_notifications_short" },
     { id = "showWarnings",        section = "events",  key = "showWarnings",        type = "bool",  admin = false, l10n = "rwe_warnings_short" },
     { id = "showHUD",             section = "events",  key = "showHUD",             type = "bool",  admin = false, l10n = "rwe_show_hud_short" },

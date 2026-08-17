@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="106">
     <author>TisonK</author>
-    <version>2.1.8.0</version>
+    <version>2.2.0.1</version>
     <modName>FS25_RandomWorldEvents</modName>
     <title>
         <en>Random World Events</en>
@@ -20,7 +20,7 @@
          adapted from "RealPhysics Steering" by Tubez47. Credit recorded in the source
          header of utils/VehiclePhysics.lua, README.md and DEVELOPMENT.md. -->
     <description>
-        <en>Adds random events, real vehicle-physics effects, and configurable settings. The vehicle "steering pull" effect uses a technique adapted from RealPhysics Steering by Tubez47 - thank you!</en>
+        <en>Adds realistic random world events and configurable settings. An opt-in arcade physics layer (player vehicle only) can add event-driven speed, engine and durability effects. The physics layer uses a technique adapted from RealPhysics Steering by Tubez47 - thank you!</en>
         <de>Fügt zufällige Ereignisse, Physik-Überarbeitung und konfigurierbare Einstellungen hinzu.</de>
         <fr>Ajoute des événements aléatoires, une refonte de la physique et des paramètres configurables.</fr>
         <pl>Dodaje losowe wydarzenia, przebudowę fizyki i konfigurowalne ustawienia.</pl>
@@ -61,6 +61,9 @@
         <sourceFile filename="gui/RWEEventHUD.lua"/>
         <sourceFile filename="gui/RWESettingsIntegration.lua"/>
         <sourceFile filename="utils/EffectHooks.lua"/>
+        <!-- Vendored Option-Scaling Spine resolver (pure library, byte-identical
+             to SettingsHub's spine branch). OFF/absent == neutral, see header. -->
+        <sourceFile filename="utils/OptionScalingResolver.lua"/>
         <!-- Vehicle physics controller (specialization) must load before the
              vehicle events that drive it, and installs its type hook on load. -->
         <sourceFile filename="utils/VehiclePhysics.lua"/>
@@ -440,11 +443,11 @@
             <ru>[EN] Vehicle Events</ru>
         </text>
         <text name="rwe_vehicle_long">
-            <en>Enable vehicle events (speed, fuel, damage)</en>
-            <uk>Увімкнути події з технікою (швидкість, паливо, пошкодження)</uk>
-            <da>Aktivér køretøjshændelser (hastighed, brændstof, skader)</da>
+            <en>Enable vehicle events (speed, engine, damage)</en>
+            <uk>Увімкнути події з технікою (швидкість, двигун, пошкодження)</uk>
+            <da>Aktivér køretøjshændelser (hastighed, motor, skader)</da>
         
-            <de>Aktiviere Fahrzeugereignisse (Geschwindigkeit, Verbrauch, Schaden)</de>
+            <de>Aktiviere Fahrzeugereignisse (Geschwindigkeit, Motor, Schaden)</de>
             <fr>[EN] Enable vehicle events (speed, fuel, damage)</fr>
             <pl>[EN] Enable vehicle events (speed, fuel, damage)</pl>
             <es>[EN] Enable vehicle events (speed, fuel, damage)</es>
@@ -524,11 +527,11 @@
             <ru>[EN] Special Events</ru>
         </text>
         <text name="rwe_special_long">
-            <en>Enable time, XP, and special events</en>
-            <uk>Увімкнути події з часом, досвідом та особливі події</uk>
-            <da>Aktivér tids-, XP- og Særlige hændelser</da>
+            <en>Enable special events (festivals, trade prices, durability)</en>
+            <uk>Увімкнути особливі події (фестивалі, торгові ціни, міцність)</uk>
+            <da>Aktivér særlige hændelser (festivaler, handelspriser, holdbarhed)</da>
         
-            <de>Zeit-, EP- und Spezialereignisse aktivieren</de>
+            <de>Spezialereignisse aktivieren (Feste, Handelspreise, Haltbarkeit)</de>
             <fr>[EN] Enable time, XP, and special events</fr>
             <pl>[EN] Enable time, XP, and special events</pl>
             <es>[EN] Enable time, XP, and special events</es>
@@ -812,18 +815,18 @@
             <ru>[EN] Living World</ru>
         </text>
         <text name="helpLine_rwe_ov1_intro_text">
-            <en>Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</en>
-            <uk>Випадкові світові події привносять динамічні та непередбачувані події на вашу ферму. 53 унікальні події у п'яти категоріях запускаються автоматично під час гри, впливаючи на економіку, техніку, поля, дику природу та багато іншого. Жодне проходження не буде схожим на попереднє.</uk>
-            <da>Random World Events bringer dynamiske og uforudsigelige hændelser til din gård. 53 unikke hændelser fordelt på fem kategorier udløses automatisk under spillet og påvirker din økonomi, dine køretøjer, marker, dyreliv og meget mere. Hver gennemspilning føles unik.</da>
+            <en>Random World Events brings dynamic, unpredictable events to your farm. 40 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</en>
+            <uk>Випадкові світові події привносять динамічні та непередбачувані події на вашу ферму. 40 унікальних подій у п'яти категоріях запускаються автоматично під час гри, впливаючи на економіку, техніку, поля, дику природу та багато іншого. Жодне проходження не буде схожим на попереднє.</uk>
+            <da>Random World Events bringer dynamiske og uforudsigelige hændelser til din gård. 40 unikke hændelser fordelt på fem kategorier udløses automatisk under spillet og påvirker din økonomi, dine køretøjer, marker, dyreliv og meget mere. Hver gennemspilning føles unik.</da>
         
-            <de>Zufällige Welteregnisse bringen dynamische, unvorhersagbare Ereignisse auf deine Farm. 53 einzigartige Ereignisse aus fünf Kategorien starten zufällig im Spiel und beeinflussen Wirtschaft, Fahrzeuge, Wildtiere und mehr. Kein Spieldurchlauf wird sich mehr gleich anfühlen.</de>
-            <fr>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</fr>
-            <pl>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</pl>
-            <es>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</es>
-            <it>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</it>
-            <cz>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</cz>
-            <br>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</br>
-            <ru>[EN] Random World Events brings dynamic, unpredictable events to your farm. 53 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</ru>
+            <de>Zufällige Welteregnisse bringen dynamische, unvorhersagbare Ereignisse auf deine Farm. 40 einzigartige Ereignisse aus fünf Kategorien starten zufällig im Spiel und beeinflussen Wirtschaft, Fahrzeuge, Wildtiere und mehr. Kein Spieldurchlauf wird sich mehr gleich anfühlen.</de>
+            <fr>[EN] Random World Events brings dynamic, unpredictable events to your farm. 40 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</fr>
+            <pl>[EN] Random World Events brings dynamic, unpredictable events to your farm. 40 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</pl>
+            <es>[EN] Random World Events brings dynamic, unpredictable events to your farm. 40 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</es>
+            <it>[EN] Random World Events brings dynamic, unpredictable events to your farm. 40 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</it>
+            <cz>[EN] Random World Events brings dynamic, unpredictable events to your farm. 40 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</cz>
+            <br>[EN] Random World Events brings dynamic, unpredictable events to your farm. 40 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</br>
+            <ru>[EN] Random World Events brings dynamic, unpredictable events to your farm. 40 unique events across five categories fire automatically during play, affecting your economy, vehicles, fields, wildlife, and more. No two playthroughs will feel the same.</ru>
         </text>
         <text name="helpLine_rwe_ov1_expect_title">
             <en>What to Expect</en>
@@ -840,18 +843,18 @@
             <ru>[EN] What to Expect</ru>
         </text>
         <text name="helpLine_rwe_ov1_expect_text">
-            <en>Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</en>
-            <uk>Події відображаються як сповіщення HUD і тривають налаштовуваний час. Деякі дають бонуси (підйоми на ринку, поповнення палива, підсилення врожаю), тоді як інші створюють труднощі (аварії, падіння цін, натовпи тварин). Таймер перерви запобігає надмірній кількості подій.</uk>
-            <da>Hændelser vises som HUD-notifikationer og varer i et tidsrum, du selv kan konfigurere. Nogle giver bonusser (markedsboom, brændstofpåfyldning, afgrødebonusser), mens andre skaber udfordringer (ulykker, prisstyrt, paniske dyreflokke). En cooldown-timer sikrer, at hændelser ikke spammer spillet.</da>
+            <en>Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, subsidies, crop buffs), while others impose challenges (accidents, price crashes, disease scares). A cooldown timer prevents event spam.</en>
+            <uk>Події відображаються як сповіщення HUD і тривають налаштовуваний час. Деякі дають бонуси (підйоми на ринку, субсидії, підсилення врожаю), тоді як інші створюють труднощі (аварії, падіння цін, спалахи хвороб). Таймер перерви запобігає надмірній кількості подій.</uk>
+            <da>Hændelser vises som HUD-notifikationer og varer i et tidsrum, du selv kan konfigurere. Nogle giver bonusser (markedsboom, tilskud, afgrødebonusser), mens andre skaber udfordringer (ulykker, prisstyrt, sygdomsalarm). En cooldown-timer sikrer, at hændelser ikke spammer spillet.</da>
         
-            <de>Die Ereignisse starten mit einer HUD-Benachrichtigung und dauern für eine einstellbare Zeit an. Einige geben Boni (z.B. Marktnachfrage, Betankungen oder Erntebuffs), andere sorgen für Schwierigkeiten (z.B. Unfälle, Preiseinbrüche, wilde Tierherden). Eingebaute Timer verhindern, dass zu viele Ereignisse starten.</de>
-            <fr>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</fr>
-            <pl>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</pl>
-            <es>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</es>
-            <it>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</it>
-            <cz>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</cz>
-            <br>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</br>
-            <ru>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, fuel refills, crop buffs), while others impose challenges (accidents, price crashes, stampedes). A cooldown timer prevents event spam.</ru>
+            <de>Die Ereignisse starten mit einer HUD-Benachrichtigung und dauern für eine einstellbare Zeit an. Einige geben Boni (z.B. Marktnachfrage, Subventionen oder Erntebuffs), andere sorgen für Schwierigkeiten (z.B. Unfälle, Preiseinbrüche, Seuchenwarnungen). Eingebaute Timer verhindern, dass zu viele Ereignisse starten.</de>
+            <fr>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, subsidies, crop buffs), while others impose challenges (accidents, price crashes, disease scares). A cooldown timer prevents event spam.</fr>
+            <pl>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, subsidies, crop buffs), while others impose challenges (accidents, price crashes, disease scares). A cooldown timer prevents event spam.</pl>
+            <es>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, subsidies, crop buffs), while others impose challenges (accidents, price crashes, disease scares). A cooldown timer prevents event spam.</es>
+            <it>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, subsidies, crop buffs), while others impose challenges (accidents, price crashes, disease scares). A cooldown timer prevents event spam.</it>
+            <cz>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, subsidies, crop buffs), while others impose challenges (accidents, price crashes, disease scares). A cooldown timer prevents event spam.</cz>
+            <br>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, subsidies, crop buffs), while others impose challenges (accidents, price crashes, disease scares). A cooldown timer prevents event spam.</br>
+            <ru>[EN] Events appear as HUD notifications and last for a configurable duration. Some grant bonuses (market booms, subsidies, crop buffs), while others impose challenges (accidents, price crashes, disease scares). A cooldown timer prevents event spam.</ru>
         </text>
 
         <!-- Help page: Overview page 2 -->
@@ -942,11 +945,11 @@
             <ru>[EN] Economic Events</ru>
         </text>
         <text name="helpLine_rwe_cat1_good_title">
-            <en>Positive Events (11)</en>
-            <uk>Позитивні події (11)</uk>
-            <da>Positive hændelser (11)</da>
+            <en>Positive Events (10)</en>
+            <uk>Позитивні події (10)</uk>
+            <da>Positive hændelser (10)</da>
         
-            <de>11 positive Ereignisse</de>
+            <de>10 positive Ereignisse</de>
             <fr>[EN] Positive Events (11)</fr>
             <pl>[EN] Positive Events (11)</pl>
             <es>[EN] Positive Events (11)</es>
@@ -956,18 +959,18 @@
             <ru>[EN] Positive Events (11)</ru>
         </text>
         <text name="helpLine_rwe_cat1_good_text">
-            <en>Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</en>
-            <uk>Державні субсидії, підйоми на ринку, пожертви фермерів, повернення податків, страхові виплати, експортні можливості, знижки на насіння, знижки на добрива, знижки на паливо, знижки на обладнання та цінові бонуси (тимчасово підвищені ціни продажу). Ці події надають пряму готівку або тимчасові цінові бонуси.</uk>
-            <da>Statslige tilskud, markedsboom, donationer fra landmænd, skatterefusioner, forsikringsudbetalinger, eksportmuligheder, rabatter på frø, rabatter på gødning, rabatter på brændstof, rabatter på udstyr samt bonusser fra prisfastsættelse (midlertidigt forhøjede salgspriser). Disse hændelser giver direkte kontanter eller midlertidige prisbonusser.</da>
+            <en>Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</en>
+            <uk>Державні субсидії, підйоми на ринку, пожертви фермерів, повернення податків, страхові виплати, експортні можливості, знижки на насіння, знижки на добрива, знижки на обладнання та цінові бонуси (тимчасово підвищені ціни продажу). Ці події надають пряму готівку або тимчасові цінові бонуси.</uk>
+            <da>Statslige tilskud, markedsboom, donationer fra landmænd, skatterefusioner, forsikringsudbetalinger, eksportmuligheder, rabatter på frø, rabatter på gødning, rabatter på udstyr samt bonusser fra prisfastsættelse (midlertidigt forhøjede salgspriser). Disse hændelser giver direkte kontanter eller midlertidige prisbonusser.</da>
         
-            <de>Staatliche Subventionen, Marktbooms, Spenden von Landwirten, Steuerrückerstattungen, Versicherungsleistungen, Exportmöglichkeiten, Saatgut-, Düngemittel-, Kraftstoff- und Geräterabatte sowie Preisbindungsprämien (vorübergehend erhöhte Verkaufspreise) können zu direkten Geldauszahlungen oder befristeten Preisboni führen.</de>
-            <fr>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</fr>
-            <pl>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</pl>
-            <es>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</es>
-            <it>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</it>
-            <cz>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</cz>
-            <br>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</br>
-            <ru>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, fuel discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</ru>
+            <de>Staatliche Subventionen, Marktbooms, Spenden von Landwirten, Steuerrückerstattungen, Versicherungsleistungen, Exportmöglichkeiten, Saatgut-, Düngemittel- und Geräterabatte sowie Preisbindungsprämien (vorübergehend erhöhte Verkaufspreise) können zu direkten Geldauszahlungen oder befristeten Preisboni führen.</de>
+            <fr>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</fr>
+            <pl>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</pl>
+            <es>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</es>
+            <it>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</it>
+            <cz>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</cz>
+            <br>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</br>
+            <ru>[EN] Government subsidies, market booms, farmer donations, tax refunds, insurance payouts, export opportunities, seed discounts, fertilizer discounts, equipment discounts, and price-fixing bonuses (temporary elevated sell prices). These events grant direct cash or temporary price bonuses.</ru>
         </text>
         <text name="helpLine_rwe_cat1_bad_title">
             <en>Negative Events (4)</en>
@@ -1014,11 +1017,11 @@
             <ru>[EN] Vehicle &amp; Field Events</ru>
         </text>
         <text name="helpLine_rwe_cat2_vehicle_title">
-            <en>Vehicle Events (8)</en>
-            <uk>Події з технікою (8)</uk>
-            <da>Køretøjshændelser (8)</da>
+            <en>Vehicle Events (4)</en>
+            <uk>Події з технікою (4)</uk>
+            <da>Køretøjshændelser (4)</da>
         
-            <de>8 Fahrzeugereignisse</de>
+            <de>4 Fahrzeugereignisse</de>
             <fr>[EN] Vehicle Events (8)</fr>
             <pl>[EN] Vehicle Events (8)</pl>
             <es>[EN] Vehicle Events (8)</es>
@@ -1028,18 +1031,18 @@
             <ru>[EN] Vehicle Events (8)</ru>
         </text>
         <text name="helpLine_rwe_cat2_vehicle_text">
-            <en>Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</en>
-            <uk>Прискорення, безкоштовне поповнення палива, витік палива, дрібні аварії з рахунками за ремонт, повне чищення парку техніки, візуальні оновлення, проблеми з двигуном (знижена потужність) та екстрені рахунки за ремонт. Більшість подій з технікою стосуються транспортного засобу, яким ви керуєте.</uk>
-            <da>Hastighedsboosts, gratis brændstofpåfyldninger, brændstoflækager, mindre ulykker med reparationsregninger, rengøring af hele køretøjsflåden, visuelle opgraderinger, motorproblemer (reduceret kraft) samt akutte reparationsregninger. De fleste køretøjshændelser påvirker det køretøj, du aktuelt styrer.</da>
+            <en>Minor accidents with repair bills and emergency repair bills target your farm's machines. An opt-in arcade mode (Arcade Physics, default off) adds speed boosts and engine trouble, applied to your own vehicle only.</en>
+            <uk>Дрібні аварії з рахунками за ремонт та екстрені рахунки за ремонт стосуються техніки вашої ферми. Додатковий аркадний режим (Аркадна фізика, вимкнено за замовчуванням) додає прискорення та проблеми з двигуном, лише для вашої техніки.</uk>
+            <da>Mindre ulykker med reparationsregninger og akutte reparationsregninger rammer gårdens maskiner. En valgfri arkademodus (Arkade-fysik, slået fra som standard) tilføjer hastighedsboosts og motorproblemer, kun på dit eget køretøj.</da>
         
-            <de>Höhere Geschwindigkeiten, kostenlose Tankfüllungen, Kraftstofflecks, kleinere Unfälle mit Reparaturkosten, Komplettreinigung der Flotte, kostenlose Lackierungen, Motorprobleme (Leistungsverlust) und Rechnungen für Notfallreparaturen. Die meisten Fahrzeugereignisse betreffen das aktuell gesteuerte Fahrzeug.</de>
-            <fr>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</fr>
-            <pl>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</pl>
-            <es>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</es>
-            <it>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</it>
-            <cz>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</cz>
-            <br>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</br>
-            <ru>[EN] Speed boosts, free fuel refills, fuel leaks, minor accidents with repair bills, full fleet cleaning, visual upgrades, engine trouble (reduced power), and emergency repair bills. Most vehicle events target your currently controlled vehicle.</ru>
+            <de>Kleinere Unfälle mit Reparaturkosten und Rechnungen für Notfallreparaturen betreffen die Maschinen deiner Farm. Ein optionaler Arcade-Modus (Arcade-Physik, standardmäßig aus) fügt Geschwindigkeitsboosts und Motorprobleme hinzu, nur für dein eigenes Fahrzeug.</de>
+            <fr>[EN] Minor accidents with repair bills and emergency repair bills target your farm's machines. An opt-in arcade mode (Arcade Physics, default off) adds speed boosts and engine trouble, applied to your own vehicle only.</fr>
+            <pl>[EN] Minor accidents with repair bills and emergency repair bills target your farm's machines. An opt-in arcade mode (Arcade Physics, default off) adds speed boosts and engine trouble, applied to your own vehicle only.</pl>
+            <es>[EN] Minor accidents with repair bills and emergency repair bills target your farm's machines. An opt-in arcade mode (Arcade Physics, default off) adds speed boosts and engine trouble, applied to your own vehicle only.</es>
+            <it>[EN] Minor accidents with repair bills and emergency repair bills target your farm's machines. An opt-in arcade mode (Arcade Physics, default off) adds speed boosts and engine trouble, applied to your own vehicle only.</it>
+            <cz>[EN] Minor accidents with repair bills and emergency repair bills target your farm's machines. An opt-in arcade mode (Arcade Physics, default off) adds speed boosts and engine trouble, applied to your own vehicle only.</cz>
+            <br>[EN] Minor accidents with repair bills and emergency repair bills target your farm's machines. An opt-in arcade mode (Arcade Physics, default off) adds speed boosts and engine trouble, applied to your own vehicle only.</br>
+            <ru>[EN] Minor accidents with repair bills and emergency repair bills target your farm's machines. An opt-in arcade mode (Arcade Physics, default off) adds speed boosts and engine trouble, applied to your own vehicle only.</ru>
         </text>
         <text name="helpLine_rwe_cat2_field_title">
             <en>Field Events (10)</en>
@@ -1086,11 +1089,11 @@
             <ru>[EN] Special &amp; Wildlife Events</ru>
         </text>
         <text name="helpLine_rwe_cat3_special_title">
-            <en>Special Events (10)</en>
-            <uk>Особливі події (10)</uk>
-            <da>Særlige hændelser (10)</da>
+            <en>Special Events (4)</en>
+            <uk>Особливі події (4)</uk>
+            <da>Særlige hændelser (4)</da>
         
-            <de>10 Spezialereignisse</de>
+            <de>4 Spezialereignisse</de>
             <fr>[EN] Special Events (10)</fr>
             <pl>[EN] Special Events (10)</pl>
             <es>[EN] Special Events (10)</es>
@@ -1100,25 +1103,25 @@
             <ru>[EN] Special Events (10)</ru>
         </text>
         <text name="helpLine_rwe_cat3_special_text">
-            <en>Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</en>
-            <uk>Прискорення та уповільнення часу (впливає на масштаб ігрового часу), бонуси та штрафи до отримання досвіду, множники грошей, зміни міцності обладнання, кращі торгові ціни та міські фестивалі. Після закінчення часових подій відновлюється початковий масштаб часу.</uk>
-            <da>Tidsacceleration og -opbremsning (påvirker spillets tidsskala), bonusser og straf på XP-optjening, pengemultiplikatorer, ændringer i udstyrets holdbarhed, bedre handelspriser samt byfestivaler. Tidsrelaterede hændelser gendanner den oprindelige tidsskala, når de slutter.</da>
+            <en>Better trade prices, town festivals, and equipment durability changes (the last two only with the opt-in Arcade Physics mode). Time-warp, reputation and cash-trickle events have been retired.</en>
+            <uk>Кращі торгові ціни, міські фестивалі та зміни міцності обладнання (останні два лише в додатковому аркадному режимі). Події з часом, досвідом та грошовими потоками вилучено.</uk>
+            <da>Bedre handelspriser, byfestivaler og ændringer i udstyrets holdbarhed (de to sidste kun i den valgfrie arkademodus). Tids-, ry- og kontant-tricklehændelser er udfaset.</da>
         
-            <de>Zeitbeschleunigung und -verlangsamung (beeinflusst die Spielzeit), Boni und Mali beim EP-Gewinn, Geldmultiplikatoren, Änderungen der Ausrüstungshaltbarkeit, bessere Handelspreise und Stadtfeste. Zeitereignisse stellen nach ihrem Ende die ursprüngliche Zeit wieder her.</de>
-            <fr>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</fr>
-            <pl>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</pl>
-            <es>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</es>
-            <it>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</it>
-            <cz>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</cz>
-            <br>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</br>
-            <ru>[EN] Time acceleration and slowdown (affects in-game time scale), XP gain bonuses and penalties, money multipliers, equipment durability changes, better trade prices, and town festivals. Time events restore the original time scale when they end.</ru>
+            <de>Bessere Handelspreise, Stadtfeste und Änderungen der Ausrüstungshaltbarkeit (die letzten beiden nur im optionalen Arcade-Modus). Zeit-, EP- und Geld-Trickle-Ereignisse wurden entfernt.</de>
+            <fr>[EN] Better trade prices, town festivals, and equipment durability changes (the last two only with the opt-in Arcade Physics mode). Time-warp, reputation and cash-trickle events have been retired.</fr>
+            <pl>[EN] Better trade prices, town festivals, and equipment durability changes (the last two only with the opt-in Arcade Physics mode). Time-warp, reputation and cash-trickle events have been retired.</pl>
+            <es>[EN] Better trade prices, town festivals, and equipment durability changes (the last two only with the opt-in Arcade Physics mode). Time-warp, reputation and cash-trickle events have been retired.</es>
+            <it>[EN] Better trade prices, town festivals, and equipment durability changes (the last two only with the opt-in Arcade Physics mode). Time-warp, reputation and cash-trickle events have been retired.</it>
+            <cz>[EN] Better trade prices, town festivals, and equipment durability changes (the last two only with the opt-in Arcade Physics mode). Time-warp, reputation and cash-trickle events have been retired.</cz>
+            <br>[EN] Better trade prices, town festivals, and equipment durability changes (the last two only with the opt-in Arcade Physics mode). Time-warp, reputation and cash-trickle events have been retired.</br>
+            <ru>[EN] Better trade prices, town festivals, and equipment durability changes (the last two only with the opt-in Arcade Physics mode). Time-warp, reputation and cash-trickle events have been retired.</ru>
         </text>
         <text name="helpLine_rwe_cat3_wildlife_title">
-            <en>Wildlife Events (10)</en>
-            <uk>Події з дикою природою (10)</uk>
-            <da>Dyrelivshændelser (10)</da>
+            <en>Wildlife Events (8)</en>
+            <uk>Події з дикою природою (8)</uk>
+            <da>Dyrelivshændelser (8)</da>
         
-            <de>10 Wildtierereignisse</de>
+            <de>8 Wildtierereignisse</de>
             <fr>[EN] Wildlife Events (10)</fr>
             <pl>[EN] Wildlife Events (10)</pl>
             <es>[EN] Wildlife Events (10)</es>
@@ -1128,18 +1131,18 @@
             <ru>[EN] Wildlife Events (10)</ru>
         </text>
         <text name="helpLine_rwe_cat3_wildlife_text">
-            <en>Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</en>
-            <uk>Зграї птахів, корисні комахи, дикі натовпи тварин, сповіщення про хижаків, нашестя кролів, рої бджіл, бонуси сезону полювання, бонуси та штрафи до продуктів тваринництва, ветеринарні рахунки та спалахи хвороб. Увімкніть категорію «Дика природа», щоб переживати ці події.</uk>
-            <da>Fugleflokke, nyttige insekter, vilde dyreflokke på flugt, rovdyrvarsler, kaninangreb, bisværme, bonusser i jagtsæsonen, bonusser og straf på husdyrprodukter, dyrlægeregninger samt sygdomsbekymringer. Aktivér kategorien Dyreliv for at opleve disse hændelser.</da>
+            <en>Livestock product bonuses and penalties, wolf sightings, bumper wool seasons, disease scares, feed shortages, veterinary payouts, and wildlife pest invasions. Feed shortages and veterinary payouts affect your account; the herd and field events are signals the sim systems react to.</en>
+            <uk>Бонуси та штрафи до продуктів тваринництва, спостереження вовків, щедрі вовняні сезони, спалахи хвороб, нестача кормів, ветеринарні виплати та нашестя шкідників. Нестача кормів і ветеринарні виплати впливають на ваш рахунок; події стада та полів є сигналами, на які реагують симуляційні системи.</uk>
+            <da>Bonusser og straf på husdyrprodukter, ulveobservationer, store uldsæsoner, sygdomsalarm, fodermangel, dyrlægeudbetalinger samt skadedyrsinvasioner. Fodermangel og dyrlægeudbetalinger påvirker din konto; besætnings- og markhændelser er signaler, som simuleringssystemerne reagerer på.</da>
         
-            <de>Vogelschwärme, nützliche Insekten, wilde Tierherden, Raubtierwarnungen, Kaninchenplagen, Bienenschwärme, Boni in der Jagdsaison, Boni und Mali bei der Viehprodukten, Tierarztkosten und Seuchenwarnungen. Diese Ereignisse sind nur aktiv, wenn die Einstellung Wildtiere aktiv ist.</de>
-            <fr>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</fr>
-            <pl>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</pl>
-            <es>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</es>
-            <it>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</it>
-            <cz>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</cz>
-            <br>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</br>
-            <ru>[EN] Bird flocks, beneficial insects, wild stampedes, predator alerts, rabbit infestations, bee swarms, hunting season bonuses, livestock product bonuses and penalties, veterinary bills, and disease scares. Enable the Wildlife category to experience these.</ru>
+            <de>Boni und Mali bei den Viehprodukten, Wolfsichtungen, üppige Wollzeiten, Seuchenwarnungen, Futtermangel, Tierarztzahlungen und Schädlingsinvasionen. Futtermangel und Tierarztzahlungen wirken auf dein Konto; Herden- und Feldereignisse sind Signale, auf die die Simulationssysteme reagieren.</de>
+            <fr>[EN] Livestock product bonuses and penalties, wolf sightings, bumper wool seasons, disease scares, feed shortages, veterinary payouts, and wildlife pest invasions. Feed shortages and veterinary payouts affect your account; the herd and field events are signals the sim systems react to.</fr>
+            <pl>[EN] Livestock product bonuses and penalties, wolf sightings, bumper wool seasons, disease scares, feed shortages, veterinary payouts, and wildlife pest invasions. Feed shortages and veterinary payouts affect your account; the herd and field events are signals the sim systems react to.</pl>
+            <es>[EN] Livestock product bonuses and penalties, wolf sightings, bumper wool seasons, disease scares, feed shortages, veterinary payouts, and wildlife pest invasions. Feed shortages and veterinary payouts affect your account; the herd and field events are signals the sim systems react to.</es>
+            <it>[EN] Livestock product bonuses and penalties, wolf sightings, bumper wool seasons, disease scares, feed shortages, veterinary payouts, and wildlife pest invasions. Feed shortages and veterinary payouts affect your account; the herd and field events are signals the sim systems react to.</it>
+            <cz>[EN] Livestock product bonuses and penalties, wolf sightings, bumper wool seasons, disease scares, feed shortages, veterinary payouts, and wildlife pest invasions. Feed shortages and veterinary payouts affect your account; the herd and field events are signals the sim systems react to.</cz>
+            <br>[EN] Livestock product bonuses and penalties, wolf sightings, bumper wool seasons, disease scares, feed shortages, veterinary payouts, and wildlife pest invasions. Feed shortages and veterinary payouts affect your account; the herd and field events are signals the sim systems react to.</br>
+            <ru>[EN] Livestock product bonuses and penalties, wolf sightings, bumper wool seasons, disease scares, feed shortages, veterinary payouts, and wildlife pest invasions. Feed shortages and veterinary payouts affect your account; the herd and field events are signals the sim systems react to.</ru>
         </text>
 
         <!-- Help page: Settings / event settings -->
@@ -1514,6 +1517,64 @@
             <uk>[F3]: перемкнути   ПКМ: рух/розмір</uk>
             <ru>[F3]: переключить   ПКМ: переместить/размер</ru>
             <da>[F3]: slå til/fra Højreklik: flyt/ændr størrelse</da>
+        </text>
+
+        <!-- Arcade physics opt-in (redesign, default OFF) -->
+        <text name="rwe_arcade_physics_short">
+            <en>Arcade Physics</en>
+            <de>Arcade-Physik</de>
+            <fr>Physique arcade</fr>
+            <nl>Arcade-fysica</nl>
+            <it>Fisica arcade</it>
+            <pl>Fizyka zręcznościowa</pl>
+            <es>Física arcade</es>
+            <ea>Física arcade</ea>
+            <pt>Física arcade</pt>
+            <br>Física arcade</br>
+            <ru>Аркадная физика</ru>
+            <uk>Аркадна фізика</uk>
+            <cz>Arkádová fyzika</cz>
+            <hu>Arkád fizika</hu>
+            <ro>Fizică arcade</ro>
+            <tr>Arcade Fizik</tr>
+            <fi>Arcade-fysiikka</fi>
+            <no>Arcade-fysikk</no>
+            <sv>Arcade-fysik</sv>
+            <da>Arkade-fysik</da>
+            <kr>아케이드 물리</kr>
+            <jp>アーケード物理</jp>
+            <ct>街機物理</ct>
+            <fc>街机物理</fc>
+            <id>Fisika arkade</id>
+            <vi>Vật lý arcade</vi>
+        </text>
+        <text name="rwe_arcade_physics_long">
+            <en>Allow arcade vehicle-physics events (player vehicle only, default off)</en>
+            <de>Arcade-Fahrzeugphysik-Ereignisse erlauben (nur eigenes Fahrzeug, standardmäßig aus)</de>
+            <fr>Autoriser les événements de physique de véhicule arcade (véhicule du joueur uniquement, désactivé par défaut)</fr>
+            <nl>Arcade-voertuigfysica-gebeurtenissen toestaan (alleen eigen voertuig, standaard uit)</nl>
+            <it>Consenti eventi di fisica di veicolo arcade (solo veicolo del giocatore, disattivati per impostazione predefinita)</it>
+            <pl>Zezwól na arkadowe zdarzenia fizyki pojazdów (tylko pojazd gracza, domyślnie wyłączone)</pl>
+            <es>Permitir eventos de física de vehículos arcade (solo el vehículo del jugador, desactivado por defecto)</es>
+            <ea>Permitir eventos de física de vehículos arcade (solo el vehículo del jugador, desactivado por defecto)</ea>
+            <pt>Permitir eventos de física de veículos arcade (apenas o veículo do jogador, desativado por padrão)</pt>
+            <br>Permitir eventos de física de veículos arcade (apenas o veículo do jogador, desativado por padrão)</br>
+            <ru>Разрешить аркадные события физики техники (только техника игрока, по умолчанию выключено)</ru>
+            <uk>Дозволити аркадні події фізики техніки (лише техніка гравця, вимкнено за замовчуванням)</uk>
+            <cz>Povolit arkádové události fyziky vozidel (pouze vozidlo hráče, ve výchozím nastavení vypnuto)</cz>
+            <hu>Arkád járműfizika-események engedélyezése (csak a játékos járműve, alapból kikapcsolva)</hu>
+            <ro>Permiteți evenimente arcade de fizică a vehiculelor (doar vehiculul jucătorului, dezactivat implicit)</ro>
+            <tr>Arcade araç fizik olaylarına izin ver (yalnızca oyuncu aracı, varsayılan olarak kapalı)</tr>
+            <fi>Salli arcade-ajoneuvofysiikkatapahtumat (vain pelaajan ajoneuvo, oletuksena pois päältä)</fi>
+            <no>Tillat arkade-kjøretøysfysikkhendelser (kun spillerens kjøretøy, av som standard)</no>
+            <sv>Tillåt arkadfordonsfysikhändelser (endast spelarens fordon, av som standard)</sv>
+            <da>Tillad arkade-køretøjsfysikbegivenheder (kun spillerens køretøj, slået fra som standard)</da>
+            <kr>아케이드 차량 물리 이벤트 허용 (플레이어 차량만, 기본적으로 꺼짐)</kr>
+            <jp>アーケード車両物理イベントを許可（プレイヤー車両のみ、デフォルトはオフ）</jp>
+            <ct>允許街機車輛物理事件（僅限玩家車輛，默認關閉）</ct>
+            <fc>允许街机车辆物理事件（仅限玩家车辆，默认关闭）</fc>
+            <id>Izinkan peristiwa fisika kendaraan arkade (hanya kendaraan pemain, nonaktif secara default)</id>
+            <vi>Cho phép sự kiện vật lý xe arcade (chỉ xe của người chơi, tắt mặc định)</vi>
         </text>
     </l10n>
 

@@ -140,23 +140,6 @@ economicEvents.eventList = {
     },
 
     {
-        name="fuel_discount", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.fuelDiscount = 0.1 + 0.05 * intensity
-            end
-            return string.format("Fuel prices drop! -%.0f%% at the pump today.", (0.1 + 0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return "Fuel's still cheap — keep those engines running."
-        end,
-        ambientMsgs = {
-            "Crude oil glut on global markets is trickling down to farm diesel.",
-            "The local fuel supplier is matching the regional price drop.",
-        },
-    },
-
-    {
         name="equipment_discount", minI=1,
         func=function(intensity)
             if g_RandomWorldEvents then
@@ -302,10 +285,6 @@ local function economicTickHandler(rwe)
         local savings = math.floor(400 * s.fertilizerDiscount)
         amount = amount + savings
     end
-    if s.fuelDiscount then
-        local savings = math.floor(300 * s.fuelDiscount)
-        amount = amount + savings
-    end
     if s.equipmentDiscount then
         local savings = math.floor(350 * s.equipmentDiscount)
         amount = amount + savings
@@ -348,7 +327,6 @@ local function registerEconomicEvents()
                     s.marketMalus        = nil
                     s.seedDiscount       = nil
                     s.fertilizerDiscount = nil
-                    s.fuelDiscount       = nil
                     s.equipmentDiscount  = nil
                     s.priceFixing        = nil
                     s.exportBonus        = nil

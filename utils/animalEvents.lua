@@ -202,36 +202,15 @@ animalEvents.eventList = {
 }
 
 -- =====================
--- TICK HANDLER
--- Delivers per-minute cash effects for active animal bonuses/maluses.
--- =====================
-local function animalTickHandler(rwe)
-    if not g_currentMission then return end
-    local s = rwe.EVENT_STATE
-    local t = g_currentMission.time
-    local lastTick = s.lastAnimalTick or 0
-    if t - lastTick < 60000 then return end
-    s.lastAnimalTick = t
-
-    local farmId = g_currentMission.player and g_currentMission.player.farmId or 0
-    if farmId == 0 then return end
-
-    local amount = 0
-    if s.animalProductBonus then
-        amount = amount + math.floor(400 * s.animalProductBonus)
-    end
-    if s.animalProductMalus then
-        amount = amount - math.floor(300 * s.animalProductMalus)
-    end
-
-    if amount ~= 0 and g_currentMission.addMoney then
-        rweAddMoney(amount, farmId, MoneyType.OTHER, false)
-    end
-end
-
--- =====================
 -- REGISTER ANIMAL EVENTS
 -- =====================
+-- The herd/product events (animal_product_bonus/penalty, wolf_sighting,
+-- bumper_wool_season, disease_scare, wildlife_pest_invasion) are PULL
+-- read-signals in the redesign: DairyCore / CropDisease read them via the
+-- companion surface and apply their own herd/disease/pest response. The old
+-- per-60-second money trickle for these flags is CUT (cash-from-nowhere).
+-- feed_shortage and veterinary_windfall keep their money movements until the
+-- TaxMod onDayChange settlement lands (the gated money half).
 local function registerAnimalEvents()
     if not g_RandomWorldEvents or not g_RandomWorldEvents.registerEvent then
         Logging.warning("[AnimalEvents] g_RandomWorldEvents not available yet")
@@ -257,14 +236,11 @@ local function registerAnimalEvents()
                     s.woolBonusSeason    = nil
                     s.diseaseScare       = nil
                     s.yieldMalus         = 0
-                    s.lastAnimalTick     = nil
                 end
                 return nil
             end
         })
     end
-
-    g_RandomWorldEvents:registerTickHandler("animalEvents", animalTickHandler)
 
     Logging.info("[AnimalEvents] Registered " .. #animalEvents.eventList .. " wildlife/animal events")
     return true

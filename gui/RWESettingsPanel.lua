@@ -233,6 +233,7 @@ function RWESettingsPanel:drawEventsTab(x, y, w)
     cy = self:drawHeader(x, cy, w, "GLOBAL SETTINGS")
     cy = self:drawToggle(x, cy, w, "Enable All Events", ev.enabled, function(v) ev.enabled = v end)
     cy = self:drawToggle(x, cy, w, "Experimental Systems", self.rwe.experimentalSystems, function(v) self.rwe.experimentalSystems = v end)
+    cy = self:drawToggle(x, cy, w, "Arcade Physics", ev.arcadePhysics, function(v) ev.arcadePhysics = v end)
     cy = cy - 0.01
     
     cy = self:drawHeader(x, cy, w, "TIMING & CHANCE")

@@ -45,9 +45,10 @@ if EconomyManager and EconomyManager.getPricePerLiter then
             mult = mult * (1 - s.economicCrisis.marketMalus)
         end
 
-        -- Field modifiers
-        if s.yieldBonus     then mult = mult * (1 + s.yieldBonus)     end
-        if s.yieldMalus     then mult = mult * (1 - s.yieldMalus)     end
+        -- Field price modifiers (harvest / field-sale stay here until the
+        -- MarketDynamics re-home lands; crop_yield and wildlife_pest are now
+        -- PULL read-signals owned by the sim systems, so yieldBonus/yieldMalus
+        -- no longer scale sell prices).
         if s.harvestBonus   then mult = mult * (1 + s.harvestBonus)   end
         if s.harvestMalus   then mult = mult * (1 - s.harvestMalus)   end
         if s.fieldSaleBonus then mult = mult * (1 + s.fieldSaleBonus) end
@@ -87,8 +88,11 @@ end
 
 -- =====================
 -- VEHICLE DAMAGE HOOK
--- Patches Vehicle.addDamageAmount to scale incoming damage
--- based on durability EVENT_STATE flags.
+-- Patches Vehicle.addDamageAmount to scale incoming damage based on the
+-- durability EVENT_STATE flags. Redesign: this global patch only acts behind
+-- the arcadePhysics opt-in toggle (default OFF), and even then only for the
+-- player's own vehicle. When the toggle is OFF the patch is a transparent
+-- pass-through so normal gameplay damage is never touched.
 -- =====================
 if Vehicle and Vehicle.addDamageAmount then
     local origAddDamage = Vehicle.addDamageAmount
@@ -98,6 +102,21 @@ if Vehicle and Vehicle.addDamageAmount then
             return origAddDamage(self, damage, ...)
         end
         if not g_RandomWorldEvents then
+            return origAddDamage(self, damage, ...)
+        end
+        if not g_RandomWorldEvents:allowsArcadePhysics() then
+            return origAddDamage(self, damage, ...)
+        end
+
+        -- Never scale damage on an NPC-driven vehicle.
+        local isPlayerVehicle = false
+        local p = g_localPlayer
+        if p ~= nil and p.getCurrentVehicle ~= nil then
+            isPlayerVehicle = p:getCurrentVehicle() == self
+        elseif g_currentMission ~= nil then
+            isPlayerVehicle = g_currentMission.controlledVehicle == self
+        end
+        if not isPlayerVehicle then
             return origAddDamage(self, damage, ...)
         end
 
@@ -113,7 +132,7 @@ if Vehicle and Vehicle.addDamageAmount then
         return origAddDamage(self, scaledDamage, ...)
     end
 
-    Logging.info("[EffectHooks] Vehicle.addDamageAmount hooked")
+    Logging.info("[EffectHooks] Vehicle.addDamageAmount hooked (arcade-physics gate)")
 else
     Logging.info("[EffectHooks] Vehicle.addDamageAmount not available in this build — durability scaling disabled")
 end

@@ -587,9 +587,11 @@ function RWEEventHUD:drawPanel()
         cy = cy - lh
     end
 
-    -- Stats row: frequency / intensity
-    local freq = rwe.events.frequency or 5
-    local inten = rwe.events.intensity or 2
+    -- Stats row: frequency / intensity (effective values, spine-scaled when
+    -- the Option-Scaling Spine is present so the HUD never disagrees with the
+    -- actual trigger logic).
+    local freq = rwe.getEffectiveFrequency ~= nil and rwe:getEffectiveFrequency() or (rwe.events.frequency or 5)
+    local inten = rwe.getBaseIntensity ~= nil and rwe:getBaseIntensity() or (rwe.events.intensity or 2)
     setTextAlignment(RenderText.ALIGN_LEFT)
     setTextColor(self.COLORS.DIM[1], self.COLORS.DIM[2], self.COLORS.DIM[3], 1)
     renderText(x, cy - tsSmall, tsSmall,

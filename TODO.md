@@ -17,6 +17,7 @@
 - [x] RWE-001 / RWE-002 / RWE-003 / RWE-004: additional RandomWorldEvents bugs fixed in 2026-07-26 bug sweep, merged to main.
 
 ## Features / enhancements
+- [x] Redesign NON-PRICE HALF (2026-08-14, branch `feat/RWE-redesign-nonprice`, v2.2.0.0). CUT 13 arcade edges (time warps, rep, cash-from-nowhere, magic fuel, free upgrades/cleaning, steering pull, slippery roads, fuel discount); world/sim events are now PULL read-signals; arcade physics behind the opt-in `arcadePhysics` toggle (default OFF, player-vehicle only, never economy); difficulty rides the Option-Scaling Spine (vendored resolver, World-events dial applied to frequency + base intensity, Economy dial exposed); read surface completed (getActiveEvent / isEventActive / getProgress / getRemainingTime / getIntensity / getIntensity-nil). Event catalog 53 -> 40. Bench at `tools/test/rwe-redesign-bench.mjs` (16 checks).
 - [x] Release gate mechanism (2026-08-04): `ReleaseGate.lua` with an EMPTY registry (Arissani 2026-08-03). `experimentalSystems` opt-in (default false, orthogonal to difficulty) through the settings manager load/save, the SettingsHub mirror and a settings-panel toggle. `rweRelease` status command. Nothing gated; a row drops in the moment a system needs locking.
 - [x] Bedrock migration DONE: StateLedger + SettingsHub + MasterHUD bridged (NetworkSync N/A by design).
 
@@ -32,4 +33,7 @@
 - [ ] Update README/version on each release.
 
 ## Blocked / waiting on
-- [!] Vehicle-event server-gate exemption decision (waits on: audit answer, whether physics events skip the getIsServer gate since they are local-player physics, not farm balance).
+- [!] Redesign PRICE half (gated): re-home the retained price events to MarketDynamics registered price modifiers; the EffectHooks getPricePerLiter patch stays until then. Brief gate says registerPriceModifier is unbuilt; notes.md records it as built (1.2.0.9, MarketDynamics.lua:301) since 2026-07-31 - re-verify at build time, do not build ahead.
+- [!] Redesign MONEY half (gated): accrue retained money events and settle on onDayChange via TaxMod recordExpense (both directions); instant server-gated addMoney stays until then. Includes the harvest-festival money trickle.
+- [!] Economy-dial application: read + exposed via getDifficulty(), application lands with the money/price re-homes.
+- [!] Vehicle-event server-gate exemption decision (waits on: audit answer, whether physics events skip the getIsServer gate since they are local-player physics, not farm balance). Superseded in practice by the arcadePhysics opt-in + player-vehicle scoping.

@@ -102,6 +102,12 @@ function RWESettingsIntegration:addSettingsElements(frame)
         g_i18n:getText("rwe_cooldown_long")  or "Minimum in-game time between events"
     )
 
+    frame.rwe_arcadePhysics = RWESettingsIntegration:addBinaryOption(
+        frame, "onRWEArcadePhysicsChanged",
+        g_i18n:getText("rwe_arcade_physics_short") or "Arcade Physics",
+        g_i18n:getText("rwe_arcade_physics_long")  or "Allow arcade vehicle-physics events (player vehicle only, default off)"
+    )
+
     -- ── Notifications & HUD ───────────────────────────────
     RWESettingsIntegration:addSubHeader(frame,
         g_i18n:getText("rwe_subheader_hud") or "Notifications & HUD"
@@ -367,6 +373,11 @@ function RWESettingsIntegration:updateSettingsUI(frame)
             RWESettingsIntegration.hudScaleValues, scale))
     end
 
+    -- Arcade physics opt-in
+    if frame.rwe_arcadePhysics then
+        frame.rwe_arcadePhysics:setIsChecked(ev.arcadePhysics == true, false, false)
+    end
+
     -- Categories
     if frame.rwe_economicEvents then
         frame.rwe_economicEvents:setIsChecked(ev.economicEvents == true, false, false)
@@ -446,6 +457,10 @@ end
 
 function RWESettingsIntegration:onRWECooldownChanged(state)
     applyEventSetting("cooldown", RWESettingsIntegration.cooldownValues[state] or 30)
+end
+
+function RWESettingsIntegration:onRWEArcadePhysicsChanged(state)
+    applyEventSetting("arcadePhysics", state == BinaryOptionElement.STATE_RIGHT)
 end
 
 function RWESettingsIntegration:onRWENotificationsChanged(state)
