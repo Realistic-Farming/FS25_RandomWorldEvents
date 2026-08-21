@@ -11,7 +11,10 @@
 -- =========================================================
 
 ---@class RWEEventHUD
-RWEEventHUD = {}
+-- BUILD 17:57 (Wizard hot-reload law 2026-08-21, FS25-HotReload-Guide.md Part 1):
+-- reuse the existing class table on Ctrl+R reload so updated methods land on the
+-- table live metatables already reference, instead of orphaning it.
+RWEEventHUD = RWEEventHUD or {}
 local RWEEventHUD_mt = Class(RWEEventHUD)
 
 -- ── Category metadata ─────────────────────────────────────
@@ -41,9 +44,13 @@ function RWEEventHUD.new(rweInstance)
     self.visible = true
 
     -- Panel anchor: top-left text origin
-    self.posX       = 0.77
-    self.posY       = 0.90
-    self.panelWidth = 0.21
+    -- BUILD 17:10 (Sam DESIGN 17:08): factory home splits WE off the Income box -
+    -- both mods shipped (0.77, 0.90) and stacked. WE takes the top of the 0.550-0.750
+    -- band (posY is the panel TOP edge per the clamp below): 0.86-0.98 tall.
+    -- Saved hudLayout XML still wins on load.
+    self.posX       = 0.55
+    self.posY       = 0.98
+    self.panelWidth = 0.20
 
     -- Layout constants at scale 1.0
     self.LINE_H      = 0.018
@@ -633,4 +640,36 @@ end
 
 function RWEEventHUD:divider(dx, dy, dw, sc)
     self:rect(dx, dy, dw, 0.001 * (sc or 1.0), self.COLORS.DIVIDER)
+end
+
+-- =========================================================
+
+-- BUILD 17:57 (Wizard hot-reload law, FS25-HotReload-Guide.md Part 2): after a
+
+-- Ctrl+R reload the metatable chain does not reliably deliver updated methods to
+
+-- live instances, so copy them on directly. The manager is a file-local in
+
+-- RandomWorldEvents.lua, so the reachable live path is the mission handle it
+
+-- publishes (mission.randomWorldEvents), holding the HUD as .eventHUD.
+
+-- Functions only; state fields untouched.
+
+if g_currentMission ~= nil and g_currentMission.randomWorldEvents ~= nil
+
+    and g_currentMission.randomWorldEvents.eventHUD ~= nil then
+
+    local inst = g_currentMission.randomWorldEvents.eventHUD
+
+    for k, v in pairs(RWEEventHUD) do
+
+        if type(v) == "function" then
+
+            inst[k] = v
+
+        end
+
+    end
+
 end
