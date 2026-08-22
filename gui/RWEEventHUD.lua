@@ -11,8 +11,16 @@
 -- =========================================================
 
 ---@class RWEEventHUD
-RWEEventHUD = {}
+-- BUILD 17:57 (Wizard hot-reload law 2026-08-21, FS25-HotReload-Guide.md Part 1):
+-- reuse the existing class table on Ctrl+R reload so updated methods land on the
+-- table live metatables already reference, instead of orphaning it.
+RWEEventHUD = RWEEventHUD or {}
 local RWEEventHUD_mt = Class(RWEEventHUD)
+
+local function getHUDRenderer()
+    local masterHUD = (g_currentMission and g_currentMission.masterHUD) or g_masterHUD
+    return masterHUD and masterHUD.renderer or nil
+end
 
 -- ── Category metadata ─────────────────────────────────────
 RWEEventHUD.CATEGORY = {
@@ -26,6 +34,12 @@ RWEEventHUD.CATEGORY = {
 RWEEventHUD.MIN_SCALE        = 0.60
 RWEEventHUD.MAX_SCALE        = 1.80
 RWEEventHUD.RESIZE_HANDLE_SIZE = 0.008
+-- Wizard 2026-08-21 width wave: left/right edge drag adjusts a width multiplier,
+-- independent of corner-scale (NPCFavor/Workplace pattern, suite-wide).
+RWEEventHUD.MIN_WIDTH_MULT = 0.7
+RWEEventHUD.MAX_WIDTH_MULT = 2.5
+RWEEventHUD.EDGE_BAND_W    = 0.008
+RWEEventHUD.EDGE_SENS      = 3.0
 RWEEventHUD.FLASH_DURATION   = 5000  -- ms a flash notification stays visible
 
 -- =========================================================
@@ -41,9 +55,15 @@ function RWEEventHUD.new(rweInstance)
     self.visible = true
 
     -- Panel anchor: top-left text origin
-    self.posX       = 0.77
-    self.posY       = 0.90
-    self.panelWidth = 0.21
+    -- BUILD 17:10 (Sam DESIGN 17:08): factory home splits WE off the Income box -
+    -- both mods shipped (0.77, 0.90) and stacked. WE takes the top of the 0.550-0.750
+    -- band (posY is the panel TOP edge per the clamp below): 0.86-0.98 tall.
+    -- Saved hudLayout XML still wins on load.
+    -- Wizard 2026-08-21: factory home is the suite layout Wizard arranged
+    -- in-game (bottom-center lane). A saved hudLayout XML still wins on load.
+    self.posX       = 0.421354
+    self.posY       = 0.978148
+    self.panelWidth = 0.20
 
     -- Layout constants at scale 1.0
     self.LINE_H      = 0.018
@@ -51,10 +71,10 @@ function RWEEventHUD.new(rweInstance)
     self.TEXT_TITLE  = 0.013
     self.TEXT_NORMAL = 0.011
     self.TEXT_SMALL  = 0.0095
-    self.BAR_H       = 0.006
+    self.BAR_H       = 0.005556 -- 6 px at 1080p, base fill-level height
 
     -- Scale & edit state (IncomeMod pattern)
-    self.scale            = 1.0
+    self.scale            = 1.235293   -- factory suite layout (Wizard 2026-08-21)
     self.editMode         = false
     self.dragging         = false
     self.resizing         = false
@@ -65,6 +85,12 @@ function RWEEventHUD.new(rweInstance)
     self.resizeStartScale = 1.0
     self.hoverCorner      = nil
     self.animTimer        = 0
+
+    -- Width state (edge-drag, NPCFavor/Workplace pattern)
+    self.widthMult          = 0.700000   -- factory suite layout (Wizard 2026-08-21)
+    self.edgeDragging       = nil   -- nil | "left" | "right"
+    self.edgeDragStartX     = 0
+    self.edgeDragStartWidth = 1.0
 
     -- Camera freeze during edit mode
     self.savedCamRotX = nil
@@ -170,10 +196,11 @@ function RWEEventHUD:enterEditMode()
 end
 
 function RWEEventHUD:exitEditMode()
-    self.editMode    = false
-    self.dragging    = false
-    self.resizing    = false
-    self.hoverCorner = nil
+    self.editMode     = false
+    self.dragging     = false
+    self.resizing     = false
+    self.edgeDragging = nil
+    self.hoverCorner  = nil
     if g_inputBinding and g_inputBinding.setShowMouseCursor then
         g_inputBinding:setShowMouseCursor(false)
     end
@@ -199,6 +226,7 @@ function RWEEventHUD:saveLayout()
         xml:setFloat("hudLayout.posX",   self.posX)
         xml:setFloat("hudLayout.posY",   self.posY)
         xml:setFloat("hudLayout.scale",  self.scale)
+        xml:setFloat("hudLayout.widthMult", self.widthMult or 1.0)
         xml:setBool("hudLayout.visible", self.visible)
         xml:save()
         xml:delete()
@@ -213,6 +241,8 @@ function RWEEventHUD:loadLayout()
         self.posX    = xml:getFloat("hudLayout.posX",   self.posX)
         self.posY    = xml:getFloat("hudLayout.posY",   self.posY)
         self.scale   = xml:getFloat("hudLayout.scale",  self.scale)
+        self.widthMult = math.max(RWEEventHUD.MIN_WIDTH_MULT, math.min(RWEEventHUD.MAX_WIDTH_MULT,
+            xml:getFloat("hudLayout.widthMult", self.widthMult or 1.0)))
         self.visible = xml:getBool("hudLayout.visible", self.visible)
         xml:delete()
     end
@@ -244,6 +274,16 @@ function RWEEventHUD:hitTestCorner(posX, posY)
         and posY >= r.y and posY <= r.y + r.h then
             return key
         end
+    end
+    return nil
+end
+
+function RWEEventHUD:hitTestEdge(posX, posY)
+    local band = RWEEventHUD.EDGE_BAND_W
+    local bx, by, bw, bh = self.lastBgX, self.lastBgY, self.lastBgW, self.lastBgH
+    if posY >= by and posY <= by + bh then
+        if posX >= bx - band / 2 and posX <= bx + band / 2 then return "left" end
+        if posX >= bx + bw - band / 2 and posX <= bx + bw + band / 2 then return "right" end
     end
     return nil
 end
@@ -281,14 +321,25 @@ function RWEEventHUD:onMouseEvent(posX, posY, isDown, isUp, button)
         if corner then
             self.resizing         = true
             self.dragging         = false
+            self.edgeDragging     = nil
             self.resizeStartX     = posX
             self.resizeStartY     = posY
             self.resizeStartScale = self.scale
             return
         end
+        local edge = self:hitTestEdge(posX, posY)
+        if edge then
+            self.edgeDragging       = edge
+            self.dragging           = false
+            self.resizing           = false
+            self.edgeDragStartX     = posX
+            self.edgeDragStartWidth = self.widthMult or 1.0
+            return
+        end
         if self:isPointerOverHUD(posX, posY) then
             self.dragging    = true
             self.resizing    = false
+            self.edgeDragging = nil
             self.dragOffsetX = posX - self.posX
             self.dragOffsetY = posY - self.posY
         end
@@ -296,9 +347,10 @@ function RWEEventHUD:onMouseEvent(posX, posY, isDown, isUp, button)
     end
 
     if isUp and button == 1 then
-        if self.dragging or self.resizing then
-            self.dragging = false
-            self.resizing = false
+        if self.dragging or self.resizing or self.edgeDragging then
+            self.dragging     = false
+            self.resizing     = false
+            self.edgeDragging = nil
             self:clampPosition()
         end
         return
@@ -322,7 +374,17 @@ function RWEEventHUD:onMouseEvent(posX, posY, isDown, isUp, button)
         self:clampPosition()
     end
 
-    if not self.dragging and not self.resizing then
+    -- Edge width drag: dx scaled by EDGE_SENS, left edge inverted so pulling
+    -- outward always widens (NPCFavor/Workplace pattern).
+    if self.edgeDragging then
+        local dx = posX - self.edgeDragStartX
+        if self.edgeDragging == "left" then dx = -dx end
+        self.widthMult = math.max(RWEEventHUD.MIN_WIDTH_MULT,
+            math.min(RWEEventHUD.MAX_WIDTH_MULT, self.edgeDragStartWidth + dx * RWEEventHUD.EDGE_SENS))
+        self:clampPosition()
+    end
+
+    if not self.dragging and not self.resizing and not self.edgeDragging then
         self.hoverCorner = self:hitTestCorner(posX, posY)
     end
 end
@@ -408,7 +470,7 @@ function RWEEventHUD:drawPanel()
     local rwe = self.rwe
 
     local x   = self.posX
-    local w   = self.panelWidth * sc
+    local w   = self.panelWidth * (self.widthMult or 1.0) * sc
     local pad = self.PAD  * sc
     local lh  = self.LINE_H * sc
 
@@ -434,18 +496,24 @@ function RWEEventHUD:drawPanel()
     self.lastBgW = bgW
     self.lastBgH = bgH
 
-    -- ── Drop shadow ────────────────────────────────────────
-    self:rect(bgX + 0.002, bgY - 0.002, bgW, bgH, self.COLORS.SHADOW)
+    local renderer = getHUDRenderer()
+    local renderedNativePanel = renderer ~= nil and type(renderer.renderPanel) == "function"
+        and renderer:renderPanel(bgX, bgY, bgW, bgH, self.COLORS.BG[4])
 
-    -- ── Background ────────────────────────────────────────
-    self:rect(bgX, bgY, bgW, bgH, self.COLORS.BG)
+    if not renderedNativePanel then
+        -- ── Drop shadow ────────────────────────────────────
+        self:rect(bgX + 0.002, bgY - 0.002, bgW, bgH, self.COLORS.SHADOW)
 
-    -- ── Permanent border ──────────────────────────────────
-    local bw = 0.0012
-    self:rect(bgX,            bgY + bgH - bw, bgW, bw, self.COLORS.BORDER)
-    self:rect(bgX,            bgY,            bgW, bw, self.COLORS.BORDER)
-    self:rect(bgX,            bgY,            bw, bgH, self.COLORS.BORDER)
-    self:rect(bgX + bgW - bw, bgY,            bw, bgH, self.COLORS.BORDER)
+        -- ── Background ────────────────────────────────────
+        self:rect(bgX, bgY, bgW, bgH, self.COLORS.BG)
+
+        -- ── Permanent border ──────────────────────────────
+        local bw = 0.0012
+        self:rect(bgX,            bgY + bgH - bw, bgW, bw, self.COLORS.BORDER)
+        self:rect(bgX,            bgY,            bgW, bw, self.COLORS.BORDER)
+        self:rect(bgX,            bgY,            bw, bgH, self.COLORS.BORDER)
+        self:rect(bgX + bgW - bw, bgY,            bw, bgH, self.COLORS.BORDER)
+    end
 
     -- ── Edit mode chrome ──────────────────────────────────
     if self.editMode then
@@ -460,6 +528,14 @@ function RWEEventHUD:drawPanel()
             local isHover = (self.hoverCorner == key)
             self:rectA(r.x, r.y, r.w, r.h, self.COLORS.EDIT_HANDLE, isHover and 1.0 or 0.65)
         end
+
+        -- Left/right edge width handles (suite width vocabulary)
+        local ehW   = 0.004
+        local inset = bgH * 0.15
+        self:rectA(bgX - ehW / 2,       bgY + inset, ehW, bgH - inset * 2,
+            self.COLORS.EDIT_HANDLE, self.edgeDragging == "left" and 1.0 or 0.65)
+        self:rectA(bgX + bgW - ehW / 2, bgY + inset, ehW, bgH - inset * 2,
+            self.COLORS.EDIT_HANDLE, self.edgeDragging == "right" and 1.0 or 0.65)
     end
 
     -- ── Content ───────────────────────────────────────────
@@ -511,7 +587,7 @@ function RWEEventHUD:drawPanel()
     cy = cy - lh
 
     -- Divider
-    self:divider(bgX, cy + lh * 0.35, bgW, sc)
+    self:divider(bgX, cy, bgW, sc)
     cy = cy - 0.004 * sc
 
     -- ── Active event section ──────────────────────────────
@@ -555,11 +631,16 @@ function RWEEventHUD:drawPanel()
         local barH  = self.BAR_H * sc
         local barX  = x
         local barY  = cy - barH
-        -- Background track
-        self:rect(barX, barY, barW, barH, self.COLORS.BAR_BG)
         -- Fill (category color, fades as time runs out)
         local fillAlpha = 0.5 + 0.5 * (1.0 - progress)
-        self:rectA(barX, barY, barW * progress, barH, catColor, fillAlpha)
+        local fillColor = {catColor[1], catColor[2], catColor[3], fillAlpha}
+        local renderedNativeBar = renderer ~= nil and type(renderer.renderProgressBar) == "function"
+            and renderer:renderProgressBar(barX, barY, barW, barH, progress, fillColor)
+        if not renderedNativeBar then
+            -- Background track
+            self:rect(barX, barY, barW, barH, self.COLORS.BAR_BG)
+            self:rectA(barX, barY, barW * progress, barH, catColor, fillAlpha)
+        end
         cy = cy - barH - (lh * 0.25)
 
     else
@@ -599,7 +680,7 @@ function RWEEventHUD:drawPanel()
     cy = cy - lh
 
     -- Divider
-    self:divider(bgX, cy + lh * 0.35, bgW, sc)
+    self:divider(bgX, cy, bgW, sc)
     cy = cy - 0.004 * sc
 
     -- Hint row
@@ -631,6 +712,50 @@ function RWEEventHUD:rectA(rx, ry, rw, rh, color, alpha)
     renderOverlay(self.bgOverlay, rx, ry, rw, rh)
 end
 
-function RWEEventHUD:divider(dx, dy, dw, sc)
-    self:rect(dx, dy, dw, 0.001 * (sc or 1.0), self.COLORS.DIVIDER)
+function RWEEventHUD:divider(dx, bandTopY, dw, sc)
+    local dividerH = g_pixelSizeY or (1 / 1080)
+    local bandH = 0.004 * (sc or 1.0)
+    self:rect(dx, bandTopY - (bandH + dividerH) * 0.5,
+        dw, dividerH, self.COLORS.DIVIDER)
+end
+
+-- =========================================================
+
+-- BUILD 17:57 (Wizard hot-reload law, FS25-HotReload-Guide.md Part 2): after a
+
+-- Ctrl+R reload the metatable chain does not reliably deliver updated methods to
+
+-- live instances, so copy them on directly. The manager is a file-local in
+
+-- RandomWorldEvents.lua, so the reachable live path is the mission handle it
+
+-- publishes (mission.randomWorldEvents), holding the HUD as .eventHUD.
+
+-- Functions only; state fields untouched.
+
+if g_currentMission ~= nil and g_currentMission.randomWorldEvents ~= nil
+
+    and g_currentMission.randomWorldEvents.eventHUD ~= nil then
+
+    local inst = g_currentMission.randomWorldEvents.eventHUD
+
+    for k, v in pairs(RWEEventHUD) do
+
+        if type(v) == "function" then
+
+            inst[k] = v
+
+        end
+
+    end
+
+end
+
+-- Width-wave delivery (Wizard 2026-08-21): default the new field on a
+-- pre-wave live instance, and prove delivery in log.txt.
+if g_currentMission ~= nil and g_currentMission.randomWorldEvents ~= nil
+    and g_currentMission.randomWorldEvents.eventHUD ~= nil then
+    local inst = g_currentMission.randomWorldEvents.eventHUD
+    if inst.widthMult == nil then inst.widthMult = 1.0 end
+    print("[RWE] RWEEventHUD hot-patched onto live instance")
 end
