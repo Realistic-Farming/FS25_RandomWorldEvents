@@ -28,9 +28,9 @@
 RWEVehiclePhysics = RWEVehiclePhysics or {}
 
 RWEVehiclePhysics.SPEC_NAME = "rweVehiclePhysics"
--- Captured at source time, while g_currentModName is still this mod.
-RWEVehiclePhysics.MOD_NAME = RWEVehiclePhysics.MOD_NAME or (g_currentModName or "FS25_RandomWorldEvents")
-RWEVehiclePhysics.MOD_DIR  = RWEVehiclePhysics.MOD_DIR or g_currentModDirectory
+-- Captured at source time, while (RandomWorldEventsModName or g_currentModName) is still this mod.
+RWEVehiclePhysics.MOD_NAME = RWEVehiclePhysics.MOD_NAME or ((RandomWorldEventsModName or g_currentModName) or "FS25_RandomWorldEvents")
+RWEVehiclePhysics.MOD_DIR  = RWEVehiclePhysics.MOD_DIR or (RandomWorldEventsModDirectory or g_currentModDirectory)
 RWEVehiclePhysics._validateHookInstalled = false
 RWEVehiclePhysics._didRegisterGlobally   = false
 

@@ -29,7 +29,7 @@
 -- mod environment.
 -- =========================================================
 
-RWESettingsHubBridge = {}
+RWESettingsHubBridge = RWESettingsHubBridge or {}
 
 -- id -> descriptor. section/key locate the live value in the nested settings
 -- tables (section "top" = the manager itself for hudScale). type maps onto the

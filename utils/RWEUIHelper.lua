@@ -4,7 +4,7 @@
 -- Based on the cloning pattern from Worker Costs / Soil Fertilizer
 -- =========================================================
 
-RWEUIHelper = {}
+RWEUIHelper = RWEUIHelper or {}
 
 local function getTextSafe(key)
     local text = g_i18n:getText(key)

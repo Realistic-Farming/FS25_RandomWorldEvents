@@ -9,7 +9,7 @@
 -- =========================================================
 
 ---@class RWESettingsPanel
-RWESettingsPanel = {}
+RWESettingsPanel = RWESettingsPanel or {}
 local RWESettingsPanel_mt = Class(RWESettingsPanel)
 
 -- =========================================================

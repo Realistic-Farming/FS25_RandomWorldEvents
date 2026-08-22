@@ -36,7 +36,7 @@
 -- The cross-mod handle is g_currentMission.stateLedger (published in Mission00.load).
 -- =========================================================
 
-RWEStateLedgerBridge = {}
+RWEStateLedgerBridge = RWEStateLedgerBridge or {}
 
 -- LOCKED persistence key. Never renamed after first persist (a later rename
 -- orphans saved event state). Matches the <Mod>_<Thing> convention.

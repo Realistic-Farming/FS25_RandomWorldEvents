@@ -5,7 +5,7 @@
 -- time-remaining progress bar, and flash notifications.
 -- RMB on panel → drag/resize (IncomeMod/NPCFavor pattern).
 -- Position/scale persisted to savegame XML.
--- Toggle: RWE_TOGGLE_HUD action (default F3).
+-- Toggle: RWE_TOGGLE_HUD action (no default key, player-assigned in Controls).
 -- =========================================================
 -- Author: TisonK
 -- =========================================================
@@ -51,7 +51,7 @@ function RWEEventHUD.new(rweInstance)
 
     self.rwe = rweInstance
 
-    -- Visibility (F3 toggle — not persisted)
+    -- Visibility (RWE_TOGGLE_HUD toggle — not persisted)
     self.visible = true
 
     -- Panel anchor: top-left text origin
@@ -61,8 +61,8 @@ function RWEEventHUD.new(rweInstance)
     -- Saved hudLayout XML still wins on load.
     -- Wizard 2026-08-21: factory home is the suite layout Wizard arranged
     -- in-game (bottom-center lane). A saved hudLayout XML still wins on load.
-    self.posX       = 0.421354
-    self.posY       = 0.978148
+    self.posX       = 0.420312
+    self.posY       = 0.980000
     self.panelWidth = 0.20
 
     -- Layout constants at scale 1.0
@@ -74,7 +74,7 @@ function RWEEventHUD.new(rweInstance)
     self.BAR_H       = 0.005556 -- 6 px at 1080p, base fill-level height
 
     -- Scale & edit state (IncomeMod pattern)
-    self.scale            = 1.235293   -- factory suite layout (Wizard 2026-08-21)
+    self.scale            = 1.065217   -- factory suite layout (Wizard 2026-08-22)
     self.editMode         = false
     self.dragging         = false
     self.resizing         = false
@@ -87,7 +87,7 @@ function RWEEventHUD.new(rweInstance)
     self.animTimer        = 0
 
     -- Width state (edge-drag, NPCFavor/Workplace pattern)
-    self.widthMult          = 0.700000   -- factory suite layout (Wizard 2026-08-21)
+    self.widthMult          = 0.857812   -- factory suite layout (Wizard 2026-08-22)
     self.edgeDragging       = nil   -- nil | "left" | "right"
     self.edgeDragStartX     = 0
     self.edgeDragStartWidth = 1.0
@@ -155,7 +155,7 @@ function RWEEventHUD:delete()
 end
 
 -- =========================================================
--- Visibility toggle (F3)
+-- Visibility toggle (RWE_TOGGLE_HUD)
 -- =========================================================
 
 function RWEEventHUD:toggleVisibility()

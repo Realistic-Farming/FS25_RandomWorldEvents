@@ -22,7 +22,7 @@
 -- =========================================================
 
 ---@class RWEBaseAPI
-RWEBaseAPI = {}
+RWEBaseAPI = RWEBaseAPI or {}
 
 --- Inject all shared methods into a category API table.
 ---@param target table  The category API table (e.g. RWEEconomicAPI)

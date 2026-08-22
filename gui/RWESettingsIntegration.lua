@@ -16,7 +16,7 @@
 -- Author: TisonK
 -- =========================================================
 
-RWESettingsIntegration = {}
+RWESettingsIntegration = RWESettingsIntegration or {}
 RWESettingsIntegration_mt = Class(RWESettingsIntegration)
 
 -- Dropdown option tables
@@ -128,7 +128,7 @@ function RWESettingsIntegration:addSettingsElements(frame)
     frame.rwe_showHUD = RWESettingsIntegration:addBinaryOption(
         frame, "onRWEShowHUDChanged",
         g_i18n:getText("rwe_show_hud_short") or "Show HUD Panel",
-        g_i18n:getText("rwe_show_hud_long")  or "Show the World Events HUD overlay (F3 to toggle in-game)"
+        g_i18n:getText("rwe_show_hud_long")  or "Show the World Events HUD overlay (toggle key assignable in Controls)"
     )
 
     frame.rwe_hudScale = RWESettingsIntegration:addMultiTextOption(
