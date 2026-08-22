@@ -29,7 +29,7 @@
 -- neutral, so a system can be turned fully off and the game still plays.
 -- =========================================================
 
-OptionScalingResolver = {}
+OptionScalingResolver = OptionScalingResolver or {}
 
 -- Bump only on a wire-contract change (a renamed dial, a new key shape). A
 -- consumer can compare this against its vendored copy to detect drift.

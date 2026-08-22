@@ -11,8 +11,15 @@
 -- Original author: TisonK
 -- =========================================================
 
-local modDirectory = g_currentModDirectory
-local modName = g_currentModName
+-- Hot-reload latch (FuelCosts reference): g_currentModDirectory and
+-- g_currentModName are nil on a live re-source, so they are latched into
+-- module globals on first load, with a g_modsDirectory loose-folder fallback.
+RandomWorldEventsModDirectory = RandomWorldEventsModDirectory
+    or g_currentModDirectory
+    or (g_modsDirectory ~= nil and (g_modsDirectory .. "FS25_RandomWorldEvents/") or nil)
+RandomWorldEventsModName = RandomWorldEventsModName or g_currentModName or "FS25_RandomWorldEvents"
+local modDirectory = RandomWorldEventsModDirectory
+local modName = RandomWorldEventsModName
 
 -- Resolve mod version once at load time so it's available everywhere.
 local modVersion = "?"
@@ -851,7 +858,7 @@ function RandomWorldEvents:consoleCommandHelp()
     print("rweStatus    - Show current status")
     print("rweTest      - Force-trigger random event")
     print("rweEnd       - End current event")
-    print("rweSettings  - Open settings screen (also F3)")
+    print("rweSettings  - Open settings screen (or the RWE_TOGGLE_SETTINGS key you assigned in Controls)")
     print("rweDebug on|off - Toggle debug mode")
     print("rweList [category] - List registered events")
     print("================================")
