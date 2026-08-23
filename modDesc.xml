@@ -39,14 +39,18 @@
 
     <!-- Input actions for RWE -->
     <actions>
-        <action name="RWE_TOGGLE_HUD"      category="ONFOOT VEHICLE" />
+        <action name="RWE_TOGGLE_HUD" category="ONFOOT VEHICLE" />
         <action name="RWE_TOGGLE_SETTINGS" category="ONFOOT VEHICLE" />
-        <action name="RWE_HUD_DRAG"        category="ONFOOT VEHICLE" />
+        <action name="RWE_HUD_DRAG" category="ONFOOT VEHICLE" />
     </actions>
     <inputBinding>
-        <actionBinding action="RWE_TOGGLE_HUD" />
         <actionBinding action="RWE_TOGGLE_SETTINGS" />
-        <actionBinding action="RWE_HUD_DRAG" />
+        <actionBinding action="RWE_TOGGLE_HUD">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_e" />
+        </actionBinding>
+        <actionBinding action="RWE_HUD_DRAG">
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_q" />
+        </actionBinding>
     </inputBinding>
 
     <extraSourceFiles>
