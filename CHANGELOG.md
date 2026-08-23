@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to FS25_RandomWorldEvents will be documented in this file.
 
@@ -15,6 +15,7 @@ the repo's git history and README.
 
 ### Added
 - Changelog file established (suite ruling 2026-08-22).
+- Control Center action: RWE_TOGGLE_SETTINGS opens world-event settings from the suite Control Center (requires SettingsHub).
 
 ## [2.2.0.1] - 2026-08-22
 

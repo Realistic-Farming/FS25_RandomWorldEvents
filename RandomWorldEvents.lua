@@ -1,3 +1,12 @@
+-- 2026-08-22 (Wizard): with MasterHUD installed this mod's own HUD hide/move keys must not
+-- merely be inert, they must not REGISTER at all - that is what removes their rows from the
+-- F1 legend and the Controls list. Probed on TaxMod first: skipping registration does remove
+-- the row, so the pattern is used suite-wide. Only HUD hide/move actions are gated; every
+-- other action this mod registers is untouched.
+local function __rfMhOwnsHudKeys()
+    return ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil
+end
+
 -- =========================================================
 -- Random World Events (version 2.1.3.0) - FS25 Conversion
 -- =========================================================
@@ -1088,6 +1097,13 @@ end
 -- =====================
 
 function RandomWorldEvents:onToggleHUDInput()
+    -- 2026-08-22 (Wizard): MasterHUD takeover. When MasterHUD is installed it owns the
+    -- suite-wide hide/move binds, so this mod's own per-mod key is deliberately inert:
+    -- one surface, one way to reach it. Standalone (no MasterHUD) this runs normally.
+    -- Canonical presence check, the same expression the suite's MasterHUD bridges use.
+    if ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil then
+        return
+    end
     if self.eventHUD then
         self.eventHUD:toggleVisibility()
     end
@@ -1100,6 +1116,13 @@ function RandomWorldEvents:onToggleSettingsInput()
 end
 
 function RandomWorldEvents:onHUDDragInput()
+    -- 2026-08-22 (Wizard): MasterHUD takeover. When MasterHUD is installed it owns the
+    -- suite-wide hide/move binds, so this mod's own per-mod key is deliberately inert:
+    -- one surface, one way to reach it. Standalone (no MasterHUD) this runs normally.
+    -- Canonical presence check, the same expression the suite's MasterHUD bridges use.
+    if ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil then
+        return
+    end
     if not self.eventHUD then return end
     if not self.eventHUD.visible then return end
     if self.eventHUD.editMode then
@@ -1136,11 +1159,14 @@ installInputHooks = function()
 
             g_inputBinding:beginActionEventsModification(PlayerInputComponent.INPUT_CONTEXT_NAME)
 
-            local hudOk, hudId = g_inputBinding:registerActionEvent(
-                InputAction.RWE_TOGGLE_HUD, g_RandomWorldEvents,
-                g_RandomWorldEvents.onToggleHUDInput,
-                false, true, false, true
-            )
+            local hudOk, hudId = false, nil
+            if not __rfMhOwnsHudKeys() then
+                local hudOk, hudId = g_inputBinding:registerActionEvent(
+                    InputAction.RWE_TOGGLE_HUD, g_RandomWorldEvents,
+                    g_RandomWorldEvents.onToggleHUDInput,
+                    false, true, false, true
+                )
+            end
             if hudOk and hudId then
                 g_RandomWorldEvents.hudPlayerEventId = hudId
                 g_inputBinding:setActionEventText(hudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
@@ -1168,11 +1194,14 @@ installInputHooks = function()
             end
 
             -- HUD drag (enter/exit edit mode) — PLAYER context
-            local dragOk, dragId = g_inputBinding:registerActionEvent(
-                InputAction.RWE_HUD_DRAG, g_RandomWorldEvents,
-                g_RandomWorldEvents.onHUDDragInput,
-                false, true, false, true
-            )
+            local dragOk, dragId = false, nil
+            if not __rfMhOwnsHudKeys() then
+                local dragOk, dragId = g_inputBinding:registerActionEvent(
+                    InputAction.RWE_HUD_DRAG, g_RandomWorldEvents,
+                    g_RandomWorldEvents.onHUDDragInput,
+                    false, true, false, true
+                )
+            end
             if dragOk and dragId then
                 g_RandomWorldEvents.hudDragPlayerEventId = dragId
                 g_inputBinding:setActionEventText(dragId, g_i18n:getText("input_RWE_HUD_DRAG") or "RWE HUD Edit Mode")
@@ -1235,11 +1264,14 @@ installInputHooks = function()
             -- Register in VEHICLE context
             binding:beginActionEventsModification(Vehicle.INPUT_CONTEXT_NAME)
 
-            local vHudOk, vHudId = binding:registerActionEvent(
-                InputAction.RWE_TOGGLE_HUD, mgr,
-                mgr.onToggleHUDInput,
-                false, true, false, true
-            )
+            local vHudOk, vHudId = false, nil
+            if not __rfMhOwnsHudKeys() then
+                local vHudOk, vHudId = binding:registerActionEvent(
+                    InputAction.RWE_TOGGLE_HUD, mgr,
+                    mgr.onToggleHUDInput,
+                    false, true, false, true
+                )
+            end
             if vHudOk and vHudId then
                 mgr.hudVehicleEventId = vHudId
                 binding:setActionEventText(vHudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
@@ -1255,11 +1287,14 @@ installInputHooks = function()
                 binding:setActionEventTextVisibility(vSpId, false)
             end
 
-            local vDragOk, vDragId = binding:registerActionEvent(
-                InputAction.RWE_HUD_DRAG, mgr,
-                mgr.onHUDDragInput,
-                false, true, false, true
-            )
+            local vDragOk, vDragId = false, nil
+            if not __rfMhOwnsHudKeys() then
+                local vDragOk, vDragId = binding:registerActionEvent(
+                    InputAction.RWE_HUD_DRAG, mgr,
+                    mgr.onHUDDragInput,
+                    false, true, false, true
+                )
+            end
             if vDragOk and vDragId then
                 mgr.hudDragVehicleEventId = vDragId
                 binding:setActionEventTextVisibility(vDragId, false)
@@ -1320,9 +1355,12 @@ local function loadFinished(mission, ...)
             local mgr = g_RandomWorldEvents
             g_inputBinding:beginActionEventsModification(PlayerInputComponent.INPUT_CONTEXT_NAME)
 
-            local hudOk, hudId = g_inputBinding:registerActionEvent(
-                InputAction.RWE_TOGGLE_HUD, mgr, mgr.onToggleHUDInput,
-                false, true, false, true)
+            local hudOk, hudId = false, nil
+            if not __rfMhOwnsHudKeys() then
+                local hudOk, hudId = g_inputBinding:registerActionEvent(
+                    InputAction.RWE_TOGGLE_HUD, mgr, mgr.onToggleHUDInput,
+                    false, true, false, true)
+            end
             if hudOk and hudId then
                 mgr.hudPlayerEventId = hudId
                 g_inputBinding:setActionEventText(hudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
@@ -1399,6 +1437,33 @@ end
 -- Hook into FS25
 Mission00.load = Utils.prependedFunction(Mission00.load, load)
 Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00Finished, loadFinished)
+
+-- ---------------------------------------------------------
+-- Realistic Farming Control Center: publish a runnable delegate.
+--
+-- RWE_TOGGLE_HUD and RWE_HUD_DRAG are deliberately absent: MasterHUD owns the
+-- suite HUD keys. Both keep their directory row and live key readout.
+-- ---------------------------------------------------------
+local function registerControlCenterActions()
+    local registry = g_currentMission ~= nil and g_currentMission.rfActionRegistry or nil
+    if registry == nil then return end
+
+    registry.registerAction({
+        action     = "RWE_TOGGLE_SETTINGS",
+        button     = "Open",
+        -- The settings panel draws on the HUD, so the dialog steps aside.
+        closeFirst = true,
+        run = function()
+            local mgr = g_RandomWorldEvents
+            if mgr ~= nil and mgr.onToggleSettingsInput ~= nil then
+                mgr:onToggleSettingsInput()
+            end
+        end,
+    })
+end
+
+Mission00.loadMission00Finished = Utils.appendedFunction(
+    Mission00.loadMission00Finished, registerControlCenterActions)
 FSBaseMission.update     = Utils.appendedFunction(FSBaseMission.update,     update)
 FSBaseMission.draw       = Utils.appendedFunction(FSBaseMission.draw,       draw)
 FSBaseMission.mouseEvent = Utils.prependedFunction(FSBaseMission.mouseEvent, mouseEvent)
