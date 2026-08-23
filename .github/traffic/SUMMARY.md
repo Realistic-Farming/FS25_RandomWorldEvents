@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-08-22T18:28:03Z
-**Days tracked:** 121 | **Download snapshots:** 442 (hourly)
+**Last updated:** 2026-08-23T06:38:09Z
+**Days tracked:** 122 | **Download snapshots:** 444 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 177 | 81 |
-| Git Clones | 417 | 78 |
+| Page Views | 185 | 77 |
+| Git Clones | 448 | 88 |
 
-> **Engagement:** 2.1 pages per visitor (14-day avg)
+> **Engagement:** 2.4 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 488 of 81 visitors cloned or downloaded (**602.4%**)
+> **14-day conversion:** 499 of 77 visitors cloned or downloaded (**648.0%**)
 >
-> Unique cloners: 78 | Release downloads: 410
+> Unique cloners: 88 | Release downloads: 411
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 410 |
-| Git Clones (14-day) | 417 |
-| **Total Acquisitions** | **827** |
+| Zip Downloads | 411 |
+| Git Clones (14-day) | 448 |
+| **Total Acquisitions** | **859** |
 
 ---
 
@@ -54,13 +54,13 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 104 | 54 |
+| github.com | 103 | 49 |
 | Google | 13 | 10 |
+| realisticfarming.com | 6 | 2 |
 | kingmods.net | 3 | 3 |
-| realisticfarming.com | 3 | 2 |
 | DuckDuckGo | 2 | 1 |
 | chatgpt.com | 1 | 1 |
-| yandex.ru | 1 | 1 |
+| copilot.microsoft.com | 1 | 1 |
 
 ---
 
@@ -80,14 +80,14 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 111 | 76 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 110 | 71 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 16 | 12 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 14 | 12 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 14 | 11 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/pull/32` | 9 | 4 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/pull/35` | 8 | 4 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/pull/31` | 6 | 3 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/pull/34` | 4 | 4 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.2.0.0-pre` | 3 | 3 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pull/35` | 9 | 4 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pull/31` | 7 | 3 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pull/34` | 5 | 4 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.2.0.0-pre` | 4 | 4 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/pull/36` | 3 | 2 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/branches` | 1 | 1 |
 
