@@ -15,6 +15,7 @@ the repo's git history and README.
 
 ### Added
 - Changelog file established (suite ruling 2026-08-22).
+- Playtest fixes: RWE_TOGGLE_HUD (RShift+E) and RWE_HUD_DRAG (RShift+Q) chords, event HUD, vehicle hook with spam guard.
 - Control Center action: RWE_TOGGLE_SETTINGS opens world-event settings from the suite Control Center (requires SettingsHub).
 
 ## [2.2.0.1] - 2026-08-22
