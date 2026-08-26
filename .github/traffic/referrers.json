@@ -2865,13 +2865,13 @@
   "2026-08-26": [
     {
       "referrer": "github.com",
-      "count": 101,
+      "count": 102,
       "uniques": 45
     },
     {
       "referrer": "Google",
-      "count": 13,
-      "uniques": 10
+      "count": 14,
+      "uniques": 11
     },
     {
       "referrer": "realisticfarming.com",
@@ -2880,8 +2880,8 @@
     },
     {
       "referrer": "kingmods.net",
-      "count": 4,
-      "uniques": 4
+      "count": 3,
+      "uniques": 3
     },
     {
       "referrer": "chatgpt.com",
