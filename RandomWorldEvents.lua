@@ -1441,8 +1441,12 @@ Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00
 -- ---------------------------------------------------------
 -- Realistic Farming Control Center: publish a runnable delegate.
 --
--- RWE_TOGGLE_HUD and RWE_HUD_DRAG are deliberately absent: MasterHUD owns the
--- suite HUD keys. Both keep their directory row and live key readout.
+-- MasterHUD owns the physical suite HUD keys, so the per-mod hide/move keys stay
+-- gated (no native binding). RWE_TOGGLE_HUD is surfaced here instead as a Control
+-- Center delegate: the # key hides the whole suite at once, this button hides or
+-- shows only the RWE event HUD, so a player can disable just this mod. RWE_HUD_DRAG
+-- stays a directory row only - moving the panel needs the in-world drag, not a
+-- dialog button.
 -- ---------------------------------------------------------
 local function registerControlCenterActions()
     local registry = g_currentMission ~= nil and g_currentMission.rfActionRegistry or nil
@@ -1457,6 +1461,27 @@ local function registerControlCenterActions()
             local mgr = g_RandomWorldEvents
             if mgr ~= nil and mgr.onToggleSettingsInput ~= nil then
                 mgr:onToggleSettingsInput()
+            end
+        end,
+    })
+
+    -- Per-mod HUD hide/show. Calls the HUD directly rather than onToggleHUDInput,
+    -- which deliberately stands down while MasterHUD owns the physical key. The
+    -- draw path honours self.visible under both MasterHUD and standalone, so the
+    -- panel actually appears/disappears; it composes with the suite-wide # hide.
+    registry.registerAction({
+        action = "RWE_TOGGLE_HUD",
+        -- Live caption: reflects the panel's current state so the row reads "Hide"
+        -- when shown and "Show" when hidden, flipping in place on each click.
+        button = function()
+            local hud = g_RandomWorldEvents ~= nil and g_RandomWorldEvents.eventHUD or nil
+            return (hud ~= nil and hud.visible) and "Hide" or "Show"
+        end,
+        run = function()
+            local hud = g_RandomWorldEvents ~= nil and g_RandomWorldEvents.eventHUD or nil
+            if hud ~= nil and hud.toggleVisibility ~= nil then
+                hud:toggleVisibility()
+                return hud.visible and "RWE HUD shown" or "RWE HUD hidden"
             end
         end,
     })
