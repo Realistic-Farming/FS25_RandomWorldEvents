@@ -28107,36 +28107,36 @@
     "watchers": 2
   },
   {
-    "timestamp": "2026-09-04T00:47:19Z",
+    "timestamp": "2026-09-04T18:07:02Z",
     "date": "2026-09-04",
     "views": {
-      "count": 217,
-      "uniques": 78
+      "count": 199,
+      "uniques": 72
     },
     "clones": {
-      "count": 285,
-      "uniques": 66
+      "count": 267,
+      "uniques": 65
     },
     "referrers": [
       {
         "referrer": "github.com",
-        "count": 125,
-        "uniques": 46
+        "count": 110,
+        "uniques": 42
       },
       {
         "referrer": "Google",
-        "count": 20,
-        "uniques": 15
-      },
-      {
-        "referrer": "realisticfarming.com",
-        "count": 5,
-        "uniques": 2
+        "count": 18,
+        "uniques": 13
       },
       {
         "referrer": "chatgpt.com",
         "count": 3,
         "uniques": 2
+      },
+      {
+        "referrer": "realisticfarming.com",
+        "count": 3,
+        "uniques": 1
       },
       {
         "referrer": "Bing",
@@ -28158,8 +28158,8 @@
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents",
         "title": "Overview",
-        "count": 138,
-        "uniques": 72
+        "count": 126,
+        "uniques": 67
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0",
@@ -28170,31 +28170,25 @@
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases",
         "title": "/releases",
-        "count": 15,
-        "uniques": 13
+        "count": 10,
+        "uniques": 10
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/issues",
         "title": "/issues",
-        "count": 6,
-        "uniques": 3
-      },
-      {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.2.0.0-pre",
-        "title": "/releases/tag/v2.2.0.0-pre",
-        "count": 4,
+        "count": 7,
         "uniques": 4
-      },
-      {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/pull/34",
-        "title": "/pull/34",
-        "count": 4,
-        "uniques": 3
       },
       {
         "path": "/Realistic-Farming/FS25_RandomWorldEvents/pull/31",
         "title": "/pull/31",
         "count": 4,
+        "uniques": 2
+      },
+      {
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/pull/34",
+        "title": "/pull/34",
+        "count": 3,
         "uniques": 2
       },
       {
@@ -28210,10 +28204,16 @@
         "uniques": 2
       },
       {
-        "path": "/Realistic-Farming/FS25_RandomWorldEvents/issues/created_by/closing_references",
-        "title": "/issues/created_by/closing_references",
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/pulls",
+        "title": "/pulls",
         "count": 2,
-        "uniques": 1
+        "uniques": 2
+      },
+      {
+        "path": "/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.2.0.0-pre",
+        "title": "/releases/tag/v2.2.0.0-pre",
+        "count": 2,
+        "uniques": 2
       }
     ],
     "releases": [
