@@ -2967,5 +2967,42 @@
       "count": 1,
       "uniques": 1
     }
+  ],
+  "2026-09-05": [
+    {
+      "referrer": "github.com",
+      "count": 105,
+      "uniques": 43
+    },
+    {
+      "referrer": "Google",
+      "count": 16,
+      "uniques": 11
+    },
+    {
+      "referrer": "chatgpt.com",
+      "count": 3,
+      "uniques": 2
+    },
+    {
+      "referrer": "realisticfarming.com",
+      "count": 3,
+      "uniques": 1
+    },
+    {
+      "referrer": "Bing",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "referrer": "copilot.microsoft.com",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "referrer": "kingmods.net",
+      "count": 1,
+      "uniques": 1
+    }
   ]
 }
