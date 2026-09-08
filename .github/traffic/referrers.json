@@ -3035,13 +3035,13 @@
   "2026-09-08": [
     {
       "referrer": "github.com",
-      "count": 105,
-      "uniques": 45
+      "count": 100,
+      "uniques": 42
     },
     {
       "referrer": "Google",
       "count": 16,
-      "uniques": 11
+      "uniques": 12
     },
     {
       "referrer": "chatgpt.com",
@@ -3050,11 +3050,6 @@
     },
     {
       "referrer": "Bing",
-      "count": 1,
-      "uniques": 1
-    },
-    {
-      "referrer": "kingmods.net",
       "count": 1,
       "uniques": 1
     }
