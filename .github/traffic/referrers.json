@@ -3053,5 +3053,27 @@
       "count": 1,
       "uniques": 1
     }
+  ],
+  "2026-09-10": [
+    {
+      "referrer": "github.com",
+      "count": 97,
+      "uniques": 41
+    },
+    {
+      "referrer": "Google",
+      "count": 20,
+      "uniques": 14
+    },
+    {
+      "referrer": "chatgpt.com",
+      "count": 3,
+      "uniques": 2
+    },
+    {
+      "referrer": "Bing",
+      "count": 1,
+      "uniques": 1
+    }
   ]
 }
