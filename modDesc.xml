@@ -54,6 +54,7 @@
     </inputBinding>
 
     <extraSourceFiles>
+        <sourceFile filename="utils/RWEContextInput.lua"/>
         <sourceFile filename="RandomWorldEvents.lua"/>
         <sourceFile filename="ReleaseGate.lua"/>
         <!-- Bedrock core-API bridges (optional, delegate-when-present). Each no-ops

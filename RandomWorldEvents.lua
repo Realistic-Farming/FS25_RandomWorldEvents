@@ -127,6 +127,14 @@ RandomWorldEvents.eventCounter = 0
 -- Access via g_RandomWorldEvents:getSubsystem("economic") etc.
 RandomWorldEvents.subsystems = {}
 
+-- RSF-F201 item 12: the input-hook record home. The settings literal above is a
+-- bare table on purpose (its constructor re-establishes the defaults on every
+-- load), so it cannot hold a session-lived record. This latched table survives a
+-- script reload the way the mod's other `X = X or {}` modules do, and holds only
+-- the input-hook record: captured predecessors, install latch, owner binding.
+-- No other participant reads or writes it.
+RWE_InputHookRecord = RWE_InputHookRecord or {}
+
 local RandomWorldEvents_mt = Class(RandomWorldEvents)
 
 -- =====================
@@ -1058,7 +1066,51 @@ local function load(mission)
     end
 end
 
+-- RSF-F201 input record and expected sets. `rweManager` is the owner; the
+-- handlers are resolved on it by name at call time.
+local function rweInputRecord()
+    return RWEContextInput.record(RWE_InputHookRecord, "input")
+end
+
+local function rweOwnsHudKeys() return not __rfMhOwnsHudKeys() end
+local function rweHideRow(binding, eventId) binding:setActionEventTextVisibility(eventId, false) end
+local function rweLabel(key, fallback)
+    return function(binding, eventId)
+        binding:setActionEventText(eventId, g_i18n:getText(key) or fallback)
+    end
+end
+local rweLabelHud  = rweLabel("input_RWE_TOGGLE_HUD", "Toggle RWE HUD")
+local rweLabelDrag = rweLabel("input_RWE_HUD_DRAG", "RWE HUD Edit Mode")
+local function rweSettingsPlayerAfter(binding, eventId, owner)
+    binding:setActionEventText(eventId, g_i18n:getText("input_RWE_TOGGLE_SETTINGS") or "RWE Settings")
+    -- Cache key hint for the settings panel close button (unchanged behaviour).
+    local ok, ktext = pcall(function()
+        return g_inputBinding:getActionDisplayName(InputAction.RWE_TOGGLE_SETTINGS)
+    end)
+    owner.settingsKeyHint = (ok and ktext and ktext ~= "") and ktext or "Shift+O"
+end
+
+local RWE_PLAYER_SPECS = {
+    { action = "RWE_TOGGLE_HUD", handler = "onToggleHUDInput", idField = "hudPlayerEventId",
+      present = rweOwnsHudKeys, after = rweLabelHud, up = false, down = true, always = false, startActive = true },
+    { action = "RWE_TOGGLE_SETTINGS", handler = "onToggleSettingsInput", idField = "settingsPlayerEventId",
+      after = rweSettingsPlayerAfter, up = false, down = true, always = false, startActive = true },
+    { action = "RWE_HUD_DRAG", handler = "onHUDDragInput", idField = "hudDragPlayerEventId",
+      present = rweOwnsHudKeys, after = rweLabelDrag, up = false, down = true, always = false, startActive = true },
+}
+local RWE_VEHICLE_SPECS = {
+    { action = "RWE_TOGGLE_HUD", handler = "onToggleHUDInput", idField = "hudVehicleEventId",
+      present = rweOwnsHudKeys, after = rweLabelHud, up = false, down = true, always = false, startActive = true },
+    { action = "RWE_TOGGLE_SETTINGS", handler = "onToggleSettingsInput", idField = "settingsVehicleEventId",
+      after = rweHideRow, up = false, down = true, always = false, startActive = true },
+    { action = "RWE_HUD_DRAG", handler = "onHUDDragInput", idField = "hudDragVehicleEventId",
+      present = rweOwnsHudKeys, after = rweHideRow, up = false, down = true, always = false, startActive = true },
+}
+
+
 local function update(mission, dt)
+    -- RSF-F201: admission reset is the first input act of every update interval.
+    RWEContextInput.resetAdmission(rweInputRecord())
     if rweManager and rweManager.isInitialized then
         rweManager:update(dt)
     end
@@ -1066,13 +1118,10 @@ end
 
 local function delete(mission)
     if rweManager then
-        -- Restore hooked functions before teardown
-        if rweManager._playerInputHookOriginal and PlayerInputComponent then
-            PlayerInputComponent.registerActionEvents = rweManager._playerInputHookOriginal
-        end
-        if rweManager._vehicleInputHookOriginal and InputBinding then
-            InputBinding.endActionEventsModification = rweManager._vehicleInputHookOriginal
-        end
+        -- RSF-F201: retire the input owner before teardown. Old forwarding targets
+        -- go inert and the owner reference is released. The captured predecessors
+        -- are NOT restored: restoring per mission can remove a later mod's wrapper.
+        RWEContextInput.retire(rweInputRecord())
 
         if rweManager.eventHUD then
             rweManager.eventHUD:saveLayout()
@@ -1133,179 +1182,46 @@ function RandomWorldEvents:onHUDDragInput()
 end
 
 -- =====================
--- INPUT REGISTRATION
--- Mirrors the SoilFertilizer pattern:
---   PLAYER context  → hook PlayerInputComponent.registerActionEvents
---   VEHICLE context → hook InputBinding.endActionEventsModification
+-- INPUT REGISTRATION (RSF-F201 context-qualified)
+--   PLAYER context  -> wrap PlayerInputComponent.registerActionEvents
+--   VEHICLE context -> hook InputBinding.endActionEventsModification
 -- FSBaseMission.registerActionEvents targets the base class and never fires in FS25.
+--
+-- Each context registers through its own private forwarding target. The engine
+-- keys an event by action, target and trigger shape only, so the old shared
+-- `mgr` target made PLAYER and VEHICLE one global slot; the old vehicle hook's
+-- "skip when all three cab ids are set" early return then skipped registrations
+-- the rebuilt context needed (ids stay non-nil after the engine destroys the
+-- context). Membership is now asked of the wrap's own context by walking the
+-- native lists, so nothing is inferred from a stored id and a complete set
+-- costs no transaction. The old "never clear PLAYER ids" workaround is plain
+-- scoping now: PLAYER and VEHICLE handles cannot alias.
+--
+-- The hook record lives on RWE_InputHookRecord (declared near the settings
+-- literal above), not on this settings table and not on the mission-scoped
+-- manager, and the captured predecessors are never restored per mission.
 -- =====================
 
 installInputHooks = function()
     if not rweManager then return end
-
-    -- ── PLAYER context ────────────────────────────────────────────────────
-    if PlayerInputComponent and PlayerInputComponent.registerActionEvents then
-        local originalPlayerReg = PlayerInputComponent.registerActionEvents
-        rweManager._playerInputHookOriginal = originalPlayerReg
-
-        PlayerInputComponent.registerActionEvents = function(inputComponent, ...)
-            originalPlayerReg(inputComponent, ...)
-
-            -- Only for the local owning player
-            if not (inputComponent.player and inputComponent.player.isOwner) then return end
-            -- Guard against double-registration
-            if g_RandomWorldEvents and g_RandomWorldEvents.hudPlayerEventId then return end
-            if not g_RandomWorldEvents then return end
-
-            g_inputBinding:beginActionEventsModification(PlayerInputComponent.INPUT_CONTEXT_NAME)
-
-            local hudOk, hudId = false, nil
-            if not __rfMhOwnsHudKeys() then
-                local hudOk, hudId = g_inputBinding:registerActionEvent(
-                    InputAction.RWE_TOGGLE_HUD, g_RandomWorldEvents,
-                    g_RandomWorldEvents.onToggleHUDInput,
-                    false, true, false, true
-                )
-            end
-            if hudOk and hudId then
-                g_RandomWorldEvents.hudPlayerEventId = hudId
-                g_inputBinding:setActionEventText(hudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
-                Logging.info("[RWE] HUD toggle registered in PLAYER context")
-            else
-                Logging.warning("[RWE] HUD toggle PLAYER registration failed")
-            end
-
-            local spOk, spId = g_inputBinding:registerActionEvent(
-                InputAction.RWE_TOGGLE_SETTINGS, g_RandomWorldEvents,
-                g_RandomWorldEvents.onToggleSettingsInput,
-                false, true, false, true
-            )
-            if spOk and spId then
-                g_RandomWorldEvents.settingsPlayerEventId = spId
-                g_inputBinding:setActionEventText(spId, g_i18n:getText("input_RWE_TOGGLE_SETTINGS") or "RWE Settings")
-                -- Cache key hint for the settings panel close button
-                local ok, ktext = pcall(function()
-                    return g_inputBinding:getActionDisplayName(InputAction.RWE_TOGGLE_SETTINGS)
-                end)
-                g_RandomWorldEvents.settingsKeyHint = (ok and ktext and ktext ~= "") and ktext or "Shift+O"
-                Logging.info("[RWE] Settings toggle registered in PLAYER context")
-            else
-                Logging.warning("[RWE] Settings toggle PLAYER registration failed")
-            end
-
-            -- HUD drag (enter/exit edit mode) — PLAYER context
-            local dragOk, dragId = false, nil
-            if not __rfMhOwnsHudKeys() then
-                local dragOk, dragId = g_inputBinding:registerActionEvent(
-                    InputAction.RWE_HUD_DRAG, g_RandomWorldEvents,
-                    g_RandomWorldEvents.onHUDDragInput,
-                    false, true, false, true
-                )
-            end
-            if dragOk and dragId then
-                g_RandomWorldEvents.hudDragPlayerEventId = dragId
-                g_inputBinding:setActionEventText(dragId, g_i18n:getText("input_RWE_HUD_DRAG") or "RWE HUD Edit Mode")
-                Logging.info("[RWE] HUD drag registered in PLAYER context")
-            end
-
-            g_inputBinding:endActionEventsModification()
-        end
+    -- Client-only: a dedicated server has no local input. Install once per loaded
+    -- script environment; the helper latches on its captured predecessors.
+    local mission = rweManager.mission or g_currentMission
+    if mission == nil or (mission.getIsClient ~= nil and not mission:getIsClient()) then return end
+    local record = rweInputRecord()
+    if record.playerOriginal == nil and RWEContextInput.installPlayerWrapper(record, RWE_PLAYER_SPECS) then
         Logging.info("[RWE] PlayerInputComponent hook installed")
     end
-
-    -- ── VEHICLE context ───────────────────────────────────────────────────
-    if InputBinding and InputBinding.endActionEventsModification then
-        local _rweVehicleHookActive = false
-        local originalEndMod = InputBinding.endActionEventsModification
-        rweManager._vehicleInputHookOriginal = originalEndMod
-
-        InputBinding.endActionEventsModification = function(binding, ignoreCheck)
-            -- Capture context name BEFORE the original resets it
-            local contextName = ""
-            if binding.registrationContext and
-               binding.registrationContext ~= InputBinding.NO_REGISTRATION_CONTEXT then
-                contextName = binding.registrationContext.name or ""
-            end
-
-            originalEndMod(binding, ignoreCheck)
-
-            if contextName ~= Vehicle.INPUT_CONTEXT_NAME then return end
-            if _rweVehicleHookActive then return end
-            if not g_RandomWorldEvents then return end
-
-            -- BUILD 17:45: the engine calls this constantly while the player is in a
-            -- cab. When all three vehicle slots are already live there is nothing to repair,
-            -- so the remove and re-register is skipped outright. A partial set still takes
-            -- the full path, because that is the case the teardown exists for. The return is
-            -- deliberately BEFORE the re-entrancy flag is set, so the skip cannot wedge the
-            -- hook shut.
-            if g_RandomWorldEvents.hudVehicleEventId ~= nil
-                and g_RandomWorldEvents.settingsVehicleEventId ~= nil
-                and g_RandomWorldEvents.hudDragVehicleEventId ~= nil then
-                return
-            end
-
-            _rweVehicleHookActive = true
-
-            -- Only remove vehicle-context IDs. Player-context IDs were registered
-            -- once at loadFinished and must NOT be cleared here — doing so forces
-            -- re-registration which creates fresh event IDs and discards the user's
-            -- saved key binding, causing the "must rebind every session" issue.
-            local mgr = g_RandomWorldEvents
-            local staleVehicleIds = { "hudVehicleEventId", "settingsVehicleEventId", "hudDragVehicleEventId" }
-            for _, field in ipairs(staleVehicleIds) do
-                local oldId = mgr[field]
-                if oldId then
-                    pcall(function() binding:removeActionEvent(oldId) end)
-                    mgr[field] = nil
-                end
-            end
-
-            -- Register in VEHICLE context
-            binding:beginActionEventsModification(Vehicle.INPUT_CONTEXT_NAME)
-
-            local vHudOk, vHudId = false, nil
-            if not __rfMhOwnsHudKeys() then
-                local vHudOk, vHudId = binding:registerActionEvent(
-                    InputAction.RWE_TOGGLE_HUD, mgr,
-                    mgr.onToggleHUDInput,
-                    false, true, false, true
-                )
-            end
-            if vHudOk and vHudId then
-                mgr.hudVehicleEventId = vHudId
-                binding:setActionEventText(vHudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
-            end
-
-            local vSpOk, vSpId = binding:registerActionEvent(
-                InputAction.RWE_TOGGLE_SETTINGS, mgr,
-                mgr.onToggleSettingsInput,
-                false, true, false, true
-            )
-            if vSpOk and vSpId then
-                mgr.settingsVehicleEventId = vSpId
-                binding:setActionEventTextVisibility(vSpId, false)
-            end
-
-            local vDragOk, vDragId = false, nil
-            if not __rfMhOwnsHudKeys() then
-                local vDragOk, vDragId = binding:registerActionEvent(
-                    InputAction.RWE_HUD_DRAG, mgr,
-                    mgr.onHUDDragInput,
-                    false, true, false, true
-                )
-            end
-            if vDragOk and vDragId then
-                mgr.hudDragVehicleEventId = vDragId
-                binding:setActionEventTextVisibility(vDragId, false)
-            end
-
-            binding:endActionEventsModification()
-
-            _rweVehicleHookActive = false
-        end
+    if record.vehicleOriginal == nil and RWEContextInput.installVehicleWrapper(record, RWE_VEHICLE_SPECS) then
         Logging.info("[RWE] InputBinding.endActionEventsModification hooked for VEHICLE context")
     end
+    if PlayerInputComponent == nil or Vehicle == nil then return end
+    -- Bind the current manager as input owner of this mission and mint fresh
+    -- per-context forwarding targets. A stacked reload copy adopts the binding.
+    RWEContextInput.activate(record, rweManager, mission, {
+        [PlayerInputComponent.INPUT_CONTEXT_NAME] = RWE_PLAYER_SPECS,
+        [Vehicle.INPUT_CONTEXT_NAME]              = RWE_VEHICLE_SPECS,
+    })
 end
 
 local function draw(mission)
@@ -1347,42 +1263,13 @@ local function loadFinished(mission, ...)
         rweManager:loadGUI()
         rweManager.guiLoaded = true
 
-        -- Direct PLAYER context registration as a safety net:
-        -- PlayerInputComponent.registerActionEvents may have already fired during
-        -- mission loading before our hook in installInputHooks() could intercept it.
-        -- This ensures bindings work on-foot without the user needing to rebind.
-        if g_inputBinding and g_RandomWorldEvents and not g_RandomWorldEvents.hudPlayerEventId then
-            local mgr = g_RandomWorldEvents
-            g_inputBinding:beginActionEventsModification(PlayerInputComponent.INPUT_CONTEXT_NAME)
-
-            local hudOk, hudId = false, nil
-            if not __rfMhOwnsHudKeys() then
-                local hudOk, hudId = g_inputBinding:registerActionEvent(
-                    InputAction.RWE_TOGGLE_HUD, mgr, mgr.onToggleHUDInput,
-                    false, true, false, true)
-            end
-            if hudOk and hudId then
-                mgr.hudPlayerEventId = hudId
-                g_inputBinding:setActionEventText(hudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
-                Logging.info("[RWE] HUD toggle registered (PLAYER context, loadFinished fallback)")
-            end
-
-            local spOk, spId = g_inputBinding:registerActionEvent(
-                InputAction.RWE_TOGGLE_SETTINGS, mgr, mgr.onToggleSettingsInput,
-                false, true, false, true)
-            if spOk and spId then
-                mgr.settingsPlayerEventId = spId
-                g_inputBinding:setActionEventText(spId, g_i18n:getText("input_RWE_TOGGLE_SETTINGS") or "RWE Settings")
-                -- Cache key hint text for the settings panel close button
-                local ok, ktext = pcall(function()
-                    return g_inputBinding:getActionDisplayName(InputAction.RWE_TOGGLE_SETTINGS)
-                end)
-                mgr.settingsKeyHint = (ok and ktext and ktext ~= "") and ktext or "Shift+O"
-                Logging.info("[RWE] Settings toggle registered (PLAYER context, loadFinished fallback)")
-            end
-
-            g_inputBinding:endActionEventsModification()
-        end
+        -- RSF-F201 post-load catch-up. PlayerInputComponent.registerActionEvents may
+        -- have fired during mission loading before installInputHooks() wrapped it.
+        -- One complete PLAYER reconciliation (HUD toggle, settings, drag when
+        -- locally owned) if the local owning player and the native PLAYER context
+        -- already exist; no context and no timer are created. The old body here
+        -- registered HUD and settings only and skipped drag.
+        RWEContextInput.catchUpPlayer(rweInputRecord(), RWE_PLAYER_SPECS)
 
         -- ── Bedrock core-API bridges (delegate-when-present) ──────────────────
         -- Register with the shared ecosystem engines when they are installed.
