@@ -1204,20 +1204,21 @@ end
 
 installInputHooks = function()
     if not rweManager then return end
+    -- Client-only: a dedicated server has no local input. Install once per loaded
+    -- script environment; the helper latches on its captured predecessors.
+    local mission = rweManager.mission or g_currentMission
+    if mission == nil or (mission.getIsClient ~= nil and not mission:getIsClient()) then return end
     local record = rweInputRecord()
-    if not record.installed then
-        record.installed = true
-        if RWEContextInput.installPlayerWrapper(record, RWE_PLAYER_SPECS) then
-            Logging.info("[RWE] PlayerInputComponent hook installed")
-        end
-        if RWEContextInput.installVehicleWrapper(record, RWE_VEHICLE_SPECS) then
-            Logging.info("[RWE] InputBinding.endActionEventsModification hooked for VEHICLE context")
-        end
+    if record.playerOriginal == nil and RWEContextInput.installPlayerWrapper(record, RWE_PLAYER_SPECS) then
+        Logging.info("[RWE] PlayerInputComponent hook installed")
+    end
+    if record.vehicleOriginal == nil and RWEContextInput.installVehicleWrapper(record, RWE_VEHICLE_SPECS) then
+        Logging.info("[RWE] InputBinding.endActionEventsModification hooked for VEHICLE context")
     end
     if PlayerInputComponent == nil or Vehicle == nil then return end
     -- Bind the current manager as input owner of this mission and mint fresh
     -- per-context forwarding targets. A stacked reload copy adopts the binding.
-    RWEContextInput.activate(record, rweManager, rweManager.mission or g_currentMission, {
+    RWEContextInput.activate(record, rweManager, mission, {
         [PlayerInputComponent.INPUT_CONTEXT_NAME] = RWE_PLAYER_SPECS,
         [Vehicle.INPUT_CONTEXT_NAME]              = RWE_VEHICLE_SPECS,
     })
