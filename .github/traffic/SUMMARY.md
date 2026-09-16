@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-09-15T00:18:39Z
-**Days tracked:** 134 | **Download snapshots:** 496 (hourly)
+**Last updated:** 2026-09-16T18:39:26Z
+**Days tracked:** 135 | **Download snapshots:** 498 (hourly)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 121 | 58 |
-| Git Clones | 230 | 93 |
+| Page Views | 120 | 58 |
+| Git Clones | 257 | 105 |
 
 > **Engagement:** 2.0 pages per visitor (14-day avg)
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 545 of 58 visitors cloned or downloaded (**939.6%**)
+> **14-day conversion:** 558 of 58 visitors cloned or downloaded (**962.0%**)
 >
-> Unique cloners: 93 | Release downloads: 452
+> Unique cloners: 105 | Release downloads: 453
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 452 |
-| Git Clones (14-day) | 230 |
-| **Total Acquisitions** | **682** |
+| Zip Downloads | 453 |
+| Git Clones (14-day) | 257 |
+| **Total Acquisitions** | **710** |
 
 ---
 
@@ -54,9 +54,8 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 78 | 31 |
-| Google | 22 | 15 |
-| chatgpt.com | 1 | 1 |
+| github.com | 63 | 26 |
+| Google | 31 | 19 |
 | realisticfarming.com | 1 | 1 |
 | yandex.ru | 1 | 1 |
 
@@ -78,13 +77,14 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 87 | 56 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 15 | 14 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 5 | 5 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 5 | 4 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 86 | 55 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 14 | 11 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 6 | 5 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pulls` | 3 | 3 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 3 | 3 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/actions` | 3 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/projects` | 2 | 2 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/pulls` | 2 | 2 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pull/44` | 1 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.2.0.0-pre` | 1 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/security` | 1 | 1 |
 
