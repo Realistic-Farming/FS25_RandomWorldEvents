@@ -31,22 +31,33 @@ local function roundTrip(p)
     return back
 end
 
+-- Each group runs under pcall: a Lua error (for example a read that names a
+-- different width than the write) fails ONE named row instead of hiding every
+-- row in the file. The server stub is restored after a crash.
+local function group(name, fn)
+    local ok, err = pcall(fn)
+    if not ok then
+        T.ok(name .. " [group crashed]", false, tostring(err))
+        g_server = {}
+    end
+end
+
 -- =====================================================================
 -- W: the exact wire signature
 -- =====================================================================
-do
+group("W wire signature", function()
     EC6.tapeReset()
     E.new(FULL):writeStream(1, nil)
     T.eq("W1 field order and widths on the wire",
         EC6.signature(),
         "String,UInt3,String,Int32,Bool,String,String,Bool,String,Bool,String,Bool,Bool,Bool,String,String,Bool,String,Bool")
     T.eq("W2 the class is registered", E.className, "RWEEventStateEvent")
-end
+end)
 
 -- =====================================================================
 -- R: round trip
 -- =====================================================================
-do
+group("R round trip", function()
     local b = roundTrip(FULL)
     T.eq("R1 activeEvent", b.activeEvent, "economic_crisis")
     T.eq("R2 activeIntensity 5 survives 3 bits", b.activeIntensity, 5)
@@ -71,12 +82,12 @@ do
     local clamped = E.new({ activeIntensity = 9, remainingMs = -5 })
     T.eq("R17a intensity clamped to 5", clamped.activeIntensity, 5)
     T.eq("R17b negative remaining clamped to 0", clamped.remainingMs, 0)
-end
+end)
 
 -- =====================================================================
 -- N: the only numbers on the wire
 -- =====================================================================
-do
+group("N numbers on the wire", function()
     EC6.tapeReset()
     E.new(FULL):writeStream(1, nil)
     local nums = EC6.numericEntries()
@@ -88,12 +99,12 @@ do
         if e.kind == "String" and tonumber(e.v) ~= nil then numericArg = true end
     end
     T.eq("N3 no string on the wire is a bare number", numericArg, false)
-end
+end)
 
 -- =====================================================================
 -- L: bounded bool-terminated lists
 -- =====================================================================
-do
+group("L bounded lists", function()
     local many = {}
     for i = 1, 12 do many[i] = "k" .. i end
     local b = roundTrip({ summaryArgs = many })
@@ -101,12 +112,12 @@ do
     T.eq("L2 the cap keeps the first entries", b.summaryArgs[8], "k8")
     local none = roundTrip({ noticeArgs = {} })
     T.eq("L3 an empty list round-trips", #none.noticeArgs, 0)
-end
+end)
 
 -- =====================================================================
 -- A: apply on a client only
 -- =====================================================================
-do
+group("A apply on a client", function()
     roundTrip(FULL)
     T.eq("A1 a client applies the received state", #applied, 1)
     applied = {}
@@ -126,12 +137,12 @@ do
     T.eq("A5b one broadcast event", #applied, 1)
     g_server = nil
     T.eq("A6 a client never broadcasts", E.broadcast({}), false)
-end
+end)
 
 -- =====================================================================
 -- S: settlement notice wire
 -- =====================================================================
-do
+group("S settlement notice wire", function()
     EC6.tapeReset()
     RWESettlementNoticeEvent.new("rwe_event_feed_shortage_title", -123456):writeStream(1, nil)
     T.eq("S1 notice wire signature", EC6.signature(), "String,Int32")
@@ -141,4 +152,4 @@ do
     back:readStream(1, nil)
     T.eq("S2 a large charge survives the width", back.amount, -123456)
     T.eq("S3 label key", back.labelKey, "rwe_event_feed_shortage_title")
-end
+end)
