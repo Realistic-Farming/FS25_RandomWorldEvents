@@ -29,9 +29,13 @@
 -- single restore path (with its vehicle-event skip + absolute-time math) is shared
 -- by both the own-XML and the ledger loads and the two can never diverge.
 --
--- Number keys / nested tables round-trip through StateLedgerXML fine, but this
--- block is deliberately flat scalars (string + numbers + bool) so it is trivially
--- safe.
+-- Number keys / nested tables round-trip through StateLedgerXML fine. Schema 1 was
+-- flat scalars. Schema 2 (EC-6) adds activeIntensity, the event summary, the crisis
+-- parts and the pending settlement lines (a list of { farmId, lines = {...} }), all
+-- read from the same snapshot the own XML writes, so the two copies cannot differ.
+-- A schema 1 block loads with an empty settlement, no intensity, no summary and no
+-- crisis parts. serialize runs only inside FSCareerMissionInfo.saveToXMLFile (a
+-- real game save), so it reads the current state.
 --
 -- The cross-mod handle is g_currentMission.stateLedger (published in Mission00.load).
 -- =========================================================
@@ -41,7 +45,7 @@ RWEStateLedgerBridge = RWEStateLedgerBridge or {}
 -- LOCKED persistence key. Never renamed after first persist (a later rename
 -- orphans saved event state). Matches the <Mod>_<Thing> convention.
 RWEStateLedgerBridge.MODULE_ID = "RandomWorldEvents_EventState"
-RWEStateLedgerBridge.SCHEMA    = 1
+RWEStateLedgerBridge.SCHEMA    = 2
 
 RWEStateLedgerBridge.active       = false   -- ledger present and we registered
 RWEStateLedgerBridge.delivered    = false   -- deserialize has fired (once)
@@ -55,19 +59,31 @@ function RWEStateLedgerBridge.buildState(mgr)
     local out = {
         schema              = RWEStateLedgerBridge.SCHEMA,
         activeEvent         = "",
+        activeIntensity     = 0,
         remainingMs         = 0,
         cooldownRemainingMs = 0,
         midpointFired       = false,
+        summaryKey          = "",
+        summaryArgs         = {},
+        crisisHasPrice      = false,
+        crisisHasLoan       = false,
+        settlement          = {},
     }
 
-    local es = mgr ~= nil and mgr.EVENT_STATE or nil
-    if es ~= nil and g_currentMission ~= nil then
-        if es.activeEvent ~= nil then
-            out.activeEvent   = es.activeEvent
-            out.remainingMs   = math.max(0, (es.eventStartTime + (es.eventDuration or 0)) - g_currentMission.time)
-            out.midpointFired = es.midpointFired or false
+    if mgr ~= nil and g_currentMission ~= nil and type(mgr.currentStateSnapshot) == "function" then
+        local snap = mgr:currentStateSnapshot()
+        out.cooldownRemainingMs = snap.cooldownRemainingMs or 0
+        out.settlement          = snap.settlement or {}
+        if snap.activeEvent ~= nil then
+            out.activeEvent     = snap.activeEvent
+            out.activeIntensity = snap.intensity or 0
+            out.remainingMs     = snap.remainingMs or 0
+            out.midpointFired   = snap.midpointFired == true
+            out.summaryKey      = snap.summaryKey or ""
+            out.summaryArgs     = snap.summaryArgs or {}
+            out.crisisHasPrice  = snap.crisisHasPrice == true
+            out.crisisHasLoan   = snap.crisisHasLoan == true
         end
-        out.cooldownRemainingMs = math.max(0, (es.cooldownUntil or 0) - g_currentMission.time)
     end
 
     return out
@@ -94,6 +110,41 @@ function RWEStateLedgerBridge.applyState(mgr)
     mgr._savedRemainingMs         = tonumber(data.remainingMs) or 0
     mgr._savedCooldownRemainingMs = tonumber(data.cooldownRemainingMs) or 0
     mgr._savedMidpointFired       = data.midpointFired == true
+
+    -- Schema 2 fields. A schema 1 block (or a missing field) loads with no intensity,
+    -- no summary, no crisis parts and an empty settlement, overriding whatever the
+    -- own XML copy imported, so the ledger stays the single load source.
+    local schema2 = (tonumber(data.schema) or 1) >= 2
+    local intensity = schema2 and tonumber(data.activeIntensity) or nil
+    mgr._savedActiveIntensity = (intensity ~= nil and intensity > 0) and math.floor(intensity) or 0
+    local summaryKey = schema2 and data.summaryKey or nil
+    mgr._savedSummaryKey = (type(summaryKey) == "string" and summaryKey ~= "") and summaryKey or nil
+    local args = {}
+    if schema2 and type(data.summaryArgs) == "table" then
+        for _, a in ipairs(data.summaryArgs) do
+            if type(a) == "string" then args[#args + 1] = a end
+        end
+    end
+    mgr._savedSummaryArgs    = args
+    mgr._savedCrisisHasPrice = schema2 and data.crisisHasPrice == true
+    mgr._savedCrisisHasLoan  = schema2 and data.crisisHasLoan == true
+    local settlement = (schema2 and type(data.settlement) == "table") and data.settlement or {}
+    mgr._savedSettlement = RWESettlement ~= nil and RWESettlement.validateSaved(settlement) or {}
+
+    -- The own XML safety copy re-writes this loaded state on every write that is
+    -- not a real game save (see saveSettings).
+    mgr._savedStateSnapshot = {
+        activeEvent = mgr._savedActiveEvent,
+        intensity = mgr._savedActiveIntensity,
+        remainingMs = mgr._savedRemainingMs,
+        cooldownRemainingMs = mgr._savedCooldownRemainingMs,
+        midpointFired = mgr._savedMidpointFired,
+        summaryKey = mgr._savedSummaryKey,
+        summaryArgs = args,
+        crisisHasPrice = mgr._savedCrisisHasPrice,
+        crisisHasLoan = mgr._savedCrisisHasLoan,
+        settlement = mgr._savedSettlement,
+    }
     return true
 end
 

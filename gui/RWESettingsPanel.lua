@@ -97,6 +97,11 @@ function RWESettingsPanel:toggle()
     end
 
     if self.isOpen then
+        -- EC-6: the server re-reads the market price status when the panel opens;
+        -- a change takes the one status-change path.
+        if g_server ~= nil and RWEMarketBridge ~= nil then
+            RWEMarketBridge.watch(self.rwe)
+        end
         -- Optional: lock player movement too
         -- if g_currentMission.player then g_currentMission.player:setDisableInput(true) end
     else
@@ -254,6 +259,7 @@ function RWESettingsPanel:drawCategoriesTab(x, y, w)
 
     cy = self:drawHeader(x, cy, w, "EVENT CATEGORIES")
     cy = self:drawToggle(x, cy, w, "Economic Events", ev.economicEvents, function(v) ev.economicEvents = v end)
+    cy = self:drawPriceStatus(x, cy, w)
     cy = self:drawToggle(x, cy, w, "Vehicle Events", ev.vehicleEvents, function(v) ev.vehicleEvents = v end)
     cy = self:drawToggle(x, cy, w, "Field Events", ev.fieldEvents, function(v) ev.fieldEvents = v end)
     cy = self:drawToggle(x, cy, w, "Wildlife Events", ev.wildlifeEvents, function(v) ev.wildlifeEvents = v end)
@@ -261,9 +267,46 @@ function RWESettingsPanel:drawCategoriesTab(x, y, w)
     cy = self:drawToggle(x, cy, w, "Weather Events (WIP)", ev.weatherEvents, function(v) ev.weatherEvents = v end)
 end
 
+--- EC-6: read-only market price status under Economic Events (the server's read, or
+--- the synced copy on a client). Nothing is drawn before a client has the copy.
+local PRICE_STATUS_KEYS = {
+    available            = "rwe_price_status_available",
+    no_market            = "rwe_price_status_no_market",
+    market_prices_off    = "rwe_price_status_prices_off",
+    market_update_needed = "rwe_price_status_update_needed",
+}
+
+function RWESettingsPanel:drawInfoLine(x, y, w, key)
+    local text = (g_i18n ~= nil and g_i18n:hasText(key)) and g_i18n:getText(key) or key
+    setTextAlignment(RenderText.ALIGN_LEFT)
+    setTextBold(false)
+    setTextColor(unpack(self.COLORS.TEXT_LO))
+    local size = 0.012
+    setTextWrapWidth(w)
+    local height = getTextHeight(size, text)
+    renderText(x, y - size - 0.004, size, text)
+    setTextWrapWidth(0)
+    return y - height - 0.012
+end
+
+function RWESettingsPanel:drawPriceStatus(x, y, w)
+    local status = RWEMarketBridge ~= nil and RWEMarketBridge.displayStatus() or nil
+    local key = status ~= nil and PRICE_STATUS_KEYS[status] or nil
+    if key == nil then return y end
+    return self:drawInfoLine(x + 0.01, y, w - 0.01, key)
+end
+
 function RWESettingsPanel:drawPhysicsTab(x, y, w)
     local cy = y
     local ph = self.rwe.physics
+
+    -- EC-6: the traction governor is part of Arcade Physics. With it off, the
+    -- controls are hidden and the tab says no driving physics change applies.
+    if not self.rwe:allowsArcadePhysics() then
+        cy = self:drawHeader(x, cy, w, "PHYSICS OVERRIDE")
+        cy = self:drawInfoLine(x, cy, w, "rwe_settings_physics_arcade_off")
+        return
+    end
 
     cy = self:drawHeader(x, cy, w, "PHYSICS OVERRIDE")
     cy = self:drawToggle(x, cy, w, "Enable Physics", ph.enabled, function(v) ph.enabled = v end)
@@ -271,7 +314,7 @@ function RWESettingsPanel:drawPhysicsTab(x, y, w)
 
     cy = self:drawHeader(x, cy, w, "HANDLING")
     -- Traction governor: higher = more grip = less slowdown on loose ground
-    -- (field, mud, snow). 1.00 = neutral. Drives RWEVehiclePhysics.
+    -- (mud, snow, ice). 1.00 = neutral. Drives RWEVehiclePhysics.
     cy = self:drawSlider(x, cy, w, "Traction (loose ground)", ph.wheelGripMultiplier, 0.5, 2.0, 0.05, function(v) ph.wheelGripMultiplier = v end, "%.2fx")
 end
 

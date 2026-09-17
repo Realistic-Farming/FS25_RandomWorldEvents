@@ -66,6 +66,12 @@ function RWEBaseAPI.mixin(target)
             canTrigger   = def.canTrigger or function() return g_currentMission ~= nil end,
             ambientMsgs  = def.ambientMsgs,   -- optional table of periodic flavor strings
             onMid        = userMid,            -- optional midpoint handler
+            -- EC-6: carried to the stored definition so reload and the scheduler see
+            -- them (brief 3.7.2 and 3.8): flag re-application on restore, the arcade
+            -- gate, and an optional figure-free summary key.
+            applyFlags   = def.applyFlags,
+            gate         = def.gate,
+            summaryKey   = def.summaryKey,
 
             onStart = function(intensity)
                 local msg = userFunc(intensity)

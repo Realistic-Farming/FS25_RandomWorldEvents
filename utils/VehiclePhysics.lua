@@ -6,23 +6,25 @@
 -- This is a vehicle specialization injected into every drivable,
 -- motorized, wheeled vehicle type. It exposes a small API that the
 -- vehicle EVENTS use to apply real, restorable physics effects, and
--- it runs an always-on terrain "traction governor".
+-- it runs a terrain "traction governor" while Arcade Physics is on.
 --
 -- Only fields the GIANTS engine actually reads are touched here:
 --   * vehicle.speedLimit ............ km/h cap (Vehicle:getRawSpeedLimit)
 --   * motor.maxForwardSpeed ......... true top speed (restore origin)
 --   * motor:setAccelerationLimit() .. engine sluggishness
---   * spec_drivable.lastInputValues.axisSteer .. steering pull
 --   * wheel.physics:getSurfaceSoundAttributes() .. real surface (read)
 -- =========================================================
 -- Author: TisonK  |  Part of FS25_RandomWorldEvents
 --
--- CREDIT: The steering-input technique used here - feeding a value back into
--- Drivable's spec_drivable.lastInputValues.axisSteer so the game steers as if
--- the player were holding the wheel - is adapted from the mod
--- "RealPhysics Steering" by Tubez47. Thank you, Tubez47.
+-- CREDIT: Earlier versions carried a steering-pull effect adapted from the mod
+-- "RealPhysics Steering" by Tubez47 (thank you, Tubez47). No catalogue event used
+-- it, and EC-6 removed it; RWEVehicleAPI now ignores a steerPull modifier.
 -- (The spec is injected into existing vehicle types via the standard
 -- TypeManager.validateTypes pattern, the same as Variable Tire Pressure.)
+--
+-- EC-6: the terrain traction governor is part of Arcade Physics. It applies only
+-- while g_RandomWorldEvents:allowsArcadePhysics() is true (default OFF); with the
+-- toggle off a vehicle it touched is restored on its next update.
 -- =========================================================
 
 RWEVehiclePhysics = RWEVehiclePhysics or {}
@@ -67,6 +69,12 @@ local function getMotorSafe(vehicle)
     return nil
 end
 
+--- The terrain governor runs only with Arcade Physics on (EC-6 brief 3.4.4).
+local function governorAllowed()
+    local rwe = g_RandomWorldEvents
+    return rwe ~= nil and type(rwe.allowsArcadePhysics) == "function" and rwe:allowsArcadePhysics() == true
+end
+
 -- Is this the vehicle the local player is currently driving? FS25 exposes
 -- that via g_localPlayer:getCurrentVehicle() (returns nil when on foot), with
 -- g_currentMission.controlledVehicle as a legacy fallback.
@@ -90,7 +98,6 @@ end
 
 function RWEVehiclePhysics.registerEventListeners(vehicleType)
     SpecializationUtil.registerEventListener(vehicleType, "onLoad",         RWEVehiclePhysics)
-    SpecializationUtil.registerEventListener(vehicleType, "onPreUpdate",    RWEVehiclePhysics)
     SpecializationUtil.registerEventListener(vehicleType, "onUpdate",       RWEVehiclePhysics)
     SpecializationUtil.registerEventListener(vehicleType, "onLeaveVehicle", RWEVehiclePhysics)
     SpecializationUtil.registerEventListener(vehicleType, "onDelete",       RWEVehiclePhysics)
@@ -129,7 +136,6 @@ function RWEVehiclePhysics.getState(vehicle)
             baseMaxRpm      = nil,   -- captured lazily (engine max rpm; raised for turbo)
             eventSpeedScale = 1,     -- scales top speed AND the working cap
             eventAccelScale = 1,     -- acceleration multiplier (engine feel)
-            eventSteerPull  = 0,     -- -1..1 steering bias from events
             lastTouched     = false, -- did we write physics last frame?
         }
         vehicle._rwePhysics = s
@@ -167,7 +173,6 @@ end
 -- Apply a set of event modifiers. Unspecified keys are left unchanged.
 --   speedScale : multiplier on top speed + working cap (0.5 slow, 1.3 fast)
 --   accelScale : multiplier on acceleration (engine feel; < 1.0 sluggish)
---   steerPull  : -1..1 continuous steering bias (per frame)
 function RWEVehiclePhysics.applyEventMods(vehicle, mods)
     if vehicle == nil or type(mods) ~= "table" then return end
     local s = RWEVehiclePhysics.getState(vehicle)
@@ -175,7 +180,6 @@ function RWEVehiclePhysics.applyEventMods(vehicle, mods)
 
     if mods.speedScale ~= nil then s.eventSpeedScale = clamp(mods.speedScale, 0.05, 5.0) end
     if mods.accelScale ~= nil then s.eventAccelScale = clamp(mods.accelScale, 0.05, 5.0) end
-    if mods.steerPull  ~= nil then s.eventSteerPull  = clamp(mods.steerPull, -1.0, 1.0) end
 
     -- Apply immediately so the effect is felt without waiting a frame
     -- (also covers vehicles that, for any reason, lack the spec update).
@@ -188,7 +192,6 @@ function RWEVehiclePhysics.clearEventMods(vehicle)
     if s == nil then return end
     s.eventSpeedScale = 1
     s.eventAccelScale = 1
-    s.eventSteerPull  = 0
     RWEVehiclePhysics.restore(vehicle, s)
 end
 
@@ -218,7 +221,7 @@ function RWEVehiclePhysics.restore(vehicle, state)
 end
 
 -- =====================
--- TERRAIN TRACTION GOVERNOR (always-on, replaces the old fake grip)
+-- TERRAIN TRACTION GOVERNOR (Arcade Physics only, replaces the old fake grip)
 -- Returns speedScale, accelScale based on the surface under the wheels.
 -- =====================
 function RWEVehiclePhysics.getTerrainScales(vehicle)
@@ -280,9 +283,10 @@ function RWEVehiclePhysics.enforce(vehicle, state)
     local speedScale = state.eventSpeedScale or 1
     local accelScale = state.eventAccelScale or 1
 
-    -- Terrain governor only affects the vehicle the player is driving.
+    -- Terrain governor only affects the vehicle the player is driving, and only
+    -- while Arcade Physics is on.
     local controlled = isPlayerVehicle(vehicle)
-    if controlled then
+    if controlled and governorAllowed() then
         local tSpeed, tAccel = RWEVehiclePhysics.getTerrainScales(vehicle)
         speedScale = speedScale * tSpeed
         accelScale = accelScale * tAccel
@@ -326,36 +330,6 @@ end
 -- PER-FRAME LISTENERS
 -- =====================
 
--- Steering pull is written before the steering physics consume the input
--- (proven approach from RealPhysics Steering by Tubez47).
---
--- It is applied in short, eased bursts rather than a constant lean, so it
--- nudges the wheel now and then (a loose axle catching) instead of fighting
--- the player non-stop - much friendlier on keyboard.
-RWEVehiclePhysics.STEER_CYCLE_MS = 5000   -- one tug every 5 s
-RWEVehiclePhysics.STEER_ON_MS    = 1200   -- each tug lasts ~1.2 s
-
-function RWEVehiclePhysics:onPreUpdate(dt, isActiveForInput, isActiveForInputIgnoreSelection, isSelected)
-    local s = self._rwePhysics
-    if s == nil or not s.eventSteerPull or s.eventSteerPull == 0 then return end
-    if not self.isServer then return end
-
-    local sd = self.spec_drivable
-    if sd == nil or sd.lastInputValues == nil then return end
-
-    local t = (g_currentMission and g_currentMission.time) or 0
-    local phase = t % RWEVehiclePhysics.STEER_CYCLE_MS
-    if phase >= RWEVehiclePhysics.STEER_ON_MS then return end  -- resting between tugs
-
-    -- Smooth 0 -> peak -> 0 envelope across the tug window.
-    local envelope = math.sin((phase / RWEVehiclePhysics.STEER_ON_MS) * math.pi)
-    local pull = s.eventSteerPull * envelope
-
-    local current = tonumber(sd.lastInputValues.axisSteer) or 0
-    sd.lastInputValues.axisSteer = clamp(current + pull, -1, 1)
-    sd.lastInputValues.axisSteerIsAnalog = true
-end
-
 function RWEVehiclePhysics:onUpdate(dt)
     if not self.isServer then return end
     local s = self._rwePhysics
@@ -364,10 +338,9 @@ function RWEVehiclePhysics:onUpdate(dt)
     -- Cheap early-out: the governor only matters for the controlled vehicle,
     -- so skip idle parked / AI machines entirely unless an event touched them.
     local hasEventMod = (s.eventSpeedScale ~= 1) or (s.eventAccelScale ~= 1)
-        or (s.eventSteerPull ~= 0)
     local physics = g_RandomWorldEvents ~= nil and g_RandomWorldEvents.physics or nil
     local governorRelevant = physics ~= nil and physics.enabled == true
-        and isPlayerVehicle(self)
+        and governorAllowed() and isPlayerVehicle(self)
 
     if not hasEventMod and not governorRelevant and not s.lastTouched then
         return
@@ -408,8 +381,8 @@ function RWEVehiclePhysics.applyMotorEnforcement(vehicle)
     local speedScale = s.eventSpeedScale or 1
     local accelScale = s.eventAccelScale or 1
 
-    -- Always-on terrain governor, controlled vehicle only.
-    if isPlayerVehicle(vehicle) then
+    -- Terrain governor, controlled vehicle only, Arcade Physics on only.
+    if governorAllowed() and isPlayerVehicle(vehicle) then
         local tS, tA = RWEVehiclePhysics.getTerrainScales(vehicle)
         speedScale = speedScale * tS
         accelScale = accelScale * tA

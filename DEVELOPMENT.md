@@ -23,8 +23,8 @@ FS25_RandomWorldEvents adds:
 - A **probabilistic event engine** that fires timed world events (economic, vehicle,
   field, special) with configurable frequency, intensity, and cooldown.
 - A **real vehicle-physics layer** (`RWEVehiclePhysics`, a vehicle specialization) that
-  drives speed, top speed, acceleration and steering through the engine's own fields,
-  plus a loose-ground traction governor. See §5.
+  drives speed, top speed and acceleration through the engine's own fields, plus a
+  loose-ground traction governor that runs only with Arcade Physics on. See §5.
 - An **in-game settings screen** (tabbed GUI) for toggling categories and tuning all
   parameters without restarting the game.
 - **Per-savegame persistence** so each farm's settings survive restarts.
@@ -246,12 +246,11 @@ Real, engine-respected levers:
 | Speed cap | `vehicle.speedLimit` (km/h, read by `Vehicle:getRawSpeedLimit`) | speed boost / slow-down |
 | Top speed | `motor.maxForwardSpeed` (restore from `motor.maxForwardSpeedOrigin`) | true turbo above gear cap |
 | Acceleration | `motor:setAccelerationLimit()` | engine sluggishness / limp home |
-| Steering | `spec_drivable.lastInputValues.axisSteer` (per frame) | steering pull |
 | Surface (read) | `wheel.physics:getSurfaceSoundAttributes()` | traction governor |
 
 Per-vehicle state lives on `vehicle._rwePhysics` (event scales + captured baselines), so
 the event API can reach it even on a vehicle that did not receive the spec. Baselines are
-captured lazily on first update. Enforcement runs in `onUpdate`/`onPreUpdate` on the
+captured lazily on first update. Enforcement runs in `onUpdate` on the
 server, and only writes when a value actually deviates, so untouched parked machines are
 never modified. Restore happens on `clearEventMods`, `onLeaveVehicle` and `onDelete`.
 
@@ -262,15 +261,15 @@ RWEVehiclePhysics.applyEventMods(vehicle, {
     speedScale = 1.4,   -- km/h cap multiplier
     topScale   = 1.4,   -- physical top-speed multiplier
     accelScale = 0.5,   -- acceleration multiplier (engine feel)
-    steerPull  = 0.10,  -- -1..1 continuous steering bias
 })
 RWEVehiclePhysics.clearEventMods(vehicle)  -- restore baselines
 ```
 
 ### Traction governor
 
-When `physics.enabled` is on, the spec eases speed/acceleration for the *controlled*
-vehicle on loose ground (field, mud, snow), scaled by the `wheelGripMultiplier` setting.
+When Arcade Physics and `physics.enabled` are both on, the spec eases speed/acceleration
+for the *controlled* vehicle on loose ground (mud, snow, ice), scaled by the
+`wheelGripMultiplier` setting. With Arcade Physics off (the default) it changes nothing.
 Surfaces come from the real `getSurfaceSoundAttributes()` data, never a faked field.
 
 ### `PhysicsUtils` (`utils/PhysicsUtils.lua`)
@@ -281,11 +280,12 @@ under the wheels, and any active modifiers.
 
 ### Credit
 
-> The steering technique - writing into `spec_drivable.lastInputValues.axisSteer` each
-> frame so the game steers as if the player were holding the wheel - and the approach of
-> injecting a specialization into existing vehicle types via `TypeManager.finalizeTypes`
-> are **adapted from "RealPhysics Steering" by Tubez47**. The source header of
-> `utils/VehiclePhysics.lua` records this inline. Thank you, Tubez47.
+> The approach of injecting a specialization into existing vehicle types via
+> `TypeManager.finalizeTypes` is **adapted from "RealPhysics Steering" by Tubez47**, as was
+> the steering-pull technique earlier versions carried (writing into
+> `spec_drivable.lastInputValues.axisSteer` each frame). No catalogue event used the
+> steering pull and EC-6 removed it. The source header of `utils/VehiclePhysics.lua`
+> records this inline. Thank you, Tubez47.
 
 ---
 

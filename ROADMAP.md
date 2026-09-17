@@ -41,12 +41,14 @@
 - [ ] Read by MarketDynamics (`getPriceModifier` via the economic subsystem).
 - [x] Bedrock migrations DONE: StateLedger + SettingsHub + MasterHUD bridged (NetworkSync N/A by design).
 
-## Gated follow-up (blocked by design, do not build ahead)
-The NON-PRICE HALF of the redesign is built (2026-08-14); these halves stay on the shelf:
-- [ ] PRICE half (blocked on the MarketDynamics re-home): market_boom/crash, price_fixing, export_opportunity, harvest/field_sale, bonus_trade_prices and the economic_crisis market-malus move from the EffectHooks getPricePerLiter patch to registered MarketDynamics price modifiers. The patch stays in place until then; only the read-signal flags (yieldBonus/yieldMalus) have left it.
-- [ ] MONEY half (blocked on the onDayChange settlement): government_subsidy, sudden_expense, farmer_donation, insurance_bonus, tax_refund, loan_interest, economic_crisis loan cost, feed_shortage, veterinary_windfall, vehicle_accident, vehicle_repair_bill and the shop discounts accrue and settle on onDayChange via TaxMod recordExpense instead of instant addMoney. The instant server-gated addMoney calls are preserved until then.
-- [ ] Economy-dial application: the spine's Economy dial is read and exposed via getDifficulty() but not yet applied to economic magnitudes; it lands with the money/price re-homes.
-- [ ] NOTE: the workspace notes record MarketDynamics registerPriceModifier as already built (1.2.0.9) as of 2026-07-31, which contradicts the brief's gate note. The price half stays unbuilt per the brief regardless; re-verify the dependency before building it.
+## Redesign remaining half (EC-6, brief v1.7)
+The NON-PRICE HALF was built 2026-08-14. EC-6 builds the rest (branch `feat/EC-6-rwe-redesign-remaining-half`), paired with MarketDynamics PR #154 and LOCKED to ship in one release:
+- [x] PRICE half: the EffectHooks getPricePerLiter patch is gone. Price events reach selling points only through one registered MarketDynamics consumer modifier (integrations/RWEMarketBridge.lua), gated on MarketDynamics' rweConsumerContractVersion >= 1, eligible only while the price status is "available", with a live status watch and refreshConsumerPrices on a change.
+- [x] MONEY half: every money event queues one statement line per eligible farm, settled once at the next in-game day (utils/RWESettlement.lua; DAY_CHANGED plus the Time Guard accrual, TaxMod recordExpense as a mirror only). BALANCE CHANGE: money events now pay farms in every mode, single player included. seed_discount, fertilizer_discount, equipment_discount and tax_refund are retired (catalogue 40 -> 36). The festival money trickle is gone.
+- [x] Client surface: RWEEventStateEvent (shared state, summary, price status, join state) and RWESettlementNoticeEvent (private amount to the paid farm); unconditional client gate in update.
+- [x] Reload keeps an active event whole (applyFlags, summary and crisis parts saved in both paths, StateLedger schema 2).
+- [x] Vehicle writes removed from the two bill events; terrain traction governor behind Arcade Physics; steering-pull machinery removed.
+- [ ] Economy-dial application: the spine's Economy dial is read and exposed via getDifficulty() but not applied. Authority 1 is on HOLD (API5-H1 to H5); no parallel setting.
 
 ## Deferred / parked
 - Event scheduling / prediction API: parked by design. Events are probabilistic; peers read active state and cooldown only.

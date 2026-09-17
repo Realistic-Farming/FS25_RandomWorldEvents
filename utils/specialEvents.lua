@@ -1,122 +1,105 @@
 -- =========================================================
--- Random World Events (version 2.1.3.0) - FS25
+-- Random World Events - FS25
 -- =========================================================
 -- Special events for FS25
 -- =========================================================
 -- Author: TisonK
 -- =========================================================
+-- EC-6 (brief v1.7 sections 3.1, 3.3.6, 3.4.3 and 3.8):
+--   * special_event_festival and bonus_trade_prices are price events through
+--     MarketDynamics' registered modifier, eligible only while the price status is
+--     "available". The festival's per-minute income trickle is removed; the festival
+--     is price only.
+--   * The equipment durability pair is arcade physics: host-local, off by default,
+--     eligible only with the host player in a vehicle. Its wear fraction is stored
+--     once in eventData at activation and its notices say the direction only.
+-- =========================================================
 
 local specialEvents = {}
 
--- Server-authoritative money. addMoney must run only on the server in multiplayer,
--- or every client applies the change (desync); the engine syncs the balance back.
-local function rweAddMoney(...)
-    if g_currentMission and g_currentMission:getIsServer() then
-        g_currentMission:addMoney(...)
-    end
+local function priceAvailable()
+    return RWEMarketBridge ~= nil and RWEMarketBridge.priceStatus() == RWEMarketBridge.STATUS_AVAILABLE
+end
+
+local function arcadeEligible()
+    return g_RandomWorldEvents ~= nil and g_RandomWorldEvents:arcadeEligible()
+end
+
+local function key(name, part) return "rwe_event_" .. name .. "_" .. part end
+
+local function ambients(name, count)
+    local out = {}
+    for n = 1, count do out[n] = key(name, "ambient" .. n) end
+    return out
+end
+
+local function setFlag(field, value)
+    if g_RandomWorldEvents then g_RandomWorldEvents.EVENT_STATE[field] = value end
+end
+
+local function storeWear(fraction)
+    local d = g_RandomWorldEvents ~= nil and g_RandomWorldEvents.EVENT_STATE.eventData or nil
+    if type(d) == "table" then d.wearFraction = fraction end
 end
 
 specialEvents.eventList = {
     {
-        name="special_event_festival", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.marketBonus = 0.05 + 0.03 * intensity
-                g_RandomWorldEvents.EVENT_STATE.moneyBonus  = 0.10 + 0.05 * intensity
-            end
-            return string.format("Harvest festival! Prices +%.0f%%, income +€%d/min!",
-                (0.05 + 0.03 * intensity) * 100,
-                math.floor(500 * (0.10 + 0.05 * intensity))
-            )
+        name = "special_event_festival", minI = 1,
+        summaryKey = "rwe_summary_price_rise",
+        canTrigger = priceAvailable,
+        applyFlags = function(intensity) setFlag("marketBonus", 0.05 + 0.03 * intensity) end,
+        func = function(intensity)
+            specialEvents.byName.special_event_festival.applyFlags(intensity)
+            return { key = key("special_event_festival", "start") }
         end,
-        onMid = function(intensity)
-            return "Festival is in full swing — stalls everywhere, buyers in a generous mood."
-        end,
-        ambientMsgs = {
-            "Music drifting over the fields from the fairground. Good atmosphere.",
-            "Visitors from the city are buying direct — premium prices.",
-            "The town square is packed. The farm stand is doing brisk trade.",
-            "Beer tent's full, the square smells of fried food. Classic harvest time.",
-        },
+        onMid = function(intensity) return { key = key("special_event_festival", "mid") } end,
+        ambientMsgs = ambients("special_event_festival", 4),
     },
 
     {
-        name="equipment_durability_boost", minI=1, gate="arcadePhysics",
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.durabilityBoost = 0.15 + 0.05 * intensity
-            end
-            return string.format("Everything running sweet! Wear rate down %.0f%%.", (0.15 + 0.05 * intensity) * 100)
+        name = "equipment_durability_boost", minI = 1, gate = "arcadePhysics",
+        canTrigger = arcadeEligible,
+        applyFlags = function(intensity) setFlag("durabilityBoost", 0.15 + 0.05 * intensity) end,
+        func = function(intensity)
+            specialEvents.byName.equipment_durability_boost.applyFlags(intensity)
+            storeWear(0.15 + 0.05 * intensity)
+            return { key = key("equipment_durability_boost", "start") }
         end,
-        onMid = function(intensity)
-            return "Machines still holding up brilliantly — low wear ongoing."
-        end,
-        ambientMsgs = {
-            "Conditions are kind on the equipment today. No unusual wear.",
-            "Filters are clean, fluids look good — the fleet is in fine shape.",
-        },
+        onMid = function(intensity) return { key = key("equipment_durability_boost", "mid") } end,
+        endNotice = { key = key("equipment_durability_boost", "end") },
+        ambientMsgs = ambients("equipment_durability_boost", 2),
     },
 
     {
-        name="equipment_durability_drop", minI=1, gate="arcadePhysics",
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.durabilityMalus = 0.15 + 0.05 * intensity
-            end
-            return string.format("Rough patch! Equipment wear rate up %.0f%%.", (0.15 + 0.05 * intensity) * 100)
+        name = "equipment_durability_drop", minI = 1, gate = "arcadePhysics",
+        canTrigger = arcadeEligible,
+        applyFlags = function(intensity) setFlag("durabilityMalus", 0.15 + 0.05 * intensity) end,
+        func = function(intensity)
+            specialEvents.byName.equipment_durability_drop.applyFlags(intensity)
+            storeWear(0.15 + 0.05 * intensity)
+            return { key = key("equipment_durability_drop", "start") }
         end,
-        onMid = function(intensity)
-            return string.format("Wear still elevated — %.0f%% above normal. Keep an eye on the machines.", (0.15 + 0.05 * intensity) * 100)
-        end,
-        ambientMsgs = {
-            "Abrasive soil or grit in the air — everything is wearing faster.",
-            "The stone content in this field is punishing. Watch the blades.",
-            "Hydraulic temps running a bit high. Not critical, but keep an eye on it.",
-        },
+        onMid = function(intensity) return { key = key("equipment_durability_drop", "mid") } end,
+        endNotice = { key = key("equipment_durability_drop", "end") },
+        ambientMsgs = ambients("equipment_durability_drop", 3),
     },
 
     {
-        name="bonus_trade_prices", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.tradeBonus = 0.10 + 0.05 * intensity
-            end
-            return string.format("Trade premium! +%.0f%% on all sales right now.", (0.10 + 0.05 * intensity) * 100)
+        name = "bonus_trade_prices", minI = 1,
+        summaryKey = "rwe_summary_price_rise",
+        canTrigger = priceAvailable,
+        applyFlags = function(intensity) setFlag("tradeBonus", 0.10 + 0.05 * intensity) end,
+        func = function(intensity)
+            specialEvents.byName.bonus_trade_prices.applyFlags(intensity)
+            return { key = key("bonus_trade_prices", "start") }
         end,
-        onMid = function(intensity)
-            return string.format("Premium prices holding — %.0f%% above board rate.", (0.10 + 0.05 * intensity) * 100)
-        end,
-        ambientMsgs = {
-            "Every sell point is offering above the daily average today.",
-            "Regional shortage has nudged every category upward. Sell what you can.",
-        },
+        onMid = function(intensity) return { key = key("bonus_trade_prices", "mid") } end,
+        ambientMsgs = ambients("bonus_trade_prices", 2),
     },
 }
 
--- =====================
--- TICK HANDLER
--- =====================
-local function specialTickHandler(rwe)
-    if not g_currentMission then return end
-    local s = rwe.EVENT_STATE
-    local t = g_currentMission.time
-    local lastTick = s.lastSpecialTick or 0
-    if t - lastTick < 60000 then return end
-    s.lastSpecialTick = t
-
-    local farmId = g_currentMission.player and g_currentMission.player.farmId or 0
-    if farmId == 0 then return end
-
-    -- The harvest festival's income trickle is the only money this handler
-    -- carries now (money_bonus/money_malus and the reputation events are cut;
-    -- reputation belongs to NPCFavor). Gated server-side as before.
-    local amount = 0
-    if s.moneyBonus then amount = amount + math.floor(500 * s.moneyBonus) end
-
-    if amount ~= 0 and g_currentMission.addMoney then
-        rweAddMoney(amount, farmId, MoneyType.OTHER, false)
-    end
-end
+specialEvents.byName = {}
+for _, e in ipairs(specialEvents.eventList) do specialEvents.byName[e.name] = e end
 
 -- =====================
 -- REGISTER SPECIAL EVENTS
@@ -128,32 +111,35 @@ local function registerSpecialEvents()
     end
 
     for _, e in ipairs(specialEvents.eventList) do
+        local def = e
         g_RandomWorldEvents:registerEvent({
-            name         = e.name,
-            category     = "special",
-            weight       = 1,
-            duration     = { min = 10, max = 60 },
-            minIntensity = e.minI,
-            canTrigger   = function() return g_currentMission ~= nil end,
-            onStart      = e.func,
-            onMid        = e.onMid,
-            ambientMsgs  = e.ambientMsgs,
+            name            = def.name,
+            category        = "special",
+            weight          = 1,
+            duration        = { min = 10, max = 60 },
+            minIntensity    = def.minI,
+            gate            = def.gate,
+            applyFlags      = def.applyFlags,
+            summaryKey      = def.summaryKey,
+            chooseSummary   = def.chooseSummary,
+            ambientVariants = def.ambientVariants,
+            canTrigger      = function() return g_currentMission ~= nil and (def.canTrigger == nil or def.canTrigger()) end,
+            onStart         = def.func,
+            onMid           = def.onMid,
+            ambientMsgs     = def.ambientMsgs,
             onEnd = function()
                 if g_RandomWorldEvents then
                     local s = g_RandomWorldEvents.EVENT_STATE
-                    s.moneyBonus      = nil
                     s.durabilityBoost = nil
                     s.durabilityMalus = nil
                     s.tradeBonus      = nil
                     s.marketBonus     = nil
-                    s.lastSpecialTick = nil
                 end
-                return nil
+                -- Arcade events end with a host-local notice (the core never sends it).
+                return def.endNotice
             end
         })
     end
-
-    g_RandomWorldEvents:registerTickHandler("specialEvents", specialTickHandler)
 
     Logging.info("[SpecialEvents] Registered " .. #specialEvents.eventList .. " special events")
     return true
