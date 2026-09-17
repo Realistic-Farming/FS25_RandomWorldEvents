@@ -28,11 +28,21 @@ _G.RWE_EffectHooks_installed = true
 
 -- =====================
 -- VEHICLE DAMAGE HOOK
--- Scales the usage damage the player's own vehicle takes, from the durability
+-- Scales the usage damage every vehicle in use takes, from the durability
 -- EVENT_STATE flags. Redesign: it only acts behind the arcadePhysics opt-in toggle
--- (default OFF), and even then only for the player's own vehicle. When the toggle
--- is OFF the wrapper is a transparent pass-through, so normal gameplay damage is
--- never touched.
+-- (default OFF). When the toggle is OFF the wrapper is a transparent pass-through,
+-- so normal gameplay damage is never touched.
+--
+-- "In use" is the engine's own usage-damage gate (Design d3c0626): updateDamageAmount
+-- returns 0 unless getUsageCausesDamage, which needs the vehicle active
+-- (Wearable.lua:189-192, :204-209) and a motorized vehicle's motor running
+-- (Motorized.lua:1997-2003). A vehicle is active while any player drives it (the
+-- server sets isControlled for a client's entry, VehicleEnterResponseEvent.lua:45,
+-- Enterable.lua:712, :992-995), while a hired worker runs it (AIJobVehicle.lua:251),
+-- and an implement while its attacher is active (Attachable.lua:1456-1466). A parked
+-- vehicle's delta is 0 and passes through unscaled. The scaling runs on the server
+-- (onUpdateTick under isServer) and clients get the damage through the engine's
+-- own Wearable sync.
 --
 -- Where the damage is (decompiled FS25 scripts):
 --   * Usage damage accrues on the server in Wearable:onUpdateTick as
@@ -59,18 +69,6 @@ local function rweScaleUsageDamage(self, damage)
         return damage
     end
     if not g_RandomWorldEvents:allowsArcadePhysics() then
-        return damage
-    end
-
-    -- Never scale damage on an NPC-driven vehicle.
-    local isPlayerVehicle = false
-    local p = g_localPlayer
-    if p ~= nil and p.getCurrentVehicle ~= nil then
-        isPlayerVehicle = p:getCurrentVehicle() == self
-    elseif g_currentMission ~= nil then
-        isPlayerVehicle = g_currentMission.controlledVehicle == self
-    end
-    if not isPlayerVehicle then
         return damage
     end
 

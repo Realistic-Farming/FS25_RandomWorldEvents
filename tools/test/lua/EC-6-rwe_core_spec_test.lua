@@ -156,6 +156,32 @@ do
     T.ok("F4a dedicated server: an arcade event is refused", string.find(r, "arcade physics", 1, true) ~= nil, r)
     T.eq("F4b nothing activated", ES.activeEvent, nil)
 
+    -- Design d3c0626 (Bob intake 82af751): the durability pair is server-scoped
+    reset()
+    mgr.events.arcadePhysics = true
+    T.eq("F4c [reached: no local player, as on a dedicated server]", g_localPlayer, nil)
+    mgr:triggerNamedEvent("equipment_durability_drop", 2)
+    T.eq("F4d NAMED: High Wear starts on a dedicated server with no local player", ES.activeEvent, "equipment_durability_drop")
+    T.near("F4e and sets its wear flag", ES.durabilityMalus, 0.25, 1e-9)
+    reset()
+    mgr.events.arcadePhysics = true
+    mgr:triggerNamedEvent("equipment_durability_boost", 1)
+    T.eq("F4f NAMED: Low Wear starts on a dedicated server with no local player", ES.activeEvent, "equipment_durability_boost")
+    reset()
+    mgr.events.arcadePhysics = true
+    r = mgr:triggerNamedEvent("vehicle_engine_trouble", 2)
+    T.ok("F4g engine trouble stays host-local: refused with no local player", string.find(r, "arcade physics", 1, true) ~= nil, r)
+    T.eq("F4h nothing activated", ES.activeEvent, nil)
+    reset()
+    r = mgr:triggerNamedEvent("equipment_durability_drop", 2)
+    T.ok("F4i Arcade Physics off: a durability event is refused", string.find(r, "durability", 1, true) ~= nil, r)
+    T.eq("F4j nothing activated", ES.activeEvent, nil)
+    reset()
+    mgr.events.arcadePhysics = true
+    T.eq("F4k [reached: durability eligibility is true on a server]", mgr:durabilityEligible(), true)
+    g_server = nil
+    T.eq("F4l NAMED: on a pure client durability eligibility is false", mgr:durabilityEligible(), false)
+
     reset()
     g_server = nil
     r = mgr:triggerNamedEvent("insurance_bonus", 1)
