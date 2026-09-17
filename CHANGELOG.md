@@ -27,7 +27,7 @@ the repo's git history and README.
 - A reload keeps an active event whole: intensity, summary, crisis parts and pending statement lines are saved (StateLedger block schema 2).
 
 ### Fixed
-- Equipment Durability events (Low Wear / High Wear) now change the wear the player's own vehicle takes while Arcade Physics is on. The old hook targeted a function that does not exist and never installed; the durability scaling now wraps each vehicle's own usage-damage step as it loads.
+- Equipment Durability events (Low Wear / High Wear) now change the wear the player's own vehicle takes while Arcade Physics is on. The old hook targeted a function that does not exist and never installed; the durability scaling now wraps each vehicle's own usage-damage step as it loads. In multiplayer only the host's own vehicle is scaled: a joined player's vehicle is not, and a dedicated server (no local player) scales nothing.
 - The Arcade Physics setting texts held Simplified Chinese under the French Canadian column; French Canadian and Simplified Chinese now each get their own text.
 - RSF-F201: cab and on-foot controls stay valid across vehicle entry and exit. Each input context now registers through its own private target, so the PLAYER and VEHICLE registrations no longer share one engine identifier that a cab rebuild wiped. Membership is checked in the wrap's own context, a complete set costs no registration work, and the input wrappers install once per session instead of being restored on every mission teardown. The cab early return that skipped re-registration after a rebuilt context is gone; the hook record lives on RWE_InputHookRecord.
 

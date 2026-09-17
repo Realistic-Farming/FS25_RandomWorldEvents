@@ -39,7 +39,7 @@ do
     d = damageAfterTick({ state = { durabilityBoost = 1.5 }, playerVehicle = "self" })
     T.eq("A3 a boost past 1 floors at no damage, never negative", d, 0)
     d = damageAfterTick({ state = { durabilityMalus = 0.2 }, noPlayer = true, controlledVehicle = "self" })
-    T.near("A4 with no local player the mission's controlled vehicle is the player's", d, BASE * 1.2, 1e-12)
+    T.near("A4 the controlledVehicle fallback, moved verbatim, still scales (Bob #46: the engine never assigns g_currentMission.controlledVehicle, so in game this branch is likely unreachable)", d, BASE * 1.2, 1e-12)
 
     local _, v = damageAfterTick({ state = { durabilityMalus = 0.2 }, playerVehicle = "self" })
     local values = {}
@@ -68,4 +68,18 @@ do
     WEAR.world({ state = { durabilityMalus = 0.2 }, playerVehicle = v })
     WEAR.tick(v, 1000)
     T.eq("P6 no usage damage stays no damage", v.spec_wearable.damage, 0)
+
+    -- Multiplayer (Bob #46): usage damage accrues on the server and g_localPlayer is
+    -- that machine's own player (PlayerSystem.lua:205-206).
+    local hostVehicle = WEAR.loadVehicle(WEAR.EARLY_TYPE)
+    local clientVehicle = WEAR.loadVehicle(WEAR.EARLY_TYPE)
+    WEAR.world({ state = { durabilityMalus = 0.2 }, playerVehicle = hostVehicle })
+    WEAR.tick(hostVehicle, 1000)
+    WEAR.tick(clientVehicle, 1000)
+    T.near("P7a MP host: the host's own vehicle is scaled", hostVehicle.spec_wearable.damage, BASE * 1.2, 1e-12)
+    T.near("P7b MP host: a joined player's vehicle is not", clientVehicle.spec_wearable.damage, BASE, 1e-12)
+    local dediVehicle = WEAR.loadVehicle(WEAR.EARLY_TYPE)
+    WEAR.world({ state = { durabilityMalus = 0.2 }, noPlayer = true })
+    WEAR.tick(dediVehicle, 1000)
+    T.near("P8 dedicated server (no local player): nothing is scaled", dediVehicle.spec_wearable.damage, BASE, 1e-12)
 end
