@@ -55,7 +55,8 @@ RandomWorldEvents = {
 
         -- Arcade-physics opt-in (default OFF). When ON, the retained physics
         -- events (speed boost, engine trouble, equipment durability) may fire,
-        -- scoped to the player's own vehicle and out of the economy.
+        -- out of the economy: speed and engine on the host player's own vehicle,
+        -- durability on the usage wear of every vehicle in use.
         arcadePhysics = false,
 
         weatherEvents = false,
@@ -438,8 +439,10 @@ end
 
 --- Arcade-physics opt-in (redesign): the retained vehicle-physics events
 --- (speed boost, engine trouble, equipment durability) only fire when this is
---- ON. Default OFF. Always scoped to the player's own vehicle, never an NPC
---- machine, never the economy. Admin key RandomWorldEvents.arcadePhysics.
+--- ON. Default OFF. Speed boost and engine trouble act on the host player's own
+--- vehicle; the equipment durability pair scales usage wear on every vehicle in
+--- use, decided on the server (Design d3c0626). Never the economy. Admin key
+--- RandomWorldEvents.arcadePhysics.
 ---@return boolean
 function RandomWorldEvents:allowsArcadePhysics()
     return self.events.arcadePhysics == true
@@ -628,7 +631,8 @@ end
 -- EC-6: ELIGIBILITY, NOTICES, SHARED STATE, END PATH
 -- =====================
 
---- True for the four host-local arcade-physics events (stored gate).
+--- True for the four arcade-physics events (stored gate). Their notices, broadcast
+--- and save-resume stay host-local; the durability pair's wear effect does not.
 function RandomWorldEvents:isArcadeEvent(event)
     return type(event) == "table" and event.gate == "arcadePhysics"
 end
@@ -640,11 +644,23 @@ function RandomWorldEvents:getLocalVehicle()
     return cur or (g_currentMission ~= nil and g_currentMission.controlledVehicle) or nil
 end
 
---- Arcade events are host-local: the toggle is on, this machine is a listen server
---- with a local player, and that player is in a vehicle. A dedicated server (no
---- local player) and a pure client never start one.
+--- Speed boost and engine trouble are host-local: the toggle is on, this machine is
+--- a listen server with a local player, and that player is in a vehicle. A
+--- dedicated server (no local player) and a pure client never start one.
 function RandomWorldEvents:arcadeEligible()
     return self:allowsArcadePhysics() and g_server ~= nil and g_localPlayer ~= nil and self:getLocalVehicle() ~= nil
+end
+
+--- The equipment durability pair (arcadeScope "server") scales usage wear on every
+--- vehicle in use, which the server decides (Design d3c0626), so it needs only the
+--- toggle and a server: a dedicated server with no local player starts one too.
+function RandomWorldEvents:durabilityEligible()
+    return self:allowsArcadePhysics() and g_server ~= nil
+end
+
+--- True for an arcade event whose effect the server decides for every vehicle.
+function RandomWorldEvents:isServerScopedArcadeEvent(event)
+    return self:isArcadeEvent(event) and event.arcadeScope == "server"
 end
 
 --- The same eligibility for the scheduler and for every forced trigger: the stored
@@ -652,7 +668,11 @@ end
 --- eligible farms, map conditions). Returns ok, reason.
 function RandomWorldEvents:eventEligibility(event)
     if type(event) ~= "table" then return false, "unknown event" end
-    if self:isArcadeEvent(event) and not self:arcadeEligible() then
+    if self:isServerScopedArcadeEvent(event) then
+        if not self:durabilityEligible() then
+            return false, "equipment durability events need Arcade Physics on, on the server"
+        end
+    elseif self:isArcadeEvent(event) and not self:arcadeEligible() then
         return false, "arcade physics events need Arcade Physics on and the host player in a vehicle on a listen server"
     end
     local ok, can = pcall(event.canTrigger)

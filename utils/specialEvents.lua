@@ -10,8 +10,9 @@
 --     MarketDynamics' registered modifier, eligible only while the price status is
 --     "available". The festival's per-minute income trickle is removed; the festival
 --     is price only.
---   * The equipment durability pair is arcade physics: host-local, off by default,
---     eligible only with the host player in a vehicle. Its wear fraction is stored
+--   * The equipment durability pair is arcade physics, off by default. It scales
+--     usage wear on every vehicle in use and is eligible on any server with Arcade
+--     Physics on, a dedicated one included (Design d3c0626). Its wear fraction is stored
 --     once in eventData at activation and its notices say the direction only.
 -- =========================================================
 
@@ -21,8 +22,8 @@ local function priceAvailable()
     return RWEMarketBridge ~= nil and RWEMarketBridge.priceStatus() == RWEMarketBridge.STATUS_AVAILABLE
 end
 
-local function arcadeEligible()
-    return g_RandomWorldEvents ~= nil and g_RandomWorldEvents:arcadeEligible()
+local function durabilityEligible()
+    return g_RandomWorldEvents ~= nil and g_RandomWorldEvents:durabilityEligible()
 end
 
 local function key(name, part) return "rwe_event_" .. name .. "_" .. part end
@@ -57,8 +58,8 @@ specialEvents.eventList = {
     },
 
     {
-        name = "equipment_durability_boost", minI = 1, gate = "arcadePhysics",
-        canTrigger = arcadeEligible,
+        name = "equipment_durability_boost", minI = 1, gate = "arcadePhysics", arcadeScope = "server",
+        canTrigger = durabilityEligible,
         applyFlags = function(intensity) setFlag("durabilityBoost", 0.15 + 0.05 * intensity) end,
         func = function(intensity)
             specialEvents.byName.equipment_durability_boost.applyFlags(intensity)
@@ -71,8 +72,8 @@ specialEvents.eventList = {
     },
 
     {
-        name = "equipment_durability_drop", minI = 1, gate = "arcadePhysics",
-        canTrigger = arcadeEligible,
+        name = "equipment_durability_drop", minI = 1, gate = "arcadePhysics", arcadeScope = "server",
+        canTrigger = durabilityEligible,
         applyFlags = function(intensity) setFlag("durabilityMalus", 0.15 + 0.05 * intensity) end,
         func = function(intensity)
             specialEvents.byName.equipment_durability_drop.applyFlags(intensity)
@@ -119,6 +120,7 @@ local function registerSpecialEvents()
             duration        = { min = 10, max = 60 },
             minIntensity    = def.minI,
             gate            = def.gate,
+            arcadeScope     = def.arcadeScope,
             applyFlags      = def.applyFlags,
             summaryKey      = def.summaryKey,
             chooseSummary   = def.chooseSummary,

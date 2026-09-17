@@ -222,9 +222,9 @@ const hooks = src("utils/EffectHooks.lua");
 !/EconomyManager\.getPricePerLiter\s*=/.test(hooks)
   ? ok("structural: the EconomyManager.getPricePerLiter patch is gone (EC-6)")
   : fail("structural: EffectHooks still patches EconomyManager.getPricePerLiter");
-(/allowsArcadePhysics/.test(hooks) && /g_localPlayer/.test(hooks))
-  ? ok("structural: damage patch gated behind arcadePhysics + player-vehicle scope")
-  : fail("structural: damage patch not gated or not player-scoped");
+(/allowsArcadePhysics/.test(hooks) && !/g_localPlayer/.test(hooks))
+  ? ok("structural: damage patch gated behind arcadePhysics, no player-vehicle rule (Design d3c0626)")
+  : fail("structural: damage patch not gated, or the retired player-vehicle rule is back");
 
 const physics = src("utils/VehiclePhysics.lua");
 const governorCalls = (physics.match(/getTerrainScales\(vehicle\)/g) || []).length - 1;
