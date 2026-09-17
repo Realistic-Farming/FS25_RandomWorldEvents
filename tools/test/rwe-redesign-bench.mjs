@@ -4,12 +4,16 @@
 //   A. The vendored OptionScalingResolver (pure library, byte-identical to the
 //      SettingsHub spine branch) executed in a real Lua 5.1 VM (fengari):
 //      OFF/absent == neutral, canonical World-events curve anchors, switch off.
-//   B. Structural assertions over the ACTUAL source files (luaparse): the 13
-//      cut events are gone, the 4 arcade-physics events carry the toggle gate,
-//      the field/animal money trickle handlers are removed, the reputation
-//      write is gone, the price patch no longer reads the read-signal flags,
-//      the damage patch is arcade-gated, and the core read/difficulty surface
-//      is present.
+//   B. Structural assertions over the ACTUAL source files: the 13 cut events and
+//      the 4 events EC-6 retired are gone, the 4 arcade-physics events carry the
+//      toggle gate, the money trickle handlers are removed, the reputation write
+//      is gone, the engine price patch is gone (EC-6), the damage patch is
+//      arcade-gated, and the core read/difficulty surface is present.
+//      EC-6: the catalogue and the gates are read from the STORED definitions,
+//      captured by running the five event modules in the Lua VM against a
+//      recording registerEvent. A name literal in the source proves nothing: the
+//      field and wildlife modules build most events through helper functions, and
+//      the gate the scheduler reads is the one the registration loop stored.
 //
 // The mod has no in-engine test harness; this is the stand-in. Usage:
 //   node tools/test/rwe-redesign-bench.mjs <repo-root>
@@ -128,46 +132,41 @@ const CUT = [
   "money_malus", "vehicle_fuel_bonus", "vehicle_fuel_penalty",
   "vehicle_free_upgrade", "vehicle_cleaning_bonus", "vehicle_steering_pull",
   "vehicle_slippery_roads", "fuel_discount",
+  // EC-6, Arissani's 2026-09-16 rulings
+  "seed_discount", "fertilizer_discount", "equipment_discount", "tax_refund",
 ];
 const TOGGLE = [
   "vehicle_speed_boost", "vehicle_engine_trouble",
   "equipment_durability_boost", "equipment_durability_drop",
 ];
 
-// luaparse gives StringLiteral.value = null (only .raw is set), so unquote raw.
-const unquote = (str) => (typeof str === "string" && str.startsWith("\"")) ? str.slice(1, -1) : str;
-
-// Walk every TableConstructorExpression, yielding each entry's
-// { name = string|nil, gate = string|nil } as keyed by its literal fields.
-function tableEntries(ast) {
-  const out = [];
-  (function walk(node) {
-    if (!node || typeof node !== "object") return;
-    if (node.type === "TableConstructorExpression") {
-      const entry = { name: undefined, gate: undefined };
-      for (const f of node.fields || []) {
-        if (f.type !== "TableKeyString") continue;
-        const keyName = f.key && f.key.name;
-        if ((keyName === "name" || keyName === "gate") && f.value && f.value.type === "StringLiteral") {
-          entry[keyName] = unquote(f.value.raw);
-        }
-      }
-      if (entry.name !== undefined) out.push(entry);
+// Run the five event modules in a fresh Lua VM with a recording registerEvent and
+// return the stored definitions: [{ name, category, gate }].
+async function storedDefinitions() {
+  const { lua, lauxlib, lualib, to_luastring, to_jsstring } = await import("fengari");
+  const L = lauxlib.luaL_newstate();
+  lualib.luaL_openlibs(L);
+  const run = (code, name) => {
+    if (lauxlib.luaL_loadbuffer(L, to_luastring(code), null, to_luastring(name)) !== 0 || lua.lua_pcall(L, 0, 0, 0) !== 0) {
+      throw new Error(name + ": " + to_jsstring(lua.lua_tostring(L, -1)));
     }
-    for (const k of Object.keys(node)) walk(node[k]);
-  })(ast);
-  return out;
-}
-
-// Collect the string values of every `name = "..."` field inside a module.
-function eventNames(rel) {
-  return tableEntries(parse(rel)).map((e) => e.name);
-}
-
-// Find the `gate = "..."` value of a named event, if any.
-function gateOf(rel, eventName) {
-  const entry = tableEntries(parse(rel)).find((e) => e.name === eventName);
-  return entry ? entry.gate : undefined;
+  };
+  run(`Logging = { info = function() end, warning = function() end }
+    g_RandomWorldEvents = { EVENTS = {}, EVENT_STATE = { eventData = {} } }
+    function g_RandomWorldEvents:registerEvent(e) self.EVENTS[e.name] = e end`, "stubs");
+  for (const [rel] of modules) run(src(rel), rel);
+  run(`local out = {}
+    for name, e in pairs(g_RandomWorldEvents.EVENTS) do
+      out[#out + 1] = name .. "=" .. tostring(e.category) .. "=" .. tostring(e.gate)
+    end
+    table.sort(out)
+    STORED = table.concat(out, ";")`, "collect");
+  lua.lua_getglobal(L, to_luastring("STORED"));
+  const raw = to_jsstring(lua.lua_tostring(L, -1));
+  return raw.split(";").filter(Boolean).map((row) => {
+    const [name, category, gate] = row.split("=");
+    return { name, category, gate: gate === "nil" ? undefined : gate };
+  });
 }
 
 const modules = [
@@ -178,16 +177,21 @@ const modules = [
   ["utils/vehicleEvents.lua", "vehicle"],
 ];
 
-const allNames = modules.flatMap(([rel]) => eventNames(rel));
+const stored = await storedDefinitions();
+const allNames = stored.map((e) => e.name);
 const stillPresent = CUT.filter((c) => allNames.includes(c));
 stillPresent.length === 0
   ? ok(`structural: none of the ${CUT.length} cut events remain registered`)
   : fail(`structural: cut events still registered: ${stillPresent.join(", ")}`);
 
-const ungated = TOGGLE.filter((t) => gateOf("utils/" + (t.startsWith("vehicle") ? "vehicleEvents.lua" : "specialEvents.lua"), t) !== "arcadePhysics");
+const ungated = TOGGLE.filter((t) => (stored.find((e) => e.name === t) || {}).gate !== "arcadePhysics");
 ungated.length === 0
-  ? ok("structural: all 4 arcade-physics events carry gate=arcadePhysics")
-  : fail(`structural: toggle events missing gate: ${ungated.join(", ")}`);
+  ? ok("structural: all 4 arcade-physics events STORE gate=arcadePhysics")
+  : fail(`structural: toggle events missing a stored gate: ${ungated.join(", ")}`);
+const extraGated = stored.filter((e) => e.gate === "arcadePhysics" && !TOGGLE.includes(e.name)).map((e) => e.name);
+extraGated.length === 0
+  ? ok("structural: no other event stores the arcade gate")
+  : fail(`structural: unexpected arcade gate on: ${extraGated.join(", ")}`);
 
 const fieldSrc = src("utils/fieldEvents.lua");
 const animalSrc = src("utils/animalEvents.lua");
@@ -199,17 +203,44 @@ const animalSrc = src("utils/animalEvents.lua");
   : fail("structural: animal tick handler still present");
 
 const specialSrc = src("utils/specialEvents.lua");
+const economicSrc = src("utils/economicEvents.lua");
+(!/registerTickHandler/.test(specialSrc) && !/moneyBonus/.test(specialSrc))
+  ? ok("structural: festival money trickle removed (EC-6)")
+  : fail("structural: special tick handler or festival moneyBonus still present");
+(!/economicTickHandler/.test(economicSrc) && !/registerTickHandler/.test(economicSrc))
+  ? ok("structural: economic money trickle removed (EC-6)")
+  : fail("structural: economic tick handler still present");
+const moneyWriters = modules.filter(([rel]) => /addMoney/.test(src(rel))).map(([rel]) => rel);
+moneyWriters.length === 0
+  ? ok("structural: no event module writes money (statement lines only, EC-6)")
+  : fail(`structural: addMoney still called in: ${moneyWriters.join(", ")}`);
 !/repPoints/.test(specialSrc)
   ? ok("structural: reputation (repPoints) write removed")
   : fail("structural: repPoints still written in specialEvents");
 
 const hooks = src("utils/EffectHooks.lua");
-!/s\.yieldBonus|s\.yieldMalus/.test(hooks)
-  ? ok("structural: read-signal flags removed from the price patch")
-  : fail("structural: yieldBonus/yieldMalus still read by the price patch");
+!/EconomyManager\.getPricePerLiter\s*=/.test(hooks)
+  ? ok("structural: the EconomyManager.getPricePerLiter patch is gone (EC-6)")
+  : fail("structural: EffectHooks still patches EconomyManager.getPricePerLiter");
 (/allowsArcadePhysics/.test(hooks) && /g_localPlayer/.test(hooks))
   ? ok("structural: damage patch gated behind arcadePhysics + player-vehicle scope")
   : fail("structural: damage patch not gated or not player-scoped");
+
+const physics = src("utils/VehiclePhysics.lua");
+const governorCalls = (physics.match(/getTerrainScales\(vehicle\)/g) || []).length - 1;
+(/if controlled and governorAllowed\(\) then/.test(physics)
+  && /if governorAllowed\(\) and isPlayerVehicle\(vehicle\) then/.test(physics)
+  && /governorAllowed\(\) and isPlayerVehicle\(self\)/.test(physics)
+  && governorCalls === 2)
+  ? ok("structural: the terrain governor applies only with Arcade Physics (both call sites + relevance, EC-6)")
+  : fail(`structural: terrain governor not behind allowsArcadePhysics (call sites ${governorCalls})`);
+(!/eventSteerPull|axisSteer|onPreUpdate/.test(physics))
+  ? ok("structural: steering-pull machinery removed (EC-6)")
+  : fail("structural: steering pull still present in VehiclePhysics");
+const hud = src("gui/RWEEventHUD.lua");
+(/eventTitle\(eventId\)/.test(hud) && !/eventId:gsub/.test(hud))
+  ? ok("structural: HUD shows the translated title, never a name built from the id (EC-6)")
+  : fail("structural: HUD still builds the event name from the raw id");
 
 const core = src("RandomWorldEvents.lua");
 const need = ["getIntensity", "isEventActive", "getProgress", "getRemainingTime", "getDifficulty", "allowsArcadePhysics", "getEffectiveFrequency", "getBaseIntensity", 'event.gate == "arcadePhysics"'];
@@ -231,10 +262,10 @@ const resolverSrc = src("utils/OptionScalingResolver.lua");
   : fail("structural: vendored resolver missing or contract drift");
 
 const counts = {};
-for (const [rel, key] of modules) counts[key] = new Set(eventNames(rel)).size;
-const total = Object.values(counts).reduce((a, b) => a + b, 0);
-if (counts.economic === 14 && counts.field === 10 && counts.vehicle === 4 && counts.wildlife === 8 && counts.special === 4 && total === 40) {
-  ok(`structural: event catalog = 40 (economic ${counts.economic}, field ${counts.field}, vehicle ${counts.vehicle}, wildlife ${counts.wildlife}, special ${counts.special})`);
+for (const e of stored) counts[e.category] = (counts[e.category] || 0) + 1;
+const total = stored.length;
+if (counts.economic === 10 && counts.field === 10 && counts.vehicle === 4 && counts.wildlife === 8 && counts.special === 4 && total === 36) {
+  ok(`structural: stored event catalog = 36 (economic ${counts.economic}, field ${counts.field}, vehicle ${counts.vehicle}, wildlife ${counts.wildlife}, special ${counts.special})`);
 } else {
   fail(`structural: unexpected catalog ${JSON.stringify(counts)} (total ${total})`);
 }
