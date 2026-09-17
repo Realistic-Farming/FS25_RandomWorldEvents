@@ -1,7 +1,7 @@
 -- =========================================================
 -- Random World Events (version 2.1.3.0) - FS25
 -- =========================================================
--- EffectHooks — patches FS25 class methods to apply EVENT_STATE
+-- EffectHooks: patches FS25 class methods to apply EVENT_STATE
 -- flags as real gameplay modifiers.
 --
 -- Installed at file-load time.  Uses a global sentinel so the
@@ -18,73 +18,13 @@ end
 _G.RWE_EffectHooks_installed = true
 
 -- =====================
--- ECONOMY MANAGER HOOK
--- Patches EconomyManager.getPricePerLiter to apply EVENT_STATE
--- price multipliers whenever the player sells goods.
---
--- FS25 signature: getPricePerLiter(fillTypeIndex, supplyDemandPressure, ...)
--- fillTypeIndex is captured so per-crop modifiers from RWEEconomicAPI can be applied.
+-- PRICE PATH (EC-6)
+-- The EconomyManager.getPricePerLiter patch that lived here is gone. Selling
+-- stations price through SellingStation:getEffectiveFillTypePrice and never called
+-- it; fill-trigger purchases, bale value and production payouts did. World-event
+-- sell-price swings now reach selling points only through MarketDynamics'
+-- registered consumer modifier (integrations/RWEMarketBridge.lua).
 -- =====================
-if EconomyManager and EconomyManager.getPricePerLiter then
-    local origGetPrice = EconomyManager.getPricePerLiter
-
-    EconomyManager.getPricePerLiter = function(self, fillTypeIndex, ...)
-        local price = origGetPrice(self, fillTypeIndex, ...)
-        if type(price) ~= "number" or price <= 0 then return price end
-        if not g_RandomWorldEvents then return price end
-
-        local s = g_RandomWorldEvents.EVENT_STATE
-        local mult = 1.0
-
-        -- Economic modifiers
-        if s.marketBonus then mult = mult * (1 + s.marketBonus) end
-        if s.marketMalus then mult = mult * (1 - s.marketMalus) end
-        if s.priceFixing  then mult = mult * (1 + s.priceFixing) end
-        if s.exportBonus  then mult = mult * (1 + s.exportBonus) end
-        if s.economicCrisis and s.economicCrisis.marketMalus then
-            mult = mult * (1 - s.economicCrisis.marketMalus)
-        end
-
-        -- Field price modifiers (harvest / field-sale stay here until the
-        -- MarketDynamics re-home lands; crop_yield and wildlife_pest are now
-        -- PULL read-signals owned by the sim systems, so yieldBonus/yieldMalus
-        -- no longer scale sell prices).
-        if s.harvestBonus   then mult = mult * (1 + s.harvestBonus)   end
-        if s.harvestMalus   then mult = mult * (1 - s.harvestMalus)   end
-        if s.fieldSaleBonus then mult = mult * (1 + s.fieldSaleBonus) end
-        if s.fieldSaleMalus then mult = mult * (1 - s.fieldSaleMalus) end
-
-        -- Special / wildlife
-        if s.tradeBonus then mult = mult * (1 + s.tradeBonus) end
-
-        -- Per-crop-type modifiers from RWEEconomicAPI:setPriceModifier().
-        -- Entries are keyed by FillType index or string.  Expired entries are
-        -- lazily pruned here to avoid a separate cleanup pass.
-        if s.customPriceModifiers and fillTypeIndex ~= nil then
-            local entry = s.customPriceModifiers[fillTypeIndex]
-            if entry then
-                if entry.expiresAt and g_currentMission and g_currentMission.time > entry.expiresAt then
-                    -- Expired — prune and skip.
-                    s.customPriceModifiers[fillTypeIndex] = nil
-                else
-                    mult = mult * entry.multiplier
-                end
-            end
-        end
-
-        if mult ~= 1.0 and g_RandomWorldEvents.debug and g_RandomWorldEvents.debug.enabled then
-            Logging.info(string.format(
-                "[EffectHooks] Price modifier: x%.3f (fillType=%s base €%.2f -> €%.2f)",
-                mult, tostring(fillTypeIndex), price, price * mult))
-        end
-
-        return price * mult
-    end
-
-    Logging.info("[EffectHooks] EconomyManager.getPricePerLiter hooked")
-else
-    Logging.warning("[EffectHooks] EconomyManager.getPricePerLiter not found — price hooks disabled")
-end
 
 -- =====================
 -- VEHICLE DAMAGE HOOK

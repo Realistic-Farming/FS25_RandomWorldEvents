@@ -255,6 +255,37 @@ function RandomWorldEvents:createSettingsManager()
                 settingsObject._savedCooldownRemainingMs = xml:getFloat(manager.XMLTAG..".eventState.cooldownRemainingMs", 0)
                 settingsObject._savedMidpointFired = xml:getBool(manager.XMLTAG..".eventState.midpointFired", false)
 
+                -- EC-6: the event summary, the crisis parts and the pending settlement lines.
+                local summaryKey = xml:getString(manager.XMLTAG..".eventState#summaryKey", "")
+                settingsObject._savedSummaryKey = summaryKey ~= "" and summaryKey or nil
+                local summaryArgs = {}
+                local i = 0
+                while true do
+                    local arg = xml:getString(string.format("%s.eventState.summaryArg(%d)#value", manager.XMLTAG, i))
+                    if arg == nil then break end
+                    summaryArgs[#summaryArgs + 1] = arg
+                    i = i + 1
+                end
+                settingsObject._savedSummaryArgs = summaryArgs
+                settingsObject._savedCrisisHasPrice = xml:getBool(manager.XMLTAG..".eventState#crisisHasPrice", false)
+                settingsObject._savedCrisisHasLoan = xml:getBool(manager.XMLTAG..".eventState#crisisHasLoan", false)
+                settingsObject._savedSettlement = RWESettlement ~= nil and RWESettlement.loadFromXML(xml, manager.XMLTAG..".eventState") or {}
+
+                -- The savegame-coupled state as it stands on disk: re-written unchanged
+                -- by every save that is not a real game save (see saveSettings).
+                settingsObject._savedStateSnapshot = {
+                    activeEvent = settingsObject._savedActiveEvent,
+                    intensity = settingsObject._savedActiveIntensity,
+                    remainingMs = settingsObject._savedRemainingMs,
+                    cooldownRemainingMs = settingsObject._savedCooldownRemainingMs,
+                    midpointFired = settingsObject._savedMidpointFired,
+                    summaryKey = settingsObject._savedSummaryKey,
+                    summaryArgs = summaryArgs,
+                    crisisHasPrice = settingsObject._savedCrisisHasPrice,
+                    crisisHasLoan = settingsObject._savedCrisisHasLoan,
+                    settlement = RWESettlement ~= nil and RWESettlement.validateSaved(settingsObject._savedSettlement) or {},
+                }
+
                 xml:delete()
                 return
             end
@@ -278,7 +309,7 @@ function RandomWorldEvents:createSettingsManager()
         end
     end
     
-    manager.saveSettings = function(settingsObject)
+    manager.saveSettings = function(settingsObject, opts)
         local xmlPath = manager.getSavegameXmlFilePath()
         if not xmlPath then 
             Logging.warning("[RWE] No savegame path found")
@@ -321,19 +352,39 @@ function RandomWorldEvents:createSettingsManager()
 
             xml:setBool(manager.XMLTAG..".experimentalSystems", settingsObject.experimentalSystems == true)
 
+            -- EC-6: the event snapshot and the pending settlement lines are savegame-coupled
+            -- state. Only a real game save (opts.savegame) writes the current state; every
+            -- other write (a settings change, quitting) re-writes the snapshot of the last
+            -- real save, or of load. Otherwise quitting without saving would persist lines
+            -- the savegame never had (paid again on the next load) or drop lines it still
+            -- owes.
+            local snap
+            if opts ~= nil and opts.savegame then
+                snap = settingsObject:currentStateSnapshot()
+                settingsObject._savedStateSnapshot = snap
+            else
+                snap = settingsObject._savedStateSnapshot or {}
+            end
+
             -- Save active event state as remaining time so timers survive reload
-            local es = settingsObject.EVENT_STATE
-            if es and es.activeEvent then
-                xml:setString(manager.XMLTAG..".eventState.activeEvent", es.activeEvent)
-                local remaining = math.max(0, (es.eventStartTime + (es.eventDuration or 0)) - g_currentMission.time)
-                xml:setFloat(manager.XMLTAG..".eventState.remainingMs", remaining)
-                xml:setBool(manager.XMLTAG..".eventState.midpointFired", es.midpointFired or false)
-                xml:setInt(manager.XMLTAG..".eventState.intensity", es.activeIntensity or 0)
+            if snap.activeEvent ~= nil then
+                xml:setString(manager.XMLTAG..".eventState.activeEvent", snap.activeEvent)
+                xml:setFloat(manager.XMLTAG..".eventState.remainingMs", snap.remainingMs or 0)
+                xml:setBool(manager.XMLTAG..".eventState.midpointFired", snap.midpointFired == true)
+                xml:setInt(manager.XMLTAG..".eventState.intensity", snap.intensity or 0)
+                xml:setString(manager.XMLTAG..".eventState#summaryKey", snap.summaryKey or "")
+                for i, arg in ipairs(snap.summaryArgs or {}) do
+                    xml:setString(string.format("%s.eventState.summaryArg(%d)#value", manager.XMLTAG, i - 1), tostring(arg))
+                end
+                xml:setBool(manager.XMLTAG..".eventState#crisisHasPrice", snap.crisisHasPrice == true)
+                xml:setBool(manager.XMLTAG..".eventState#crisisHasLoan", snap.crisisHasLoan == true)
             else
                 xml:setString(manager.XMLTAG..".eventState.activeEvent", "")
             end
-            local esCooldown = es and math.max(0, (es.cooldownUntil or 0) - g_currentMission.time) or 0
-            xml:setFloat(manager.XMLTAG..".eventState.cooldownRemainingMs", esCooldown)
+            xml:setFloat(manager.XMLTAG..".eventState.cooldownRemainingMs", snap.cooldownRemainingMs or 0)
+            if RWESettlement ~= nil then
+                RWESettlement.saveListToXML(xml, manager.XMLTAG..".eventState", snap.settlement or {})
+            end
 
             xml:save()
             xml:delete()
@@ -355,9 +406,10 @@ function RandomWorldEvents:loadSettings()
     end
 end
 
-function RandomWorldEvents:saveSettings()
+--- @param opts table|nil  { savegame = true } only from the game's save cycle
+function RandomWorldEvents:saveSettings(opts)
     if self.settingsManager and self.settingsManager.saveSettings then
-        self.settingsManager.saveSettings(self)
+        self.settingsManager.saveSettings(self, opts)
         self:dbg("Settings saved")
     else
         Logging.error("[RandomWorldEvents] Settings manager not properly initialized")
@@ -572,7 +624,297 @@ function RandomWorldEvents:dbg(msg, level)
     end
 end
 
+-- =====================
+-- EC-6: ELIGIBILITY, NOTICES, SHARED STATE, END PATH
+-- =====================
+
+--- True for the four host-local arcade-physics events (stored gate).
+function RandomWorldEvents:isArcadeEvent(event)
+    return type(event) == "table" and event.gate == "arcadePhysics"
+end
+
+--- The host player's current vehicle, or nil.
+function RandomWorldEvents:getLocalVehicle()
+    local player = g_localPlayer
+    local cur = (player ~= nil and type(player.getCurrentVehicle) == "function") and player:getCurrentVehicle() or nil
+    return cur or (g_currentMission ~= nil and g_currentMission.controlledVehicle) or nil
+end
+
+--- Arcade events are host-local: the toggle is on, this machine is a listen server
+--- with a local player, and that player is in a vehicle. A dedicated server (no
+--- local player) and a pure client never start one.
+function RandomWorldEvents:arcadeEligible()
+    return self:allowsArcadePhysics() and g_server ~= nil and g_localPlayer ~= nil and self:getLocalVehicle() ~= nil
+end
+
+--- The same eligibility for the scheduler and for every forced trigger: the stored
+--- gate and the event's own canTrigger (price status, the old-market exclusion,
+--- eligible farms, map conditions). Returns ok, reason.
+function RandomWorldEvents:eventEligibility(event)
+    if type(event) ~= "table" then return false, "unknown event" end
+    if self:isArcadeEvent(event) and not self:arcadeEligible() then
+        return false, "arcade physics events need Arcade Physics on and the host player in a vehicle on a listen server"
+    end
+    local ok, can = pcall(event.canTrigger)
+    if ok and can then return true end
+    if RWEMarketBridge ~= nil then
+        local status = RWEMarketBridge.priceStatus()
+        if RWEMarketBridge.isOldMarketExcluded(event.name) then
+            return false, "update MarketDynamics to enable this event (status " .. tostring(status) .. ")"
+        end
+        if RWEMarketBridge.isPriceEvent(event.name) and status ~= RWEMarketBridge.STATUS_AVAILABLE then
+            return false, "market price events are unavailable (status " .. tostring(status) .. ")"
+        end
+    end
+    return false, ok and "no eligible farm or map condition for this event" or ("canTrigger error: " .. tostring(can))
+end
+
+--- Resolve a notice to display text. A notice is { key = "...", args = { ... } } with
+--- string arguments (each resolved as a translation key when one exists), or a
+--- plain string (a translation key when one exists, else literal text from a
+--- third-party event). A missing key falls back to the key itself and logs once.
+function RandomWorldEvents:noticeText(notice)
+    if notice == nil then return nil end
+    local function t(key)
+        if type(key) == "string" and g_i18n ~= nil and type(g_i18n.hasText) == "function" and g_i18n:hasText(key) then
+            return g_i18n:getText(key)
+        end
+        return nil
+    end
+    if type(notice) == "string" then return t(notice) or notice end
+    if type(notice) ~= "table" or type(notice.key) ~= "string" or notice.key == "" then return nil end
+    local template = t(notice.key)
+    if template == nil then
+        self._missingKeys = self._missingKeys or {}
+        if not self._missingKeys[notice.key] then
+            self._missingKeys[notice.key] = true
+            Logging.warning("[RWE] missing translation key '%s'", notice.key)
+        end
+        return notice.key
+    end
+    local args = {}
+    for i, a in ipairs(notice.args or {}) do args[i] = t(a) or tostring(a) end
+    if #args == 0 then return template end
+    local ok, text = pcall(string.format, template, unpack(args))
+    if ok then return text end
+    return template
+end
+
+--- The translated title of an event: rwe_event_<name>_title, or the raw id (logged once).
+function RandomWorldEvents:eventTitle(name)
+    if name == nil then return "" end
+    local key = "rwe_event_" .. tostring(name) .. "_title"
+    if g_i18n ~= nil and type(g_i18n.hasText) == "function" and g_i18n:hasText(key) then
+        return g_i18n:getText(key)
+    end
+    self._missingKeys = self._missingKeys or {}
+    if not self._missingKeys[key] then
+        self._missingKeys[key] = true
+        Logging.warning("[RWE] missing translation key '%s'", key)
+    end
+    return tostring(name)
+end
+
+local function stringArgs(args)
+    local out = {}
+    for _, a in ipairs(type(args) == "table" and args or {}) do
+        if type(a) == "string" then out[#out + 1] = a end
+    end
+    return out
+end
+
+--- Choose the active shared event's figure-free summary into eventData. Arcade
+--- events get none. The crisis chooses its row from the recorded parts.
+function RandomWorldEvents:chooseSummary(event)
+    local d = self.EVENT_STATE.eventData
+    if type(d) ~= "table" then d = {}; self.EVENT_STATE.eventData = d end
+    d.summaryKey, d.summaryArgs = nil, {}
+    if type(event) ~= "table" or self:isArcadeEvent(event) then return end
+    if type(event.chooseSummary) == "function" then
+        local ok, key, args = pcall(event.chooseSummary, d)
+        if ok and type(key) == "string" then d.summaryKey, d.summaryArgs = key, stringArgs(args) end
+    elseif type(event.summaryKey) == "string" then
+        d.summaryKey = event.summaryKey
+    end
+end
+
+--- The shared state every client sees. The only numbers are intensity and
+--- remainingMs. While an arcade event holds the slot, the event is empty.
+function RandomWorldEvents:sharedState()
+    local es = self.EVENT_STATE
+    local p = {
+        activeEvent = "", activeIntensity = 0, activeCategory = "", remainingMs = 0, midpointFired = false,
+        priceStatus = RWEMarketBridge ~= nil and RWEMarketBridge.priceStatus() or "",
+        summaryKey = "", summaryArgs = {}, crisisHasPrice = false, crisisHasLoan = false,
+        noticeKind = "", noticeKey = "", noticeArgs = {},
+    }
+    local event = es.activeEvent ~= nil and self.EVENTS[es.activeEvent] or nil
+    if es.activeEvent ~= nil and not self:isArcadeEvent(event) then
+        local now = g_currentMission ~= nil and g_currentMission.time or 0
+        local d = type(es.eventData) == "table" and es.eventData or {}
+        p.activeEvent = es.activeEvent
+        p.activeIntensity = es.activeIntensity or 0
+        p.activeCategory = es.activeCategory or ""
+        p.remainingMs = math.max(0, (es.eventStartTime or 0) + (es.eventDuration or 0) - now)
+        p.midpointFired = es.midpointFired == true
+        p.summaryKey = d.summaryKey or ""
+        p.summaryArgs = stringArgs(d.summaryArgs)
+        if es.activeEvent == "economic_crisis" then
+            p.crisisHasPrice = d.crisisHasPrice == true
+            p.crisisHasLoan = d.crisisHasLoan == true
+        end
+    end
+    return p
+end
+
+--- Attach a notice to a shared state payload (only a keyed notice travels).
+local function withNotice(p, kind, notice)
+    if type(notice) == "table" and type(notice.key) == "string" and notice.key ~= "" then
+        p.noticeKind, p.noticeKey, p.noticeArgs = kind, notice.key, stringArgs(notice.args)
+    elseif type(notice) == "string" and g_i18n ~= nil and type(g_i18n.hasText) == "function" and g_i18n:hasText(notice) then
+        p.noticeKind, p.noticeKey, p.noticeArgs = kind, notice, {}
+    end
+    return p
+end
+RandomWorldEvents._withNotice = withNotice
+
+--- Broadcast the shared state to every client. Server only.
+function RandomWorldEvents:broadcastState(p)
+    if g_server == nil or RWEEventStateEvent == nil then return false end
+    local ok = pcall(RWEEventStateEvent.broadcast, p or self:sharedState())
+    return ok
+end
+
+--- Client: apply the synced display copy. Never runs onEnd, onMid, tick handlers,
+--- settlement or the price modifier.
+function RandomWorldEvents:applySyncedState(p)
+    if g_server ~= nil or type(p) ~= "table" then return end
+    local es = self.EVENT_STATE
+    if RWEMarketBridge ~= nil then
+        RWEMarketBridge.clientPriceStatus = (p.priceStatus ~= nil and p.priceStatus ~= "") and p.priceStatus or nil
+    end
+    if p.activeEvent == nil or p.activeEvent == "" then
+        es.activeEvent, es.activeIntensity, es.activeCategory = nil, nil, nil
+        es.eventData = {}
+        es.midpointFired = false
+    else
+        es.activeEvent     = p.activeEvent
+        es.activeIntensity = (tonumber(p.activeIntensity) or 0) > 0 and p.activeIntensity or nil
+        es.activeCategory  = (p.activeCategory ~= nil and p.activeCategory ~= "") and p.activeCategory or nil
+        es.eventStartTime  = g_currentMission ~= nil and g_currentMission.time or 0
+        es.eventDuration   = tonumber(p.remainingMs) or 0
+        es.midpointFired   = p.midpointFired == true
+        es.eventData = {
+            summaryKey = (p.summaryKey ~= nil and p.summaryKey ~= "") and p.summaryKey or nil,
+            summaryArgs = stringArgs(p.summaryArgs),
+            crisisHasPrice = p.crisisHasPrice == true,
+            crisisHasLoan = p.crisisHasLoan == true,
+        }
+    end
+    if p.noticeKey ~= nil and p.noticeKey ~= "" then
+        local positive = nil
+        if p.noticeKind == "start" then positive = true elseif p.noticeKind == "mid" then positive = "warn" end
+        local category = (p.activeCategory ~= nil and p.activeCategory ~= "") and p.activeCategory or nil
+        self:notifyEvent(self:noticeText({ key = p.noticeKey, args = p.noticeArgs }), category, positive)
+    end
+end
+
+--- The one server end path for every reason (timer, console, arcade toggle off,
+--- price status). Clients never run it.
+function RandomWorldEvents:_endActiveEvent(reason)
+    if g_server == nil then return false end
+    local es = self.EVENT_STATE
+    local name = es.activeEvent
+    if name == nil then return false end
+    local event = self.EVENTS[name]
+    local arcade = self:isArcadeEvent(event)
+    local notice = nil
+    if event ~= nil and type(event.onEnd) == "function" then
+        local ok, result = pcall(event.onEnd)
+        if ok then
+            notice = result
+        else
+            Logging.warning("[RWE] onEnd failed for %s: %s", tostring(name), tostring(result))
+        end
+    end
+    local category = es.activeCategory
+    Logging.info("[RWE] Event ended: %s (%s)", tostring(name), tostring(reason))
+    es.activeEvent          = nil
+    es.activeIntensity      = nil
+    es.activeCategory       = nil
+    es.eventData            = {}
+    es.customPriceModifiers = nil
+    if notice ~= nil then
+        self:notifyEvent(self:noticeText(notice), category, nil)
+    end
+    if not arcade then
+        local p = withNotice(self:sharedState(), "end", notice)
+        p.activeCategory = category or ""
+        self:broadcastState(p)
+    end
+    return true
+end
+
+--- The live price-status rule (EC-6 3.7.7), called once per change by the watch:
+--- (1) end or narrow the active event the same way roll and restore judge it,
+--- (2) send the state, (3) ask a current MarketDynamics to recompose its quotes.
+function RandomWorldEvents:onPriceStatusChanged(status)
+    if g_server == nil or RWEMarketBridge == nil then return end
+    local es = self.EVENT_STATE
+    local name = es.activeEvent
+    local available = status == RWEMarketBridge.STATUS_AVAILABLE
+    local updateNeeded = status == RWEMarketBridge.STATUS_UPDATE_NEEDED
+    local ended = false
+    if name == "economic_crisis" then
+        local d = type(es.eventData) == "table" and es.eventData or {}
+        es.eventData = d
+        if not available then d.crisisHasPrice = false end   -- never revived during the event
+        if updateNeeded or d.crisisHasLoan ~= true then
+            ended = self:_endActiveEvent("price_status")
+        elseif not available then
+            self:chooseSummary(self.EVENTS[name])
+            es.ambientMsgIndex = 1
+        end
+    elseif name ~= nil then
+        if (RWEMarketBridge.isPriceEvent(name) and not available)
+           or (updateNeeded and RWEMarketBridge.OLD_READER_EXTRA[name] == true) then
+            ended = self:_endActiveEvent("price_status")
+        end
+    end
+    if not ended then
+        self:broadcastState(self:sharedState())
+    end
+    if RWEMarketBridge.market == "current" then
+        RWEMarketBridge.refresh()
+    end
+end
+
+--- The savegame-coupled state as it stands now (written only by a real save).
+function RandomWorldEvents:currentStateSnapshot()
+    local es = self.EVENT_STATE
+    local now = g_currentMission ~= nil and g_currentMission.time or 0
+    local snap = {
+        cooldownRemainingMs = math.max(0, (es.cooldownUntil or 0) - now),
+        settlement = RWESettlement ~= nil and RWESettlement.serialize() or {},
+    }
+    if es.activeEvent ~= nil then
+        local d = type(es.eventData) == "table" and es.eventData or {}
+        snap.activeEvent = es.activeEvent
+        snap.intensity = es.activeIntensity or 0
+        snap.remainingMs = math.max(0, (es.eventStartTime or 0) + (es.eventDuration or 0) - now)
+        snap.midpointFired = es.midpointFired == true
+        snap.summaryKey = d.summaryKey
+        snap.summaryArgs = stringArgs(d.summaryArgs)
+        snap.crisisHasPrice = d.crisisHasPrice == true
+        snap.crisisHasLoan = d.crisisHasLoan == true
+    end
+    return snap
+end
+
 function RandomWorldEvents:triggerRandomEvent()
+    if g_server == nil then
+        return false
+    end
     if not self.events.enabled then
         self:dbg("triggerRandomEvent: events disabled")
         return false
@@ -582,23 +924,22 @@ function RandomWorldEvents:triggerRandomEvent()
         self:dbg("triggerRandomEvent: event already active: " .. tostring(self.EVENT_STATE.activeEvent))
         return false
     end
-    
+
     local baseIntensity = self:getBaseIntensity()
     local available = {}
-    for eventId, event in pairs(self.EVENTS) do
+    local ids = {}
+    for eventId in pairs(self.EVENTS) do ids[#ids + 1] = eventId end
+    table.sort(ids)
+    for _, eventId in ipairs(ids) do
+        local event = self.EVENTS[eventId]
         local categoryKey = event.category .. "Events"
         local categoryEnabled = self.events[categoryKey]
-        local canTrigger = event.canTrigger()
         local intensityOk = baseIntensity >= (event.minIntensity or 1)
+        -- EC-6: the stored gate and the event's own canTrigger, the same check a
+        -- forced trigger applies.
+        local eligible = self:eventEligibility(event)
 
-        -- Opt-in gate for the retained arcade-physics events (redesign):
-        -- they only enter the pool when the arcadePhysics toggle is ON.
-        local gateOk = true
-        if event.gate == "arcadePhysics" then
-            gateOk = self:allowsArcadePhysics()
-        end
-
-        if categoryEnabled and canTrigger and intensityOk and gateOk then
+        if categoryEnabled and intensityOk and eligible then
             table.insert(available, eventId)
         end
     end
@@ -636,12 +977,21 @@ end
 ---@param intensity number  1-5
 ---@return string
 function RandomWorldEvents:triggerNamedEvent(name, intensity)
+    if g_server == nil then
+        return "[RWE] Not triggered: events start on the server only"
+    end
     if self.EVENT_STATE.activeEvent ~= nil then
         return "[RWE] Another event is already active: " .. tostring(self.EVENT_STATE.activeEvent)
     end
     local event = self.EVENTS[name]
     if not event then
         return "[RWE] Event not found: " .. tostring(name)
+    end
+    -- EC-6: a forced event may bypass probability and cooldown only, never price
+    -- status, the old-market exclusion, eligible farms or arcade eligibility.
+    local eligible, why = self:eventEligibility(event)
+    if not eligible then
+        return "[RWE] Not triggered: " .. tostring(name) .. ": " .. tostring(why)
     end
     local safeIntensity = math.max(1, math.min(5, math.floor(intensity or 1)))
     local msg = self:_activateEvent(event, safeIntensity)
@@ -650,7 +1000,9 @@ function RandomWorldEvents:triggerNamedEvent(name, intensity)
 end
 
 --- Internal: write EVENT_STATE for a new event and fire onStart + opening notify.
---- Returns the onStart message string (may be nil for silent events).
+--- EC-6: resets eventData and the custom price terms, chooses the figure-free
+--- summary, shows the start notice here and sends the shared state (never for an
+--- arcade event, which is host-local). Returns the start notice text (may be nil).
 ---@param event table   event definition from self.EVENTS
 ---@param intensity number  1-5
 ---@return string|nil
@@ -660,6 +1012,8 @@ function RandomWorldEvents:_activateEvent(event, intensity)
         duration = math.random(event.duration.min, event.duration.max) * 60000
     end
 
+    self.EVENT_STATE.eventData            = {}
+    self.EVENT_STATE.customPriceModifiers = nil
     self.EVENT_STATE.activeEvent     = event.name
     self.EVENT_STATE.activeIntensity = intensity
     self.EVENT_STATE.activeCategory  = event.category
@@ -676,9 +1030,14 @@ function RandomWorldEvents:_activateEvent(event, intensity)
     Logging.info(string.format("[RWE] Event activated: %s (intensity=%d, duration=%.1f min)",
         event.name, intensity, duration / 60000))
 
-    local message = event.onStart(intensity)
-    self:notifyEvent(message, event.category, true)
-    return message
+    local notice = event.onStart(intensity)
+    self:chooseSummary(event)
+    local text = self:noticeText(notice)
+    self:notifyEvent(text, event.category, true)
+    if not self:isArcadeEvent(event) then
+        self:broadcastState(withNotice(self:sharedState(), "start", notice))
+    end
+    return text
 end
 
 --- Show a rich event notification.
@@ -748,9 +1107,27 @@ function RandomWorldEvents:update(dt)
         end
     end
 
+    -- EC-6 client gate, unconditional: a client displays the synced state only. It
+    -- never runs the scheduler, tick handlers, notices of its own, an end, settlement
+    -- or the price modifier, whatever its own events-enabled setting says. The display
+    -- copy ends only when the server's end state arrives.
+    if g_server == nil then return end
+
+    -- Restored settlement lines bind to their Farm objects once the farms exist.
+    if RWESettlement ~= nil then RWESettlement.bindRestored() end
+
+    -- The price-status watch runs every update, whether or not an event is active
+    -- or events are enabled. An unchanged read does nothing.
+    if RWEMarketBridge ~= nil then RWEMarketBridge.watch(self) end
+
+    -- Switching Arcade Physics off ends an active arcade event at once.
+    local activeDef = self.EVENT_STATE.activeEvent ~= nil and self.EVENTS[self.EVENT_STATE.activeEvent] or nil
+    if activeDef ~= nil and self:isArcadeEvent(activeDef) and not self:allowsArcadePhysics() then
+        self:_endActiveEvent("arcade_physics_off")
+    end
+
     -- Event system update
     if self.events.enabled then
-        if g_server == nil then return end
         if g_currentMission.time > (self.EVENT_STATE.cooldownUntil or 0) then
             local chance = self:getEffectiveFrequency() * 0.001
             local roll = math.random()
@@ -781,16 +1158,9 @@ function RandomWorldEvents:update(dt)
         self:applyActiveEventEffects()
         self:_tickImmersion()
 
-        if g_currentMission.time > (self.EVENT_STATE.eventStartTime + (self.EVENT_STATE.eventDuration or 0)) then
-            local event = self.EVENTS[self.EVENT_STATE.activeEvent]
-            if event and event.onEnd then
-                local message = event.onEnd()
-                self:notifyEvent(message, event and event.category, nil)
-            end
-            Logging.info("[RWE] Event ended: " .. tostring(self.EVENT_STATE.activeEvent))
-            self.EVENT_STATE.activeEvent     = nil
-            self.EVENT_STATE.activeIntensity = nil
-            self.EVENT_STATE.activeCategory  = nil
+        if self.EVENT_STATE.activeEvent ~= nil
+           and g_currentMission.time > (self.EVENT_STATE.eventStartTime + (self.EVENT_STATE.eventDuration or 0)) then
+            self:_endActiveEvent("timer")
         end
     end
     
@@ -832,15 +1202,21 @@ function RandomWorldEvents:_tickImmersion()
     -- Uses "warn" urgency so it stands out from the start notification.
     if not s.midpointFired and duration > 0 and elapsed >= duration * 0.50 then
         s.midpointFired = true
+        local notice = nil
         if event.onMid then
             -- Midpoint narrative must mirror the intensity the event was
             -- actually activated at (spine-scaled), not the raw setting.
             local midIntensity = s.activeIntensity or self:getBaseIntensity()
             local ok, msg = pcall(event.onMid, midIntensity)
             if ok and msg then
-                self:notifyEvent(msg, event.category, "warn")
+                notice = msg
+                self:notifyEvent(self:noticeText(msg), event.category, "warn")
                 self:dbg("Midpoint fired for: " .. s.activeEvent)
             end
+        end
+        -- EC-6: joined players see the midpoint too; an arcade event stays host-local.
+        if not self:isArcadeEvent(event) then
+            self:broadcastState(withNotice(self:sharedState(), "mid", notice))
         end
     end
 
@@ -848,15 +1224,26 @@ function RandomWorldEvents:_tickImmersion()
     -- Cycles through event.ambientMsgs on a timer.
     -- Interval: 15 % of duration (min 90 s, max 5 min) so messages feel
     -- proportional regardless of whether an event lasts 10 or 90 minutes.
-    if event.ambientMsgs and #event.ambientMsgs > 0 and now >= s.nextAmbientTime then
-        local msgs  = event.ambientMsgs
+    -- EC-6: an event with ambientVariants (the crisis) picks its list at each tick
+    -- from the recorded parts, never saved: both, price-only or loan-only. Ambients
+    -- stay host-local flavour and are never sent.
+    local msgs = event.ambientMsgs
+    if type(event.ambientVariants) == "table" then
+        local d = type(s.eventData) == "table" and s.eventData or {}
+        local variant = nil
+        if d.crisisHasPrice == true and d.crisisHasLoan == true then variant = "both"
+        elseif d.crisisHasPrice == true then variant = "price"
+        elseif d.crisisHasLoan == true then variant = "loan" end
+        msgs = variant ~= nil and event.ambientVariants[variant] or nil
+    end
+    if msgs and #msgs > 0 and now >= s.nextAmbientTime then
         local idx   = ((s.ambientMsgIndex - 1) % #msgs) + 1
         local msg   = msgs[idx]
         s.ambientMsgIndex = idx + 1
 
         -- Ambient messages use nil isPositive → INGAME_NOTIFICATION_INFO
         if msg then
-            self:notifyEvent(msg, event.category, nil)
+            self:notifyEvent(self:noticeText(msg), event.category, nil)
         end
 
         -- Schedule next ambient tick
@@ -892,6 +1279,7 @@ function RandomWorldEvents:consoleCommandStatus()
         "Cooldown active: %s\n" ..
         "Arcade physics: %s\n" ..
         "Physics enabled: %s\n" ..
+        "Market price events: %s (MarketDynamics %s)\n" ..
         "=========================",
         tostring(self.events.enabled),
         self.events.frequency or 5,
@@ -901,7 +1289,9 @@ function RandomWorldEvents:consoleCommandStatus()
         self.EVENT_STATE.activeEvent or "None",
         tostring(g_currentMission.time < self.EVENT_STATE.cooldownUntil),
         tostring(self:allowsArcadePhysics()),
-        tostring(self.physics.enabled)
+        tostring(self.physics.enabled),
+        tostring(RWEMarketBridge ~= nil and RWEMarketBridge.displayStatus() or "unknown"),
+        tostring(RWEMarketBridge ~= nil and RWEMarketBridge.market or "unknown")
     )
     print(status)
     return status
@@ -917,19 +1307,13 @@ function RandomWorldEvents:consoleCommandTest()
 end
 
 function RandomWorldEvents:consoleCommandEnd()
+    if g_server == nil then
+        return "Events end on the server only"
+    end
     if not self.EVENT_STATE.activeEvent then
         return "No active event to end"
     end
-    
-    local event = self.EVENTS[self.EVENT_STATE.activeEvent]
-    if event and event.onEnd then
-        local message = event.onEnd()
-        self:notifyEvent(message, event and event.category, nil)
-    end
-    
-    self.EVENT_STATE.activeEvent     = nil
-    self.EVENT_STATE.activeIntensity = nil
-    self.EVENT_STATE.activeCategory  = nil
+    self:_endActiveEvent("console")
     return "Event ended"
 end
 
@@ -1133,6 +1517,11 @@ local function delete(mission)
             rweManager.settingsPanel = nil
         end
         rweManager:saveSettings()
+        -- EC-6 delete-path order: unregister the price modifier (when live), then the
+        -- settlement accrual, the day subscription and the farm-deleted subscription,
+        -- then clear the manager.
+        if RWEMarketBridge then RWEMarketBridge.unbind() end
+        if RWESettlement then RWESettlement.uninstall() end
         rweManager = nil
         getfenv(0)["g_RandomWorldEvents"] = nil
         if g_currentMission then g_currentMission.randomWorldEvents = nil end
@@ -1280,6 +1669,13 @@ local function loadFinished(mission, ...)
         -- below then reconstructs EVENT_STATE from them (single restore path).
         if RWESettingsHubBridge then RWESettingsHubBridge.register(rweManager) end
         if RWEMasterHUDBridge   then RWEMasterHUDBridge.register(rweManager)   end
+        -- EC-6: bind MarketDynamics and install the settlement doors before the
+        -- restore block, so restore reads the real market kind. MarketDynamics
+        -- publishes its handle earlier, at its own Mission00.load.
+        if g_server ~= nil then
+            if RWEMarketBridge then RWEMarketBridge.bind() end
+            if RWESettlement then RWESettlement.install() end
+        end
         if RWEStateLedgerBridge then
             RWEStateLedgerBridge.register(rweManager)
             if RWEStateLedgerBridge.hasState() then
@@ -1288,37 +1684,91 @@ local function loadFinished(mission, ...)
         end
 
         -- Restore active event state saved before this session ended.
-        -- g_currentMission.time is valid here; we use remaining-time offsets
-        -- instead of absolute timestamps so reloads work correctly.
-        if g_RandomWorldEvents and g_RandomWorldEvents._savedActiveEvent then
-            local mgr = g_RandomWorldEvents
-            local es = mgr.EVENT_STATE
-            local savedName  = mgr._savedActiveEvent
-            local savedEvent = mgr.EVENTS[savedName]
-
-            -- Vehicle physics effects are transient and only applied at trigger
-            -- time, not on restore. Resuming one as "active" would apply nothing
-            -- yet block every new trigger ("already active"). Skip those.
-            if savedEvent ~= nil and savedEvent.category == "vehicle" then
-                Logging.info("[RWE] Not resuming transient vehicle event from save: " .. tostring(savedName))
-            else
-                es.activeEvent     = savedName
-                es.activeIntensity = (mgr._savedActiveIntensity and mgr._savedActiveIntensity > 0) and mgr._savedActiveIntensity or nil
-                es.activeCategory  = savedEvent and savedEvent.category or nil
-                es.eventStartTime  = g_currentMission.time
-                es.eventDuration   = mgr._savedRemainingMs or 0
-                es.midpointFired   = mgr._savedMidpointFired or false
-                es.cooldownUntil   = g_currentMission.time + (mgr._savedCooldownRemainingMs or 0)
-                Logging.info("[RWE] Resumed active event from save: " .. tostring(savedName))
-            end
-
-            mgr._savedActiveEvent         = nil
-            mgr._savedActiveIntensity     = nil
-            mgr._savedRemainingMs         = nil
-            mgr._savedCooldownRemainingMs = nil
-            mgr._savedMidpointFired       = nil
+        if g_server ~= nil and g_RandomWorldEvents ~= nil then
+            g_RandomWorldEvents:restoreFromSave()
         end
     end
+end
+
+--- EC-6 restore (brief 3.7.3-3.7.6). g_currentMission.time is valid here; the
+--- saved snapshot uses remaining-time offsets. Pending settlement lines are
+--- restored untouched (bound to farms at the first server update). The price
+--- status is seeded whether or not an event is restored. An arcade event, an
+--- unknown or retired event, a price event without an available market and an
+--- event an older MarketDynamics would price are not resumed. A crisis follows
+--- its saved parts, never current loans.
+function RandomWorldEvents:restoreFromSave()
+    local es = self.EVENT_STATE
+    if RWESettlement ~= nil then
+        RWESettlement.restore(self._savedSettlement)
+    end
+    self._savedSettlement = nil
+
+    local status = RWEMarketBridge ~= nil and RWEMarketBridge.seed() or "no_market"
+    local AVAILABLE = RWEMarketBridge ~= nil and RWEMarketBridge.STATUS_AVAILABLE or "available"
+    local UPDATE_NEEDED = RWEMarketBridge ~= nil and RWEMarketBridge.STATUS_UPDATE_NEEDED or "market_update_needed"
+
+    local savedName = self._savedActiveEvent
+    if savedName ~= nil then
+        local savedEvent = self.EVENTS[savedName]
+        local restore, why = true, nil
+        if savedEvent == nil then
+            restore, why = false, "no such event (retired or from another mod)"
+        elseif self:isArcadeEvent(savedEvent) then
+            restore, why = false, "arcade events are host-local and never resume"
+        elseif savedName == "economic_crisis" then
+            local hasLoan, hasPrice = self._savedCrisisHasLoan == true, self._savedCrisisHasPrice == true
+            if status == UPDATE_NEEDED then
+                restore, why = false, "MarketDynamics needs an update"
+            elseif not (hasLoan or (hasPrice and status == AVAILABLE)) then
+                restore, why = false, "no crisis part it can still deliver"
+            end
+        elseif RWEMarketBridge ~= nil and RWEMarketBridge.isPriceEvent(savedName) and status ~= AVAILABLE then
+            restore, why = false, "market price events are unavailable (" .. tostring(status) .. ")"
+        elseif status == UPDATE_NEEDED and RWEMarketBridge ~= nil and RWEMarketBridge.OLD_READER_EXTRA[savedName] == true then
+            restore, why = false, "MarketDynamics needs an update"
+        end
+
+        if restore then
+            es.activeEvent          = savedName
+            es.activeIntensity      = (self._savedActiveIntensity and self._savedActiveIntensity > 0) and self._savedActiveIntensity or nil
+            es.activeCategory       = savedEvent.category
+            es.eventStartTime       = g_currentMission.time
+            es.eventDuration        = self._savedRemainingMs or 0
+            es.midpointFired        = self._savedMidpointFired or false
+            es.cooldownUntil        = g_currentMission.time + (self._savedCooldownRemainingMs or 0)
+            es.customPriceModifiers = nil
+            es.eventData            = {}
+            if savedName == "economic_crisis" then
+                es.eventData.crisisHasLoan  = self._savedCrisisHasLoan == true
+                es.eventData.crisisHasPrice = self._savedCrisisHasPrice == true and status == AVAILABLE
+                self:chooseSummary(savedEvent)
+            elseif self._savedSummaryKey ~= nil then
+                es.eventData.summaryKey  = self._savedSummaryKey
+                es.eventData.summaryArgs = stringArgs(self._savedSummaryArgs)
+            else
+                self:chooseSummary(savedEvent)
+            end
+            if type(savedEvent.applyFlags) == "function" then
+                local ok, err = pcall(savedEvent.applyFlags, es.activeIntensity or self.events.intensity or 1)
+                if not ok then Logging.warning("[RWE] applyFlags failed on restore for %s: %s", tostring(savedName), tostring(err)) end
+            end
+            Logging.info("[RWE] Resumed active event from save: " .. tostring(savedName))
+            self:broadcastState(self:sharedState())
+        else
+            Logging.info("[RWE] Not resuming saved event %s: %s", tostring(savedName), tostring(why))
+        end
+    end
+
+    self._savedActiveEvent         = nil
+    self._savedActiveIntensity     = nil
+    self._savedRemainingMs         = nil
+    self._savedCooldownRemainingMs = nil
+    self._savedMidpointFired       = nil
+    self._savedSummaryKey          = nil
+    self._savedSummaryArgs         = nil
+    self._savedCrisisHasPrice      = nil
+    self._savedCrisisHasLoan       = nil
 end
 
 -- Hook into FS25
@@ -1390,11 +1840,25 @@ if FSCareerMissionInfo and FSCareerMissionInfo.saveToXMLFile then
         FSCareerMissionInfo.saveToXMLFile,
         function(missionInfo)
             if rweManager and g_currentMission and g_currentMission:getIsServer() then
-                rweManager:saveSettings()
+                -- The only write of the current event and settlement state (EC-6).
+                rweManager:saveSettings({ savegame = true })
             end
         end
     )
     Logging.info("[RandomWorldEvents] Save hook installed on FSCareerMissionInfo:saveToXMLFile")
+end
+
+-- EC-6: a joining connection receives the full shared state, summary included, so
+-- its HUD shows the same event as everyone else without having seen the start notice.
+if FSBaseMission ~= nil and FSBaseMission.sendInitialClientState ~= nil then
+    FSBaseMission.sendInitialClientState = Utils.appendedFunction(
+        FSBaseMission.sendInitialClientState,
+        function(mission, connection, user, farm)
+            if rweManager ~= nil and g_server ~= nil and RWEEventStateEvent ~= nil and connection ~= nil then
+                pcall(RWEEventStateEvent.sendTo, connection, rweManager:sharedState())
+            end
+        end
+    )
 end
 
 Logging.info("========================================")

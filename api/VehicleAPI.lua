@@ -59,11 +59,11 @@ end
 
 --- Apply a set of runtime modifiers to a vehicle and track it for auto-restore.
 --- Routes through RWEVehiclePhysics so only real, engine-read fields are
---- touched (vehicle.speedLimit, motor.maxForwardSpeed, accelerationLimit,
---- steering input). Supported modifier keys:
+--- touched (vehicle.speedLimit, motor.maxForwardSpeed, accelerationLimit).
+--- Supported modifier keys:
 ---   speedMultiplier  (number) — scales the km/h cap and physical top speed
 ---   accelMultiplier  (number) — scales acceleration (engine feel)
----   steerPull        (number) — -1..1 continuous steering bias
+--- A steerPull key is ignored: the steering-pull effect was removed in EC-6.
 ---@param vehicle table   FS25 vehicle object
 ---@param modifiers table  Key-value modifier table
 function RWEVehicleAPI:applyVehicleModifier(vehicle, modifiers)
@@ -76,7 +76,6 @@ function RWEVehicleAPI:applyVehicleModifier(vehicle, modifiers)
     local mods = {}
     if modifiers.speedMultiplier then mods.speedScale = modifiers.speedMultiplier end
     if modifiers.accelMultiplier then mods.accelScale = modifiers.accelMultiplier end
-    if modifiers.steerPull       then mods.steerPull  = modifiers.steerPull       end
 
     RWEVehiclePhysics.applyEventMods(vehicle, mods)
     table.insert(self._modifiedVehicles, { vehicle = vehicle })

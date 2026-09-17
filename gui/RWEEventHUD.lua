@@ -504,6 +504,35 @@ end
 -- Panel rendering
 -- =========================================================
 
+--- EC-6: split a line of text into at most maxLines lines that fit width, breaking at
+--- a space where one exists; the last line is trimmed with "..." when text remains.
+local function wrapText(text, size, width, maxLines)
+    local lines = {}
+    local rest = text or ""
+    setTextBold(false)
+    while rest ~= "" and #lines < maxLines do
+        if #lines == maxLines - 1 or getTextWidth(size, rest) <= width then
+            lines[#lines + 1] = Utils.limitTextToWidth(rest, size, width, false, "...")
+            break
+        end
+        local n = getTextLineLength(size, rest, width)
+        if n == nil or n <= 0 then
+            lines[#lines + 1] = Utils.limitTextToWidth(rest, size, width, false, "...")
+            break
+        end
+        local head = utf8Substr(rest, 0, n)
+        local space = head:match("^.*() ")
+        if space ~= nil and space > 1 then
+            lines[#lines + 1] = head:sub(1, space - 1)
+            rest = rest:sub(space + 1)
+        else
+            lines[#lines + 1] = head
+            rest = rest:sub(#head + 1)
+        end
+    end
+    return lines
+end
+
 function RWEEventHUD:drawPanel()
     local sc  = self.scale
     local rwe = self.rwe
@@ -520,6 +549,19 @@ function RWEEventHUD:drawPanel()
     local nRows      = 5  -- title + divider-row + status + divider-row + hint
     if hasEvent then nRows = nRows + 3 end  -- category badge + name + progress bar row
     if hasFlash then nRows = nRows + 1 end
+
+    -- EC-6: the shared event's figure-free summary beneath the title (up to two lines).
+    local summaryLines = {}
+    if hasEvent then
+        local d = type(state.eventData) == "table" and state.eventData or nil
+        if d ~= nil and type(d.summaryKey) == "string" and d.summaryKey ~= "" and type(rwe.noticeText) == "function" then
+            local text = rwe:noticeText({ key = d.summaryKey, args = d.summaryArgs })
+            if type(text) == "string" and text ~= "" then
+                summaryLines = wrapText(text, self.TEXT_SMALL * sc, w, 2)
+            end
+        end
+    end
+    nRows = nRows + #summaryLines
 
     local nDividers = 2
     local bgH = pad * 2 + nRows * lh + nDividers * (0.004 * sc)
@@ -643,12 +685,20 @@ function RWEEventHUD:drawPanel()
         setTextColor(catColor[1], catColor[2], catColor[3], 1)
         renderText(x, cy - tsNormal, tsNormal, "[" .. cat.label .. "]")
 
-        local displayName = eventId:gsub("_", " ")
-        displayName = displayName:sub(1,1):upper() .. displayName:sub(2)
+        -- EC-6: the translated title key, never a name built from the raw id.
+        local displayName = type(rwe.eventTitle) == "function" and rwe:eventTitle(eventId) or tostring(eventId)
         setTextBold(false)
+        displayName = Utils.limitTextToWidth(displayName, tsNormal, w - 0.038 * sc, false, "...")
         setTextColor(self.COLORS.VALUE[1], self.COLORS.VALUE[2], self.COLORS.VALUE[3], 1)
         renderText(x + 0.038 * sc, cy - tsNormal, tsNormal, displayName)
         cy = cy - lh
+
+        for _, line in ipairs(summaryLines) do
+            setTextAlignment(RenderText.ALIGN_LEFT)
+            setTextColor(self.COLORS.LABEL[1], self.COLORS.LABEL[2], self.COLORS.LABEL[3], 1)
+            renderText(x, cy - tsSmall, tsSmall, line)
+            cy = cy - lh
+        end
 
         -- Time remaining row
         local elapsed   = g_currentMission.time - (state.eventStartTime or 0)
