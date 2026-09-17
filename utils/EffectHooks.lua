@@ -28,53 +28,81 @@ _G.RWE_EffectHooks_installed = true
 
 -- =====================
 -- VEHICLE DAMAGE HOOK
--- Patches Vehicle.addDamageAmount to scale incoming damage based on the
--- durability EVENT_STATE flags. Redesign: this global patch only acts behind
--- the arcadePhysics opt-in toggle (default OFF), and even then only for the
--- player's own vehicle. When the toggle is OFF the patch is a transparent
--- pass-through so normal gameplay damage is never touched.
+-- Scales the usage damage the player's own vehicle takes, from the durability
+-- EVENT_STATE flags. Redesign: it only acts behind the arcadePhysics opt-in toggle
+-- (default OFF), and even then only for the player's own vehicle. When the toggle
+-- is OFF the wrapper is a transparent pass-through, so normal gameplay damage is
+-- never touched.
+--
+-- Where the damage is (decompiled FS25 scripts):
+--   * Usage damage accrues on the server in Wearable:onUpdateTick as
+--     self:setDamageAmount(spec.damage + self:updateDamageAmount(dt))
+--     (vehicles/specializations/Wearable.lua:161-166). addDamageAmount, patched
+--     here before as Vehicle.addDamageAmount (which never existed, so the patch
+--     never installed), is only the gsVehicleAddDamage console command, a used
+--     sale item's starting damage and the shop preview.
+--   * updateDamageAmount is a registered per-vehicle function (Wearable.lua:47).
+--     Vehicle:load copies the type's functions onto each instance
+--     (vehicles/Vehicle.lua:486) and only then raises onLoad (:866); raised events
+--     look the listener function up on the Wearable table at call time
+--     (specialization/SpecializationUtil.lua:12). So an appended Wearable.onLoad
+--     replaces each loaded vehicle's own updateDamageAmount, whenever the type's
+--     function table was captured.
+--   * Wearable:updateDebugValues (:366) calls the same function for the debug
+--     readout, so while an event scales damage that readout shows the scaled rate.
 -- =====================
-if Vehicle and Vehicle.addDamageAmount then
-    local origAddDamage = Vehicle.addDamageAmount
-
-    Vehicle.addDamageAmount = function(self, damage, ...)
-        if type(damage) ~= "number" or damage <= 0 then
-            return origAddDamage(self, damage, ...)
-        end
-        if not g_RandomWorldEvents then
-            return origAddDamage(self, damage, ...)
-        end
-        if not g_RandomWorldEvents:allowsArcadePhysics() then
-            return origAddDamage(self, damage, ...)
-        end
-
-        -- Never scale damage on an NPC-driven vehicle.
-        local isPlayerVehicle = false
-        local p = g_localPlayer
-        if p ~= nil and p.getCurrentVehicle ~= nil then
-            isPlayerVehicle = p:getCurrentVehicle() == self
-        elseif g_currentMission ~= nil then
-            isPlayerVehicle = g_currentMission.controlledVehicle == self
-        end
-        if not isPlayerVehicle then
-            return origAddDamage(self, damage, ...)
-        end
-
-        local s = g_RandomWorldEvents.EVENT_STATE
-        local scaledDamage = damage
-
-        if s.durabilityBoost then
-            scaledDamage = scaledDamage * math.max(0, 1 - s.durabilityBoost)
-        elseif s.durabilityMalus then
-            scaledDamage = scaledDamage * (1 + s.durabilityMalus)
-        end
-
-        return origAddDamage(self, scaledDamage, ...)
+local function rweScaleUsageDamage(self, damage)
+    if type(damage) ~= "number" or damage <= 0 then
+        return damage
+    end
+    if not g_RandomWorldEvents then
+        return damage
+    end
+    if not g_RandomWorldEvents:allowsArcadePhysics() then
+        return damage
     end
 
-    Logging.info("[EffectHooks] Vehicle.addDamageAmount hooked (arcade-physics gate)")
+    -- Never scale damage on an NPC-driven vehicle.
+    local isPlayerVehicle = false
+    local p = g_localPlayer
+    if p ~= nil and p.getCurrentVehicle ~= nil then
+        isPlayerVehicle = p:getCurrentVehicle() == self
+    elseif g_currentMission ~= nil then
+        isPlayerVehicle = g_currentMission.controlledVehicle == self
+    end
+    if not isPlayerVehicle then
+        return damage
+    end
+
+    local s = g_RandomWorldEvents.EVENT_STATE
+    local scaledDamage = damage
+
+    if s.durabilityBoost then
+        scaledDamage = scaledDamage * math.max(0, 1 - s.durabilityBoost)
+    elseif s.durabilityMalus then
+        scaledDamage = scaledDamage * (1 + s.durabilityMalus)
+    end
+
+    return scaledDamage
+end
+
+if Wearable ~= nil and type(Wearable.onLoad) == "function" then
+    local origWearableOnLoad = Wearable.onLoad
+
+    Wearable.onLoad = function(self, ...)
+        origWearableOnLoad(self, ...)
+        local ownUpdateDamage = self.updateDamageAmount
+        if type(ownUpdateDamage) == "function" and not self.rweUsageDamageWrapped then
+            self.rweUsageDamageWrapped = true
+            self.updateDamageAmount = function(vehicle, dt, ...)
+                return rweScaleUsageDamage(vehicle, ownUpdateDamage(vehicle, dt, ...))
+            end
+        end
+    end
+
+    Logging.info("[EffectHooks] Wearable.onLoad hooked: usage damage scaling installs per vehicle (arcade-physics gate)")
 else
-    Logging.info("[EffectHooks] Vehicle.addDamageAmount not available in this build — durability scaling disabled")
+    Logging.info("[EffectHooks] Wearable.onLoad not available in this build; durability scaling disabled")
 end
 
 Logging.info("[EffectHooks] Module loaded successfully")
