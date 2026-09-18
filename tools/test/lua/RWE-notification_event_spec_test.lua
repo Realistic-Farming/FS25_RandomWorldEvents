@@ -167,10 +167,10 @@ group("G host-local arcade gate", function()
     local hostLocal  = { gate = "arcadePhysics" }                         -- speed boost, engine trouble
     local serverWear = { gate = "arcadePhysics", arcadeScope = "server" } -- the durability pair
 
-    -- Mirrors the expression the announce sites use, verbatim.
-    local function hostLocalNotice(ev)
-        return mgr:isArcadeEvent(ev) and not mgr:isServerScopedArcadeEvent(ev)
-    end
+    -- Pins the PRODUCTION helper, not a copy of it. The four announce sites all call
+    -- noticeIsHostLocal, so one tested expression covers every site; a mirror here
+    -- would leave each site's own transcription unpinned.
+    local function hostLocalNotice(ev) return mgr:noticeIsHostLocal(ev) end
 
     -- Pin the FIXTURES first. If the wear fixture lacked the gate field it would not
     -- be an arcade event at all, would pass the non-arcade branch, and its row would
