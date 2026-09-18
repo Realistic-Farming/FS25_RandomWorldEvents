@@ -39,26 +39,38 @@ local RWENotificationEvent_mt = Class(RWENotificationEvent, Event)
 InitEventClass(RWENotificationEvent, "RWENotificationEvent")
 
 -- Tone travels as a bounded code, never as a raw value, because isPositive is a
--- mixed-type field: true, false, nil or the string "warn". false and nil are
--- already identical to the consumer (both fall through to INGAME_NOTIFICATION_INFO),
--- so both encode to NEUTRAL and decode to nil, which preserves behaviour exactly.
-RWENotificationEvent.TONE_BITS    = 2
-RWENotificationEvent.TONE_NEUTRAL = 0
-RWENotificationEvent.TONE_POSITIVE = 1
-RWENotificationEvent.TONE_WARN    = 2
+-- mixed-type field: true, false, nil or the string "warn". All four are distinct
+-- on the wire.
+--
+-- false and nil must NOT be collapsed together, even though the ingame-notification
+-- branch treats them alike (both fall through to INGAME_NOTIFICATION_INFO). The HUD
+-- flash is the other consumer and it distinguishes them: RWEEventHUD:pushFlash stores
+-- `isPositive = isPositive ~= false` (gui/RWEEventHUD.lua:181), so nil becomes true
+-- and false stays false, and that value picks the flash colour at :647, READY against
+-- DISABLED. Collapsing false to neutral would render DISABLED on the host and READY on
+-- every client: a silent host-client divergence, the exact class of defect this event
+-- exists to remove. pushFlash's own doc at :176 calls false a "bad event", so it is a
+-- meaningful value there rather than an accident.
+RWENotificationEvent.TONE_BITS     = 2   -- four codes, and all four are used
+RWENotificationEvent.TONE_NEUTRAL  = 0   -- nil
+RWENotificationEvent.TONE_POSITIVE = 1   -- true
+RWENotificationEvent.TONE_WARN     = 2   -- "warn"
+RWENotificationEvent.TONE_FALSE    = 3   -- false, distinct from nil for the HUD flash
 
---- true / false / nil / "warn"  ->  bounded code
+--- true / false / nil / "warn"  ->  bounded code. All four map distinctly.
 function RWENotificationEvent.toneToCode(isPositive)
     if isPositive == true then return RWENotificationEvent.TONE_POSITIVE end
     if isPositive == "warn" then return RWENotificationEvent.TONE_WARN end
+    if isPositive == false then return RWENotificationEvent.TONE_FALSE end
     return RWENotificationEvent.TONE_NEUTRAL
 end
 
---- bounded code -> true / nil / "warn". An out-of-range code reads as neutral
+--- bounded code -> true / false / nil / "warn". An unknown code reads as neutral
 --- rather than erroring, so a future sender cannot break an older receiver.
 function RWENotificationEvent.codeToTone(code)
     if code == RWENotificationEvent.TONE_POSITIVE then return true end
     if code == RWENotificationEvent.TONE_WARN then return "warn" end
+    if code == RWENotificationEvent.TONE_FALSE then return false end
     return nil
 end
 

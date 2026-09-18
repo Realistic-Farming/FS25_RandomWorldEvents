@@ -75,10 +75,18 @@ end)
 group("R round trip", function()
     -- The tone cases must DIFFER from each other, or a constant would satisfy
     -- every row and the fixture would pass while carrying nothing.
+    --
+    -- false and nil are SEPARATE cases on purpose. An earlier version of this event
+    -- collapsed both to neutral, reasoning that addIngameNotification treats them
+    -- alike. It does, but the HUD flash does not: pushFlash stores `isPositive ~=
+    -- false` (gui/RWEEventHUD.lua:181) and colours from it at :647, so a collapsed
+    -- false would show DISABLED on the host and READY on every client. The false row
+    -- here is a full ROUND TRIP, so it pins the property through the wire and not only
+    -- at the encoder; group D pins the encode and decode halves as well.
     local cases = {
         { tone = true,   expect = true,   label = "positive" },
         { tone = "warn", expect = "warn", label = "warn" },
-        { tone = false,  expect = nil,    label = "false decodes to neutral" },
+        { tone = false,  expect = false,  label = "false stays false" },
         { tone = nil,    expect = nil,    label = "nil stays neutral" },
     }
     for i, c in ipairs(cases) do
@@ -88,6 +96,15 @@ group("R round trip", function()
         T.eq("R" .. i .. "c category survived (" .. c.label .. ")", shown[1] and shown[1].cat, "cat " .. c.label)
         T.eq("R" .. i .. "d tone survived (" .. c.label .. ")", shown[1] and shown[1].tone, c.expect)
     end
+
+    -- D: false and nil must stay DISTINCT, checked as codes as well as through the
+    -- round trip above, because if they were ever collapsed again both would arrive
+    -- as nil and two nils compare equal.
+    T.ok("D1 false and nil encode to different codes",
+        E.toneToCode(false) ~= E.toneToCode(nil))
+    T.eq("D2 false decodes back to false, not nil", E.codeToTone(E.toneToCode(false)), false)
+    T.eq("D3 nil decodes back to nil, not false", E.codeToTone(E.toneToCode(nil)), nil)
+    T.eq("D4 an unknown code still reads as neutral", E.codeToTone(7), nil)
 end)
 
 -- =====================================================================
