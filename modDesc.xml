@@ -35,7 +35,6 @@
     <iconFilename>icon.dds</iconFilename>
 
     <multiplayer supported="true"/>
-    <multiplayer recommended="true"/>
 
     <!-- Input actions for RWE -->
     <actions>
