@@ -14,6 +14,7 @@ the repo's git history and README.
 ## [Unreleased]
 
 ### Added
+- Shared server-to-clients notification event: every RWE event now announces itself to joined players, not just the host. Before this, no RWE announcement ever reached a client: on a listen server only the host saw an event fire, and on a dedicated server nobody did, leaving every joined player to experience an event's effects with no explanation. All existing event announcements (money, world/economic, arcade) route through the same shared path, so every event type is covered by one change.
 - Changelog file established (suite ruling 2026-08-22).
 - Playtest fixes: RWE_TOGGLE_HUD (RShift+E) and RWE_HUD_DRAG (RShift+Q) chords, event HUD, vehicle hook with spam guard.
 - Control Center action: RWE_TOGGLE_SETTINGS opens world-event settings from the suite Control Center (requires SettingsHub).
