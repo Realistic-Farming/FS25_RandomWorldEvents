@@ -12,7 +12,7 @@
 -- The tape is width-typed: a read naming a different kind or bit width than the
 -- write throws, so a field reorder or a UIntN width drift cannot round-trip clean.
 -- Groups: W wire signature, R round trip and tone fidelity, B bit accounting,
--- H host notified once, C a client never rebroadcasts.
+-- H host notified once, C a client never rebroadcasts, G the host-local arcade gate.
 
 local E = RWENotificationEvent
 
@@ -152,6 +152,68 @@ end)
 -- =====================================================================
 -- C: a client presents but never rebroadcasts
 -- =====================================================================
+-- =====================================================================
+-- G: the host-local arcade gate
+-- =====================================================================
+-- Host-local arcade notices stay local (Tyson, 2026-09-18). The gate branches on
+-- arcadeScope, NOT on isArcadeEvent: all four arcade events answer true to
+-- isArcadeEvent and the durability pair MUST still broadcast, so writing it as
+-- "isArcadeEvent" would silence wear. G3 is the row that catches that, and G6
+-- proves the flag actually suppresses the broadcast rather than merely existing.
+group("G host-local arcade gate", function()
+    local mgr = newMgr()
+
+    local plain      = { gate = nil }                                     -- ordinary event
+    local hostLocal  = { gate = "arcadePhysics" }                         -- speed boost, engine trouble
+    local serverWear = { gate = "arcadePhysics", arcadeScope = "server" } -- the durability pair
+
+    -- Mirrors the expression the announce sites use, verbatim.
+    local function hostLocalNotice(ev)
+        return mgr:isArcadeEvent(ev) and not mgr:isServerScopedArcadeEvent(ev)
+    end
+
+    -- Pin the FIXTURES first. If the wear fixture lacked the gate field it would not
+    -- be an arcade event at all, would pass the non-arcade branch, and its row would
+    -- go green while proving nothing about scope discrimination.
+    T.ok("G0a both arcade fixtures are arcade events",
+        mgr:isArcadeEvent(hostLocal) and mgr:isArcadeEvent(serverWear))
+    T.ok("G0b only the wear fixture is server-scoped",
+        mgr:isServerScopedArcadeEvent(serverWear) and not mgr:isServerScopedArcadeEvent(hostLocal))
+    T.ok("G0c the plain fixture is not an arcade event at all", not mgr:isArcadeEvent(plain))
+
+    T.ok("G1 an ordinary event is not host-local", not hostLocalNotice(plain))
+    T.ok("G2 a host-local arcade event IS host-local", hostLocalNotice(hostLocal))
+    T.ok("G3 a server-scoped arcade event is NOT, wear still broadcasts",
+        not hostLocalNotice(serverWear))
+    T.ok("G4 a nil event is treated as ordinary", not hostLocalNotice(nil))
+
+    -- The routing that follows: the flag must actually suppress the broadcast,
+    -- and every case must still present locally.
+    local sent = {}
+    local savedServer = g_server
+    g_server = { broadcastEvent = function(_, e, s) sent[#sent + 1] = { e = e, s = s } end }
+
+    for _, c in ipairs({
+        { ev = plain,      label = "ordinary",    broadcasts = true },
+        { ev = serverWear, label = "server wear", broadcasts = true },
+        { ev = hostLocal,  label = "host-local",  broadcasts = false },
+    }) do
+        shown = {}
+        sent  = {}
+        mgr:notifyEvent("notice " .. c.label, "economic", true, hostLocalNotice(c.ev))
+        T.eq("G5 " .. c.label .. " still presented locally", #shown, 1)
+        T.eq("G6 " .. c.label .. " broadcast count", #sent, c.broadcasts and 1 or 0)
+    end
+
+    -- An omitted flag still broadcasts, so the callers that do not know their
+    -- event keep their previous behaviour.
+    shown, sent = {}, {}
+    mgr:notifyEvent("no flag", "economic", true)
+    T.eq("G7 omitting the flag still broadcasts", #sent, 1)
+
+    g_server = savedServer
+end)
+
 group("C client does not rebroadcast", function()
     local savedServer = g_server
     local sent = {}

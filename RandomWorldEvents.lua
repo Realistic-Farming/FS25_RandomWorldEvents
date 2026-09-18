@@ -631,8 +631,13 @@ end
 -- EC-6: ELIGIBILITY, NOTICES, SHARED STATE, END PATH
 -- =====================
 
---- True for the four arcade-physics events (stored gate). Their notices, broadcast
---- and save-resume stay host-local; the durability pair's wear effect does not.
+--- True for the four arcade-physics events (stored gate). Their broadcast and
+--- save-resume stay host-local, and so do the NOTICES of the two host-local ones,
+--- speed boost and engine trouble. The durability pair is the exception on two
+--- counts: its wear effect is server-decided, and since Design 2c032b5 its notice
+--- DOES reach joined players. The announce sites gate on isArcadeEvent AND NOT
+--- isServerScopedArcadeEvent, branching on arcadeScope rather than on this
+--- function, which cannot tell the pair apart.
 function RandomWorldEvents:isArcadeEvent(event)
     return type(event) == "table" and event.gate == "arcadePhysics"
 end
@@ -865,7 +870,7 @@ function RandomWorldEvents:_endActiveEvent(reason)
     es.eventData            = {}
     es.customPriceModifiers = nil
     if notice ~= nil then
-        self:notifyEvent(self:noticeText(notice), category, nil)
+        self:notifyEvent(self:noticeText(notice), category, nil, self:isArcadeEvent(event) and not self:isServerScopedArcadeEvent(event))
     end
     if not arcade then
         local p = withNotice(self:sharedState(), "end", notice)
@@ -1053,7 +1058,7 @@ function RandomWorldEvents:_activateEvent(event, intensity)
     local notice = event.onStart(intensity)
     self:chooseSummary(event)
     local text = self:noticeText(notice)
-    self:notifyEvent(text, event.category, true)
+    self:notifyEvent(text, event.category, true, self:isArcadeEvent(event) and not self:isServerScopedArcadeEvent(event))
     if not self:isArcadeEvent(event) then
         self:broadcastState(withNotice(self:sharedState(), "start", notice))
     end
@@ -1090,16 +1095,23 @@ function RandomWorldEvents:presentNotification(message, categoryKey, isPositive)
     end
 end
 
---- Announce an event here and on every client.
+--- Announce an event here and, unless it is host-local, on every client.
 --- Presentation is delegated to presentNotification, which holds the original
 --- body unchanged. The only new behaviour is the broadcast below.
 ---
---- Every RWE announcement already funnels through this one function, so routing
---- it once covers every event type. The five existing call sites are untouched.
+--- EVERY RWE announcement funnels through this one function, and deliberately so:
+--- a host-local event is handled by SKIPPING THE BROADCAST here, never by calling
+--- presentNotification directly at a call site. If announcements were allowed to
+--- bypass this funnel, the next thing added here would silently miss them, which
+--- is the same shape as the defect this event was written to fix.
 -- @param message     Display text (nil = silent)
 -- @param categoryKey Event category string
 -- @param isPositive  true = good event, false/nil = neutral, "warn" = warning
-function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive)
+-- @param hostOnly    true = present locally and do NOT broadcast. Callers that
+--                    know their event pass isArcadeEvent(event) and not
+--                    isServerScopedArcadeEvent(event); callers that do not know it
+--                    omit the argument, and the default is to broadcast.
+function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive, hostOnly)
     if not message then return end
 
     self:presentNotification(message, categoryKey, isPositive)
@@ -1109,7 +1121,7 @@ function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive)
     -- presentNotification call above, never twice. The g_server guard means a
     -- client reaching this path presents locally and sends nothing, so a
     -- received notification can never be rebroadcast.
-    if g_server ~= nil and RWENotificationEvent ~= nil then
+    if not hostOnly and g_server ~= nil and RWENotificationEvent ~= nil then
         g_server:broadcastEvent(RWENotificationEvent.new(message, categoryKey, isPositive), false)
     end
 end
@@ -1257,7 +1269,7 @@ function RandomWorldEvents:_tickImmersion()
             local ok, msg = pcall(event.onMid, midIntensity)
             if ok and msg then
                 notice = msg
-                self:notifyEvent(self:noticeText(msg), event.category, "warn")
+                self:notifyEvent(self:noticeText(msg), event.category, "warn", self:isArcadeEvent(event) and not self:isServerScopedArcadeEvent(event))
                 self:dbg("Midpoint fired for: " .. s.activeEvent)
             end
         end
@@ -1290,7 +1302,7 @@ function RandomWorldEvents:_tickImmersion()
 
         -- Ambient messages use nil isPositive → INGAME_NOTIFICATION_INFO
         if msg then
-            self:notifyEvent(self:noticeText(msg), event.category, nil)
+            self:notifyEvent(self:noticeText(msg), event.category, nil, self:isArcadeEvent(event) and not self:isServerScopedArcadeEvent(event))
         end
 
         -- Schedule next ambient tick
