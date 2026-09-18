@@ -69,6 +69,7 @@
         <sourceFile filename="utils/RWESettlement.lua"/>
         <sourceFile filename="events/RWEEventStateEvent.lua"/>
         <sourceFile filename="events/RWESettlementNoticeEvent.lua"/>
+        <sourceFile filename="events/RWENotificationEvent.lua"/>
         <sourceFile filename="gui/RWESettingsPanel.lua"/>
         <sourceFile filename="gui/RWEEventHUD.lua"/>
         <sourceFile filename="gui/RWESettingsIntegration.lua"/>

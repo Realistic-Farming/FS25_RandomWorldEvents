@@ -1060,12 +1060,15 @@ function RandomWorldEvents:_activateEvent(event, intensity)
     return text
 end
 
---- Show a rich event notification.
+--- Present a notification on THIS machine. Purely local: the HUD flash queue
+--- plus the standard ingame notification. No networking happens here.
+--- Called by notifyEvent for the local player, and by RWENotificationEvent:run
+--- on a client for one that arrived from the server.
 -- Uses HUD flash queue when available; falls back to ingame notification.
 -- @param message     Display text (nil = silent)
 -- @param categoryKey Event category string
 -- @param isPositive  true = good event, false/nil = neutral, "warn" = warning
-function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive)
+function RandomWorldEvents:presentNotification(message, categoryKey, isPositive)
     if not message then return end
 
     -- Always push to HUD flash queue (even if HUD is hidden — it queues for when shown)
@@ -1084,6 +1087,30 @@ function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive)
             notifType = FSBaseMission.INGAME_NOTIFICATION_INFO
         end
         g_currentMission:addIngameNotification(notifType, message)
+    end
+end
+
+--- Announce an event here and on every client.
+--- Presentation is delegated to presentNotification, which holds the original
+--- body unchanged. The only new behaviour is the broadcast below.
+---
+--- Every RWE announcement already funnels through this one function, so routing
+--- it once covers every event type. The five existing call sites are untouched.
+-- @param message     Display text (nil = silent)
+-- @param categoryKey Event category string
+-- @param isPositive  true = good event, false/nil = neutral, "warn" = warning
+function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive)
+    if not message then return end
+
+    self:presentNotification(message, categoryKey, isPositive)
+
+    -- Server only. sendLocal is false so broadcastEvent skips the loopback
+    -- connection: a listen host is notified exactly once, by the
+    -- presentNotification call above, never twice. The g_server guard means a
+    -- client reaching this path presents locally and sends nothing, so a
+    -- received notification can never be rebroadcast.
+    if g_server ~= nil and RWENotificationEvent ~= nil then
+        g_server:broadcastEvent(RWENotificationEvent.new(message, categoryKey, isPositive), false)
     end
 end
 
