@@ -93,6 +93,7 @@ GUI_VISIBLE = false
 g_gui = { getIsGuiVisible = function() return GUI_VISIBLE end, getIsDialogVisible = function() return false end }
 
 RWEEventHUD = { new = function() return nil end }
+REC.watch = 0
 InputAction = setmetatable({}, { __index = function(_, k) return k end })
 PlayerInputComponent = { INPUT_CONTEXT_NAME = "PLAYER", registerActionEvents = function() end }
 Vehicle = { INPUT_CONTEXT_NAME = "VEHICLE", registerActionEvents = function() end }
@@ -138,10 +139,13 @@ try {
 } catch (e) { fail("save counter: " + e.message); }
 
 // ── Shift+O opens: cursor shown with the saved position, camera rotation saved ──
+// EC-6's bridge, recorded; the real one is loaded later in modDesc order and is not under test here.
+try { run(`RWEMarketBridge = { watch = function(rwe) if rwe == g_RandomWorldEvents then REC.watch = REC.watch + 1 end end }`, "bridge"); } catch (e) { fail("bridge: " + e.message); }
 try { run(`REC.cursor = {}; g_RandomWorldEvents:onToggleSettingsInput()`, "open"); } catch (e) { fail("open: " + e.message); }
 check("B1 Shift+O opens the panel", `g_RandomWorldEvents.settingsPanel.isOpen == true`);
 check("B2 open shows the cursor once, keeping its position", `#REC.cursor == 1 and REC.cursor[1].show == true and REC.cursor[1].save == true`);
 check("B3 open saves the camera rotation", `g_RandomWorldEvents.settingsPanel.savedCamRotX == 0.1 and g_RandomWorldEvents.settingsPanel.savedCamRotZ == 0.3`);
+check("B4 open re-reads the market status on the server (EC-6, kept from the old toggle)", `REC.watch == 1`);
 
 // ── every frame while open: the cursor is re-asserted and the camera held ──────
 try {
@@ -155,14 +159,16 @@ check("C3 the panel stays open across frames", `g_RandomWorldEvents.settingsPane
 
 // ── Shift+O again closes: cursor hidden, settings saved, frames stop touching both ──
 try {
-  run(`REC.cursor = {}; REC.rotWrites = {}; g_RandomWorldEvents:onToggleSettingsInput()
-       CLOSE_CURSOR = #REC.cursor
+  run(`REC.cursor = {}; REC.rotWrites = {}; WATCH_BEFORE_CLOSE = REC.watch
+       g_RandomWorldEvents:onToggleSettingsInput()
+       CLOSE_CURSOR = #REC.cursor; WATCH_AFTER_CLOSE = REC.watch
        for i = 1, 3 do FSBaseMission.update(MISSION, 16) end`, "close");
 } catch (e) { fail("close: " + e.message); }
 check("D1 the second Shift+O closes the panel", `g_RandomWorldEvents.settingsPanel.isOpen == false`);
 check("D2 close hides the cursor once", `CLOSE_CURSOR == 1 and REC.cursor[1].show == false`);
 check("D3 settings persist on close, as before", `REC.saves == 1`);
 check("D4 closed: frames neither touch the cursor nor the camera", `#REC.cursor == 1 and #REC.rotWrites == 0`);
+check("D5 the close itself does not re-read the market status (the manager's own per-frame server watch is separate)", `WATCH_AFTER_CLOSE == WATCH_BEFORE_CLOSE`);
 
 // ── a menu or dialog opening on top closes the panel and releases the cursor ──
 try {
@@ -174,6 +180,14 @@ try {
 check("E1 a GUI on top auto-closes the panel", `g_RandomWorldEvents.settingsPanel.isOpen == false`);
 check("E2 and the last cursor call hides it", `#REC.cursor >= 1 and REC.cursor[#REC.cursor].show == false`);
 check("E3 settings persisted by that close", `REC.saves == 2`);
+
+// ── a pure client opening the panel does not ask the server-side bridge ────────
+try {
+  run(`local srv = g_server; g_server = nil; REC.watch = 0
+       g_RandomWorldEvents.settingsPanel:open(); g_RandomWorldEvents.settingsPanel:close()
+       g_server = srv`, "client open");
+} catch (e) { fail("client open: " + e.message); }
+check("E4 a pure client does not re-read the market status", `REC.watch == 0`);
 
 // ── source witness: the engine-absent camera lock is gone ─────────────────────
 const panelSrc = readFileSync(join(ROOT, "gui/RWESettingsPanel.lua"), "utf8");

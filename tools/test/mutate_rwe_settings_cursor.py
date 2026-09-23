@@ -9,6 +9,8 @@
 #   M5  close leaves the cursor shown          the cursor stays after the panel is gone
 #   M6  the auto-close on a GUI dropped        the panel fights a menu for the cursor
 #   M7  close no longer saves settings         a behaviour the old toggle had is lost
+#   M8  the EC-6 market re-read on open dropped (Bob's review of #53)
+#   M9  that re-read no longer server-gated     a pure client asks the server-side bridge
 #
 # Every edit asserts it LANDED by exact occurrence count; restore is proved by sha256.
 # "DID NOT APPLY" never counts as a kill.
@@ -47,6 +49,16 @@ MUTATIONS = [
  ("M6-auto-close-dropped", PANEL,
   [("    if g_gui and (g_gui:getIsGuiVisible() or g_gui:getIsDialogVisible()) then\n        self:close()\n    end\n", "", 1)],
   "a menu opening on top leaves the panel open and asserting the cursor"),
+
+ ("M8-market-watch-on-open-dropped", PANEL,
+  # Bob's review of #53 (MAJOR 1): the EC-6 re-read on open was dropped by the rewrite
+  [("    if g_server ~= nil and RWEMarketBridge ~= nil then\n        RWEMarketBridge.watch(self.rwe)\n    end\n", "", 1)],
+  "opening the panel no longer re-reads the market price status (EC-6)"),
+
+ ("M9-market-watch-not-server-gated", PANEL,
+  [("    if g_server ~= nil and RWEMarketBridge ~= nil then\n        RWEMarketBridge.watch(self.rwe)",
+    "    if RWEMarketBridge ~= nil then\n        RWEMarketBridge.watch(self.rwe)", 1)],
+  "a pure client re-reads the market status the server owns"),
 
  ("M7-close-does-not-save", PANEL,
   [("    if self.rwe and self.rwe.saveSettings then\n        self.rwe:saveSettings()\n    end\n", "", 1)],

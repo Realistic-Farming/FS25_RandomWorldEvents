@@ -104,6 +104,11 @@ function RWESettingsPanel:open()
     if g_inputBinding and g_inputBinding.setShowMouseCursor then
         g_inputBinding:setShowMouseCursor(true, true)
     end
+    -- EC-6: the server re-reads the market price status when the panel opens; a change
+    -- takes the one status-change path. (Carried from the old toggle unchanged.)
+    if g_server ~= nil and RWEMarketBridge ~= nil then
+        RWEMarketBridge.watch(self.rwe)
+    end
 end
 
 function RWESettingsPanel:close()
