@@ -79,34 +79,71 @@ end
 -- Toggle & Lifecycle
 -- =========================================================
 
-function RWESettingsPanel:toggle()
-    self.isOpen = not self.isOpen
-    
+-- The suite's settings-panel triple (SoilFertilizer's SoilSettingsPanel is the
+-- reference shape): open shows the cursor and saves the camera rotation, update()
+-- re-asserts both EVERY FRAME while the panel is open, close hides the cursor. Showing
+-- the cursor once on open was not enough: the game hides it again, so the player could
+-- not reach the panel's toggles (tester blue_bally, RWE-52 check thread). The camera
+-- lock this replaces called setForcedNoCameraRotation, which does not exist in the
+-- FS25 engine (no definition in the decompiled scripts), so it never locked anything.
+
+function RWESettingsPanel:open()
+    self.isOpen = true
+    -- Save the camera rotation so update() can hold it every frame (no mouse-look
+    -- while the panel is open).
+    self.savedCamRotX, self.savedCamRotY, self.savedCamRotZ = nil, nil, nil
+    if getCamera and getRotation then
+        local ok, cam = pcall(getCamera)
+        if ok and cam and cam ~= 0 then
+            local ok2, rx, ry, rz = pcall(getRotation, cam)
+            if ok2 then
+                self.savedCamRotX, self.savedCamRotY, self.savedCamRotZ = rx, ry, rz
+            end
+        end
+    end
     if g_inputBinding and g_inputBinding.setShowMouseCursor then
-        g_inputBinding:setShowMouseCursor(self.isOpen)
+        g_inputBinding:setShowMouseCursor(true, true)
     end
-
-    -- Prevent camera movement when panel is open
-    if g_currentMission then
-        if g_currentMission.controlledVehicle then
-            g_currentMission.controlledVehicle:setForcedNoCameraRotation(self.isOpen)
-        end
-        if g_currentMission.player then
-            g_currentMission.player:setForcedNoCameraRotation(self.isOpen)
-        end
+    -- EC-6: the server re-reads the market price status when the panel opens; a change
+    -- takes the one status-change path. (Carried from the old toggle unchanged.)
+    if g_server ~= nil and RWEMarketBridge ~= nil then
+        RWEMarketBridge.watch(self.rwe)
     end
+end
 
-    if self.isOpen then
-        -- EC-6: the server re-reads the market price status when the panel opens;
-        -- a change takes the one status-change path.
-        if g_server ~= nil and RWEMarketBridge ~= nil then
-            RWEMarketBridge.watch(self.rwe)
-        end
-        -- Optional: lock player movement too
-        -- if g_currentMission.player then g_currentMission.player:setDisableInput(true) end
-    else
+function RWESettingsPanel:close()
+    self.isOpen = false
+    self.savedCamRotX, self.savedCamRotY, self.savedCamRotZ = nil, nil, nil
+    if g_inputBinding and g_inputBinding.setShowMouseCursor then
+        g_inputBinding:setShowMouseCursor(false)
+    end
+    -- Settings persist when the panel closes, as before.
+    if self.rwe and self.rwe.saveSettings then
         self.rwe:saveSettings()
     end
+end
+
+--- Called every frame by RandomWorldEvents:update(). Keeps the cursor shown and the
+--- camera held while the panel is open, and closes the panel when a GUI (menu or
+--- dialog) opens on top of it.
+function RWESettingsPanel:update()
+    if not self.isOpen then return end
+    if g_inputBinding and g_inputBinding.setShowMouseCursor then
+        g_inputBinding:setShowMouseCursor(true, true)
+    end
+    if self.savedCamRotX ~= nil and getCamera and setRotation then
+        local ok, cam = pcall(getCamera)
+        if ok and cam and cam ~= 0 then
+            pcall(setRotation, cam, self.savedCamRotX, self.savedCamRotY, self.savedCamRotZ)
+        end
+    end
+    if g_gui and (g_gui:getIsGuiVisible() or g_gui:getIsDialogVisible()) then
+        self:close()
+    end
+end
+
+function RWESettingsPanel:toggle()
+    if self.isOpen then self:close() else self:open() end
 end
 
 function RWESettingsPanel:delete()

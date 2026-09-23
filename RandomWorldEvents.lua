@@ -1171,6 +1171,11 @@ function RandomWorldEvents:update(dt)
         self.eventHUD:update(dt)
     end
 
+    -- Settings panel cursor and camera keepalive (every frame while it is open)
+    if self.settingsPanel then
+        self.settingsPanel:update()
+    end
+
     -- Debug heartbeat every ~30 seconds of game time
     if self.debug and self.debug.enabled then
         self._dbgNextHeartbeat = self._dbgNextHeartbeat or 0
