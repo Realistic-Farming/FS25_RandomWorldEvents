@@ -3548,21 +3548,21 @@
   "2026-10-02": [
     {
       "referrer": "github.com",
-      "count": 41,
-      "uniques": 30
+      "count": 39,
+      "uniques": 29
     },
     {
       "referrer": "Google",
-      "count": 29,
-      "uniques": 18
-    },
-    {
-      "referrer": "realisticfarming.com",
-      "count": 3,
-      "uniques": 3
+      "count": 27,
+      "uniques": 17
     },
     {
       "referrer": "kingmods.net",
+      "count": 2,
+      "uniques": 2
+    },
+    {
+      "referrer": "realisticfarming.com",
       "count": 2,
       "uniques": 2
     },
