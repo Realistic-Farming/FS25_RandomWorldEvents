@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-10-02T18:59:01Z
-**Days tracked:** 149 | **Download snapshots:** 532 (hourly)
+**Last updated:** 2026-10-06T12:48:12Z
+**Days tracked:** 150 | **Download snapshots:** 538 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 113 | 60 |
-| Git Clones | 376 | 153 |
+| Page Views | 73 | 47 |
+| Git Clones | 304 | 123 |
 
-> **Engagement:** 1.8 pages per visitor (14-day avg)
+> **Engagement:** 1.5 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 626 of 60 visitors cloned or downloaded (**1043.3%**)
+> **14-day conversion:** 603 of 47 visitors cloned or downloaded (**1282.9%**)
 >
-> Unique cloners: 153 | Release downloads: 473
+> Unique cloners: 123 | Release downloads: 480
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 473 |
-| Git Clones (14-day) | 376 |
-| **Total Acquisitions** | **849** |
+| Zip Downloads | 480 |
+| Git Clones (14-day) | 304 |
+| **Total Acquisitions** | **784** |
 
 ---
 
@@ -54,11 +54,8 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 39 | 29 |
-| Google | 27 | 17 |
-| kingmods.net | 2 | 2 |
-| realisticfarming.com | 2 | 2 |
-| chatgpt.com | 1 | 1 |
+| github.com | 32 | 28 |
+| Google | 13 | 11 |
 
 ---
 
@@ -78,16 +75,15 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 78 | 56 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 14 | 10 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 5 | 2 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 3 | 3 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/issues/2` | 2 | 1 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/pull/50` | 2 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 53 | 44 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 12 | 10 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 2 | 2 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/blob/master/README.md` | 1 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/compare/446fcb48e023...000000000000` | 1 | 1 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/compare/v2.1.8.0...v2.1.8.0` | 1 | 1 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/pull/48` | 1 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 1 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pull/44` | 1 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pulls` | 1 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/tree/master/.claude` | 1 | 1 |
 
 ---
 
