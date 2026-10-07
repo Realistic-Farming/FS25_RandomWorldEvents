@@ -14,8 +14,9 @@ local notices = {}
 g_RandomWorldEvents = { notifyEvent = function(_, text, category, positive) notices[#notices + 1] = { text = text, category = category, positive = positive } end }
 
 local mirror = {}
+-- [MAINTENANCE row 246] TaxMod's handle on the mission, where a game puts it (TaxMod main.lua:1159).
 local function taxMod(result)
-    g_TaxManager = { recordExpense = function(farmId, amount, label) mirror[#mirror + 1] = { farmId = farmId, amount = amount, label = label }; return result end }
+    g_currentMission.taxManager = { recordExpense = function(farmId, amount, label) mirror[#mirror + 1] = { farmId = farmId, amount = amount, label = label }; return result end }
 end
 
 local function fresh(opts)
