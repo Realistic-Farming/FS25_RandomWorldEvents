@@ -1553,11 +1553,21 @@ local rweLabelHud  = rweLabel("input_RWE_TOGGLE_HUD", "Toggle RWE HUD")
 local rweLabelDrag = rweLabel("input_RWE_HUD_DRAG", "RWE HUD Edit Mode")
 local function rweSettingsPlayerAfter(binding, eventId, owner)
     binding:setActionEventText(eventId, g_i18n:getText("input_RWE_TOGGLE_SETTINGS") or "RWE Settings")
-    -- Cache key hint for the settings panel close button (unchanged behaviour).
-    local ok, ktext = pcall(function()
-        return g_inputBinding:getActionDisplayName(InputAction.RWE_TOGGLE_SETTINGS)
-    end)
-    owner.settingsKeyHint = (ok and ktext and ktext ~= "") and ktext or "Shift+O"
+    -- ASH-153: live Controls chord, never the factory Shift+O as if it were live.
+    if RweLiveKeyLabel ~= nil and type(RweLiveKeyLabel.resolve) == "function" then
+        local label, kind = RweLiveKeyLabel.resolve("RWE_TOGGLE_SETTINGS")
+        if type(label) == "string" and label ~= "" then
+            owner.settingsKeyHint = label
+            owner.settingsKeyHintKind = kind
+        else
+            owner.settingsKeyHint = RweLiveKeyLabel.unavailableText
+                and RweLiveKeyLabel.unavailableText() or "unavailable"
+            owner.settingsKeyHintKind = "unavailable"
+        end
+    else
+        owner.settingsKeyHint = "unavailable"
+        owner.settingsKeyHintKind = "unavailable"
+    end
 end
 
 local RWE_PLAYER_SPECS = {
