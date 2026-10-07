@@ -230,7 +230,20 @@ function RWESettingsPanel:draw()
     end
 
     -- Close Hint (dynamic key)
-    local keyHint = (self.rwe.settingsKeyHint and self.rwe.settingsKeyHint ~= "") and self.rwe.settingsKeyHint or "Shift+O"
+    -- Resolved per draw. The cached value can be stale after a remap, and the old
+    -- "Shift+O" fallback printed a chord that is not even this action's default.
+    local keyHint
+    if RweLiveKeyLabel ~= nil and type(RweLiveKeyLabel.resolve) == "function" then
+        local label = RweLiveKeyLabel.resolve("RWE_TOGGLE_SETTINGS")
+        if type(label) == "string" and label ~= "" then keyHint = label end
+    end
+    if keyHint == nil and self.rwe.settingsKeyHint and self.rwe.settingsKeyHint ~= "" then
+        keyHint = self.rwe.settingsKeyHint
+    end
+    if keyHint == nil then
+        keyHint = (RweLiveKeyLabel ~= nil and RweLiveKeyLabel.unavailableText)
+            and RweLiveKeyLabel.unavailableText() or "unavailable"
+    end
     setTextAlignment(RenderText.ALIGN_CENTER)
     setTextColor(unpack(self.COLORS.TEXT_LO))
     renderText(self.posX + self.width / 2, self.posY + 0.015, 0.012, "Press " .. keyHint .. " to close and save")
