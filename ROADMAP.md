@@ -58,3 +58,8 @@ The NON-PRICE HALF was built 2026-08-14. EC-6 builds the rest (branch `feat/EC-6
 
 - [x] The settlement mirror read TaxMod through the bare global `g_TaxManager`, which TaxMod sets only in its own mod environment, so no event settlement was ever recorded in TaxMod's ledger. `mirrorToTaxMod` now reads `g_currentMission.taxManager` first, the bare global as the fallback. Design origin none.
 - The in-game check is TESTING row 507.
+
+## 2026-10-08 (Fred): the SettingsHub bridge saves on the server only (MAINTENANCE row 254)
+
+- [x] The bridge's `applyChange` ended in `mgr:saveSettings()` on every peer, and RWE's writer also writes the event-state snapshot and the settlement lines, so a client reached through its own SettingsHub would write its own unsynced copy of them. It now applies the value on every peer and saves only on the server. Design origin none.
+- The in-game check is TESTING row 514.

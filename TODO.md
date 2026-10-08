@@ -41,3 +41,8 @@
 
 - [x] `utils/RWESettlement.lua` mirrorToTaxMod reads `g_currentMission.taxManager` first; bar `MAINT-246-taxmanager_handle_spec_test.lua`, battery `tools/test/mutate_maint246.py`, 1 of 1.
 - [~] In game (owed): TESTING row 507.
+
+## 2026-10-08 (Fred): SettingsHub bridge server guard (MAINTENANCE row 254)
+
+- [x] `integrations/RWESettingsHubBridge.lua` `applyChange`: save behind `g_server ~= nil`. Bar `MAINT-254-hub_save_server_guard_spec_test.lua`; battery `tools/test/mutate_maint254.py`, 1 of 1.
+- [~] In game (owed): TESTING row 514.
