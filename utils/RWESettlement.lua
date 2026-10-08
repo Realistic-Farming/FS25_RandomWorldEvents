@@ -254,7 +254,10 @@ local function sendNotice(farmId, labelKey, amount)
 end
 
 local function mirrorToTaxMod(farmId, amount, labelKey)
-    local tax = g_TaxManager
+    -- [MAINTENANCE row 246] TaxMod's handle from the mission (TaxMod main.lua:1159): TaxMod writes
+    -- g_TaxManager into its own mod environment (getfenv(0), :1158), so a bare read here is nil in a
+    -- game. The bare global stays as the fallback.
+    local tax = (g_currentMission ~= nil and g_currentMission.taxManager) or g_TaxManager
     if tax == nil or type(tax.recordExpense) ~= "function" then return end
     local label = labelKey
     if g_i18n ~= nil and type(g_i18n.getText) == "function" and labelKey ~= nil then

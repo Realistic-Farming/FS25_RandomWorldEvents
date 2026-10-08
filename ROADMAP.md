@@ -53,3 +53,8 @@ The NON-PRICE HALF was built 2026-08-14. EC-6 builds the rest (branch `feat/EC-6
 ## Deferred / parked
 - Event scheduling / prediction API: parked by design. Events are probabilistic; peers read active state and cooldown only.
 - Stale help copy outside the redesign's cut list (pre-existing fiction in helpLine_rwe_cat3_wildlife and similar) is fixed where it named cut features; the remainder is a docs sweep, not a code issue.
+
+## 2026-10-07 (Fred): event settlements reach TaxMod's companion ledger (MAINTENANCE row 246)
+
+- [x] The settlement mirror read TaxMod through the bare global `g_TaxManager`, which TaxMod sets only in its own mod environment, so no event settlement was ever recorded in TaxMod's ledger. `mirrorToTaxMod` now reads `g_currentMission.taxManager` first, the bare global as the fallback. Design origin none.
+- The in-game check is TESTING row 507.
