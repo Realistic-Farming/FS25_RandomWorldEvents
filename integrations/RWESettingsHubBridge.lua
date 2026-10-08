@@ -102,8 +102,10 @@ local function applyChange(id, value)
     -- [MAINTENANCE row 254] Save only where the game saves: on the server. RWE's writer
     -- (RandomWorldEvents.lua:313-396) also writes the event-state snapshot and the settlement lines,
     -- and a joined client's savegameDirectory is set (<profile>/savegame0), so a save here would write
-    -- the client's own unsynced copy of them. SettingsHub calls a selfPersisted module's onChange on the
-    -- server only (SettingsHub #24); this guard keeps the bridge safe on its own.
+    -- the client's own unsynced copy of them. Admin keys reach onChange on the server only (SettingsHub
+    -- #24), but the player-local keys (admin = false above) reach it on a client too, through the hub's
+    -- _applyLocal (SettingsHub.lua:223-228): they apply for the session, and restoring them on a client
+    -- at rejoin is SettingsHub's job (MAINTENANCE row 266).
     if g_server ~= nil and type(mgr.saveSettings) == "function" then mgr:saveSettings() end
 end
 

@@ -8,8 +8,9 @@
 -- lines, and a joined client's savegameDirectory is set (<profile>/savegame0: JoinGameScreen.lua:630,
 -- FSCareerMissionInfo.lua:13, :451-452), so a client reached through its own SettingsHub would write
 -- its own unsynced copy of them. The bridge registers on every peer (RandomWorldEvents.lua:1756).
--- SettingsHub #24 calls a selfPersisted module's onChange on the server only; the bridge was still
--- unsafe on its own.
+-- Since SettingsHub #24 the admin keys reach a selfPersisted module's onChange on the server only, but
+-- the player-local keys (admin = false) still reach it on a client, through the hub's _applyLocal
+-- (SettingsHub.lua:223-228), so the client save was live for them.
 --
 -- THE FIX: applyChange applies the value on every peer and saves behind g_server ~= nil, RWE's own
 -- server predicate (utils/RWESettlement.lua:44).
@@ -19,7 +20,8 @@
 -- spec); the change enters where production enters it, the hub calling the registered onChange. The
 -- RWE manager is the world: its settings sections and a saveSettings that counts writes.
 --
---   E1  a client (g_server nil) registered with its own hub applies the change and writes nothing
+--   E1  a client (g_server nil) registered with its own hub applies a player-local change (showHUD,
+--       the key kind the hub still routes to a client's onChange) and writes nothing
 --   E2  the server applies it and writes once
 --   E3  the registration is selfPersisted (the hub mirrors, the mod owns persistence)
 
@@ -55,8 +57,8 @@ end
 group("E1", function()
   local mgr, mod = peer(false)
   T.ok("E1 [reached] the client's bridge registered with its own SettingsHub", mod ~= nil and type(mod.onChange) == "function")
-  mod.onChange("frequency", 7, 3)
-  T.eq("E1 the client applies the value through the registered callback", mgr.events.frequency, 7)
+  mod.onChange("showHUD", false, 3)
+  T.eq("E1 the client applies the player-local value through the registered callback", mgr.events.showHUD, false)
   T.eq("E1 and writes nothing", mgr.saves, 0)
 end)
 
