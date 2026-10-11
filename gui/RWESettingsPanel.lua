@@ -2,7 +2,7 @@
 -- Random World Events - Custom Settings Panel
 -- =========================================================
 -- Pure overlay renderer (no XML) for mod settings.
--- Opens with Shift+O.
+-- Opens with the RWE_TOGGLE_SETTINGS chord.
 -- Handles mouse input manually.
 -- =========================================================
 -- Author: TisonK
@@ -180,6 +180,32 @@ end
 -- Drawing
 -- =========================================================
 
+--- Text for the close hint at the foot of the panel.
+--- An imperative key instruction is produced for resolver kind "live" and for
+--- nothing else: an unbound, keyboard-unbound or unavailable action, and an
+--- absent helper, name the ACTION and state the status instead. The old form
+--- printed "Press Unbound to close and save", which instructs the player to
+--- press a key that does not exist.
+---@return string
+function RWESettingsPanel:closeFooterText()
+    local rwe = self.rwe or {}
+    -- When the owner could not subscribe to INPUT_BINDINGS_CHANGED there is
+    -- nothing to invalidate its cache, so a remap would never show. Re-read on
+    -- the spot in that case: slower, and the only truthful option.
+    if rwe.settingsKeyHintSubscribed ~= true and type(rwe.refreshSettingsKeyHint) == "function" then
+        pcall(rwe.refreshSettingsKeyHint)
+    end
+    local keyHint = rwe.settingsKeyHint
+    local keyKind = rwe.settingsKeyHintKind
+    if keyKind == "live" and type(keyHint) == "string" and keyHint ~= "" then
+        return "Press " .. keyHint .. " to close and save"
+    end
+    local action = (g_i18n ~= nil and g_i18n:getText("input_RWE_TOGGLE_SETTINGS"))
+        or "RWE Settings"
+    local status = (type(keyHint) == "string" and keyHint ~= "") and keyHint or "unavailable"
+    return action .. " - " .. status
+end
+
 function RWESettingsPanel:draw()
     if not self.isOpen then return end
 
@@ -229,11 +255,18 @@ function RWESettingsPanel:draw()
         self:drawDebugTab(contentX, contentY, contentW)
     end
 
-    -- Close Hint (dynamic key)
-    local keyHint = (self.rwe.settingsKeyHint and self.rwe.settingsKeyHint ~= "") and self.rwe.settingsKeyHint or "Shift+O"
+    -- Close hint. Read from the owner's cache, which RandomWorldEvents refreshes
+    -- on registration and on INPUT_BINDINGS_CHANGED, so this costs nothing per
+    -- draw and still cannot go stale after a remap.
+    --
+    -- The imperative is gated on resolver kind "live" and nothing else. An
+    -- unbound, keyboard-unbound or unavailable action used to read "Press Unbound
+    -- to close and save", which tells the player to press a key that does not
+    -- exist. Every other kind now names the ACTION and states the status, with no
+    -- chord and no instruction.
     setTextAlignment(RenderText.ALIGN_CENTER)
     setTextColor(unpack(self.COLORS.TEXT_LO))
-    renderText(self.posX + self.width / 2, self.posY + 0.015, 0.012, "Press " .. keyHint .. " to close and save")
+    renderText(self.posX + self.width / 2, self.posY + 0.015, 0.012, self:closeFooterText())
 
     -- Mouse cursor (simple crosshair or dot since we manage it)
     self:drawRect(self.mousePosX - 0.002, self.mousePosY - 0.0005, 0.004, 0.001, {1,1,1,1})

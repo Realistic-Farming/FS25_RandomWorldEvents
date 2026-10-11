@@ -1433,7 +1433,7 @@ function RandomWorldEvents:consoleCommandList(category)
     return string.format("Listed %d events", total)
 end
 
--- Settings: open with Shift+O or this command
+-- Settings: open with the RWE_TOGGLE_SETTINGS chord or this command
 function RandomWorldEvents:consoleCommandSettings()
     if self.settingsPanel then
         self.settingsPanel:toggle()
@@ -1479,7 +1479,7 @@ function RandomWorldEvents:loadGUI()
         Logging.warning("[RWE] RWEEventHUD not available — HUD disabled")
     end
 
-    -- Create the custom settings panel (Shift+O)
+    -- Create the custom settings panel (the RWE_TOGGLE_SETTINGS chord)
     self.settingsPanel = RWESettingsPanel.new(self)
     if self.settingsPanel then
         self:dbg("Custom Settings Panel created")
@@ -1551,13 +1551,61 @@ local function rweLabel(key, fallback)
 end
 local rweLabelHud  = rweLabel("input_RWE_TOGGLE_HUD", "Toggle RWE HUD")
 local rweLabelDrag = rweLabel("input_RWE_HUD_DRAG", "RWE HUD Edit Mode")
+--- Refresh the cached settings chord and its KIND on one owner.
+--- The kind travels with the label because the panel may only print an
+--- imperative key instruction for kind "live"; see RWESettingsPanel:draw.
+local function rweRefreshSettingsHint(owner)
+    if owner == nil then return end
+    if RweLiveKeyLabel ~= nil and type(RweLiveKeyLabel.resolve) == "function" then
+        local label, kind = RweLiveKeyLabel.resolve("RWE_TOGGLE_SETTINGS")
+        if type(label) == "string" and label ~= "" then
+            owner.settingsKeyHint = label
+            owner.settingsKeyHintKind = kind
+        else
+            owner.settingsKeyHint = RweLiveKeyLabel.unavailableText
+                and RweLiveKeyLabel.unavailableText() or "unavailable"
+            owner.settingsKeyHintKind = "unavailable"
+        end
+    else
+        -- No helper at all: nothing about a key can be stated truthfully.
+        owner.settingsKeyHint = "unavailable"
+        owner.settingsKeyHintKind = "unavailable"
+    end
+end
+
+--- Released in delete(); see rweReleaseSettingsHint below.
+local rweSettingsHintUnsubscribe = nil
+
 local function rweSettingsPlayerAfter(binding, eventId, owner)
     binding:setActionEventText(eventId, g_i18n:getText("input_RWE_TOGGLE_SETTINGS") or "RWE Settings")
-    -- Cache key hint for the settings panel close button (unchanged behaviour).
-    local ok, ktext = pcall(function()
-        return g_inputBinding:getActionDisplayName(InputAction.RWE_TOGGLE_SETTINGS)
-    end)
-    owner.settingsKeyHint = (ok and ktext and ktext ~= "") and ktext or "Shift+O"
+    -- ASH-153: live Controls chord, never a factory chord as if it were live.
+    rweRefreshSettingsHint(owner)
+    -- Cost, from the PR review: resolve() rebuilds the whole action-to-bindings
+    -- map, and the panel used to call it once per draw. Registration already runs
+    -- here, so the only thing that can invalidate the cache afterwards is a remap,
+    -- and the engine publishes exactly that. Subscribe once and let the panel read
+    -- a cache that cannot go stale.
+    if rweSettingsHintUnsubscribe == nil
+        and RweLiveKeyLabel ~= nil and type(RweLiveKeyLabel.subscribe) == "function" then
+        rweSettingsHintUnsubscribe = RweLiveKeyLabel.subscribe(owner, function()
+            rweRefreshSettingsHint(owner)
+        end)
+    end
+    -- subscribe() returns nil when the message centre or MessageType is absent,
+    -- and when it throws. In that case NOTHING would ever refresh the cache and
+    -- it would outlive a remap, so the panel is told to re-read instead. The
+    -- refresher is handed over as a closure because the resolve is file-local.
+    owner.settingsKeyHintSubscribed = (rweSettingsHintUnsubscribe ~= nil)
+    owner.refreshSettingsKeyHint = function() rweRefreshSettingsHint(owner) end
+end
+
+--- Drop the binding-change subscription. Called from delete(), so a second
+--- mission in one session does not inherit the first mission's owner.
+local function rweReleaseSettingsHint()
+    if rweSettingsHintUnsubscribe ~= nil then
+        pcall(rweSettingsHintUnsubscribe)
+        rweSettingsHintUnsubscribe = nil
+    end
 end
 
 local RWE_PLAYER_SPECS = {
@@ -1587,6 +1635,7 @@ local function update(mission, dt)
 end
 
 local function delete(mission)
+    rweReleaseSettingsHint()
     if rweManager then
         -- RSF-F201: retire the input owner before teardown. Old forwarding targets
         -- go inert and the owner reference is released. The captured predecessors
