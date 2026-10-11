@@ -47,7 +47,12 @@ T.eq("F201 RWE B1 three PLAYER registrations", b:totalIn("PLAYER"), 3)
 T.ok("F201 RWE B2 HUD toggle handle", mgr.hudPlayerEventId ~= nil)
 T.ok("F201 RWE B3 settings handle", mgr.settingsPlayerEventId ~= nil)
 T.ok("F201 RWE B4 drag handle (the old net skipped drag)", mgr.hudDragPlayerEventId ~= nil)
-T.eq("F201 RWE B5 settings key hint falls back when the getter is absent", mgr.settingsKeyHint, "Shift+O")
+-- [523] The factory fallback is gone: it named a chord that is not even
+-- this action's own default. With no resolvable chord the hint is the
+-- helper's own honest status, never a factory key.
+T.eq("F201 RWE B5 settings key hint is an honest status when the getter is absent", mgr.settingsKeyHint, "unavailable")
+T.eq("F201 RWE B5b and its kind travels with it", mgr.settingsKeyHintKind, "unavailable")
+T.eq("F201 RWE B5c and the panel is told there is no live subscription", mgr.settingsKeyHintSubscribed, false)
 T.eq("F201 RWE B6 drag label set", b.events[mgr.hudDragPlayerEventId].text, "input_RWE_HUD_DRAG")
 local attemptsAfterPlayer = b.attempts
 wPlayer({ player = { isOwner = true } })

@@ -47,10 +47,10 @@
             <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_equals" />
         </actionBinding>
         <actionBinding action="RWE_TOGGLE_HUD">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_v" />
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_e" />
         </actionBinding>
         <actionBinding action="RWE_HUD_DRAG">
-            <binding device="KB_MOUSE_DEFAULT" input="KEY_rctrl KEY_equals" />
+            <binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_q" />
         </actionBinding>
     </inputBinding>
 
@@ -8731,11 +8731,11 @@
             <br><![CDATA[Teclado não atribuído]]></br>
             <ru><![CDATA[Клавиатура не назначена]]></ru>
             <uk><![CDATA[Клавіатура не призначена]]></uk>
-            <cz><![CDATA[Klávesnice neprirazena]]></cz>
-            <hu><![CDATA[Billentyuzet nincs hozzarendelve]]></hu>
-            <ro><![CDATA[Tastatura neatribuita]]></ro>
-            <tr><![CDATA[Klavye atanmamis]]></tr>
-            <fi><![CDATA[Nappaimisto ei sidottu]]></fi>
+            <cz><![CDATA[Klávesnice nepřiřazena]]></cz>
+            <hu><![CDATA[Billentyűzet nincs hozzárendelve]]></hu>
+            <ro><![CDATA[Tastatură neatribuită]]></ro>
+            <tr><![CDATA[Klavye atanmamış]]></tr>
+            <fi><![CDATA[Näppäimistö ei sidottu]]></fi>
             <no><![CDATA[Tastatur ikke bundet]]></no>
             <sv><![CDATA[Tangentbord obundet]]></sv>
             <da><![CDATA[Tastatur ikke bundet]]></da>
@@ -8744,7 +8744,7 @@
             <ct><![CDATA[鍵盤未綁定]]></ct>
             <fc><![CDATA[键盘未绑定]]></fc>
             <id><![CDATA[Keyboard tidak terikat]]></id>
-            <vi><![CDATA[Ban phim chua gan]]></vi>
+            <vi><![CDATA[Bàn phím chưa gán]]></vi>
         </text>
         <text name="rf_live_key_unavailable">
             <en><![CDATA[unavailable]]></en>
