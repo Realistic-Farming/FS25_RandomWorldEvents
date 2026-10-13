@@ -13,6 +13,28 @@ the repo's git history and README.
 
 ## [Unreleased]
 
+## [2.3.0.0] - 2026-10-12
+
+> **This is not a final release.** It gives everyone, testers and players, new or returning, everything we have built so far, so nobody has to wait on an old version any longer. The Realistic Farming suite is far from done: we are still building and expanding every mod, and completing it could take months, possibly a year. Expect changes and rough edges along the way, and please report anything that looks wrong.
+
+> **Update Market Dynamics at the same time.** This release and Market Dynamics 1.4.0.0 are a pair: event price changes now go through Market Dynamics. With an older Market Dynamics nothing doubles, but event price changes do not apply and the log asks you to update it.
+
+### Changed
+- **Balance change: money events now pay, in single player too.** Before, most money events (subsidies, donations, insurance, windfalls, bills) never reached any farm. Every eligible farm now gets its money as a line on its finance statement, so you will notice them.
+- Event price changes go through Market Dynamics instead of patching the game's prices directly.
+- Wear events scale wear on every vehicle actually in use (driven by any player or run by a hired worker), decided by the server; parked vehicles are untouched. Low Wear and High Wear scale the usage damage they were meant to.
+
+### Added
+- Multiplayer: every event announcement now reaches every player. Before, only a listen host saw events fire, and on a dedicated server nobody did.
+- An event HUD show/hide toggle in the Control Center, Control Center actions, and an event HUD that follows the base game's theme and can be resized in width.
+- With Tax Mod installed, money from random events shows in Tax Mod's companion ledger.
+
+### Fixed
+- The settings panel keeps the mouse cursor and holds the camera while it is open.
+- Keyboard defaults are bound and no longer collide with other suite mods, and the settings screen no longer shows a stale key.
+- Key presses are registered only where they belong (on foot or in a vehicle).
+- Multiplayer: a settings change made through Settings Hub is saved only by the host.
+
 ### Added
 - Shared server-to-clients notification event: ordinary events and the Equipment Durability (wear) pair now announce to every joined player, not just the host. Before this, no RWE announcement ever reached a client: on a listen server only the host saw an event fire, and on a dedicated server nobody did, leaving every joined player to experience an event's effects with no explanation. Speed Boost and Engine Trouble stay host-local by design: they only affect the host's own vehicle, so there is nothing for a joined player to be told about.
 - Changelog file established (suite ruling 2026-08-22).
