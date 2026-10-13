@@ -7,5 +7,8 @@
   "devDependencies": {
     "fengari": "^0.1.4",
     "luaparse": "^0.3.1"
+  },
+  "scripts": {
+    "test": "node run-tests.mjs"
   }
 }

@@ -26,7 +26,7 @@
 -- The cross-mod handle is g_currentMission.masterHUD (published in Mission00.load).
 -- =========================================================
 
-RWEMasterHUDBridge = {}
+RWEMasterHUDBridge = RWEMasterHUDBridge or {}
 
 RWEMasterHUDBridge.HUD_ID = "RandomWorldEvents_HUD"
 RWEMasterHUDBridge.active = false   -- MasterHUD present and we registered

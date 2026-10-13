@@ -1,3 +1,12 @@
+-- 2026-08-22 (Wizard): with MasterHUD installed this mod's own HUD hide/move keys must not
+-- merely be inert, they must not REGISTER at all - that is what removes their rows from the
+-- F1 legend and the Controls list. Probed on TaxMod first: skipping registration does remove
+-- the row, so the pattern is used suite-wide. Only HUD hide/move actions are gated; every
+-- other action this mod registers is untouched.
+local function __rfMhOwnsHudKeys()
+    return ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil
+end
+
 -- =========================================================
 -- Random World Events (version 2.1.3.0) - FS25 Conversion
 -- =========================================================
@@ -11,8 +20,15 @@
 -- Original author: TisonK
 -- =========================================================
 
-local modDirectory = g_currentModDirectory
-local modName = g_currentModName
+-- Hot-reload latch (FuelCosts reference): g_currentModDirectory and
+-- g_currentModName are nil on a live re-source, so they are latched into
+-- module globals on first load, with a g_modsDirectory loose-folder fallback.
+RandomWorldEventsModDirectory = RandomWorldEventsModDirectory
+    or g_currentModDirectory
+    or (g_modsDirectory ~= nil and (g_modsDirectory .. "FS25_RandomWorldEvents/") or nil)
+RandomWorldEventsModName = RandomWorldEventsModName or g_currentModName or "FS25_RandomWorldEvents"
+local modDirectory = RandomWorldEventsModDirectory
+local modName = RandomWorldEventsModName
 
 -- Resolve mod version once at load time so it's available everywhere.
 local modVersion = "?"
@@ -39,7 +55,8 @@ RandomWorldEvents = {
 
         -- Arcade-physics opt-in (default OFF). When ON, the retained physics
         -- events (speed boost, engine trouble, equipment durability) may fire,
-        -- scoped to the player's own vehicle and out of the economy.
+        -- out of the economy: speed and engine on the host player's own vehicle,
+        -- durability on the usage wear of every vehicle in use.
         arcadePhysics = false,
 
         weatherEvents = false,
@@ -110,6 +127,14 @@ RandomWorldEvents.eventCounter = 0
 -- Subsystem API registry — populated by each RWE[Category]API on load.
 -- Access via g_RandomWorldEvents:getSubsystem("economic") etc.
 RandomWorldEvents.subsystems = {}
+
+-- RSF-F201 item 12: the input-hook record home. The settings literal above is a
+-- bare table on purpose (its constructor re-establishes the defaults on every
+-- load), so it cannot hold a session-lived record. This latched table survives a
+-- script reload the way the mod's other `X = X or {}` modules do, and holds only
+-- the input-hook record: captured predecessors, install latch, owner binding.
+-- No other participant reads or writes it.
+RWE_InputHookRecord = RWE_InputHookRecord or {}
 
 local RandomWorldEvents_mt = Class(RandomWorldEvents)
 
@@ -231,6 +256,37 @@ function RandomWorldEvents:createSettingsManager()
                 settingsObject._savedCooldownRemainingMs = xml:getFloat(manager.XMLTAG..".eventState.cooldownRemainingMs", 0)
                 settingsObject._savedMidpointFired = xml:getBool(manager.XMLTAG..".eventState.midpointFired", false)
 
+                -- EC-6: the event summary, the crisis parts and the pending settlement lines.
+                local summaryKey = xml:getString(manager.XMLTAG..".eventState#summaryKey", "")
+                settingsObject._savedSummaryKey = summaryKey ~= "" and summaryKey or nil
+                local summaryArgs = {}
+                local i = 0
+                while true do
+                    local arg = xml:getString(string.format("%s.eventState.summaryArg(%d)#value", manager.XMLTAG, i))
+                    if arg == nil then break end
+                    summaryArgs[#summaryArgs + 1] = arg
+                    i = i + 1
+                end
+                settingsObject._savedSummaryArgs = summaryArgs
+                settingsObject._savedCrisisHasPrice = xml:getBool(manager.XMLTAG..".eventState#crisisHasPrice", false)
+                settingsObject._savedCrisisHasLoan = xml:getBool(manager.XMLTAG..".eventState#crisisHasLoan", false)
+                settingsObject._savedSettlement = RWESettlement ~= nil and RWESettlement.loadFromXML(xml, manager.XMLTAG..".eventState") or {}
+
+                -- The savegame-coupled state as it stands on disk: re-written unchanged
+                -- by every save that is not a real game save (see saveSettings).
+                settingsObject._savedStateSnapshot = {
+                    activeEvent = settingsObject._savedActiveEvent,
+                    intensity = settingsObject._savedActiveIntensity,
+                    remainingMs = settingsObject._savedRemainingMs,
+                    cooldownRemainingMs = settingsObject._savedCooldownRemainingMs,
+                    midpointFired = settingsObject._savedMidpointFired,
+                    summaryKey = settingsObject._savedSummaryKey,
+                    summaryArgs = summaryArgs,
+                    crisisHasPrice = settingsObject._savedCrisisHasPrice,
+                    crisisHasLoan = settingsObject._savedCrisisHasLoan,
+                    settlement = RWESettlement ~= nil and RWESettlement.validateSaved(settingsObject._savedSettlement) or {},
+                }
+
                 xml:delete()
                 return
             end
@@ -254,7 +310,7 @@ function RandomWorldEvents:createSettingsManager()
         end
     end
     
-    manager.saveSettings = function(settingsObject)
+    manager.saveSettings = function(settingsObject, opts)
         local xmlPath = manager.getSavegameXmlFilePath()
         if not xmlPath then 
             Logging.warning("[RWE] No savegame path found")
@@ -297,19 +353,39 @@ function RandomWorldEvents:createSettingsManager()
 
             xml:setBool(manager.XMLTAG..".experimentalSystems", settingsObject.experimentalSystems == true)
 
+            -- EC-6: the event snapshot and the pending settlement lines are savegame-coupled
+            -- state. Only a real game save (opts.savegame) writes the current state; every
+            -- other write (a settings change, quitting) re-writes the snapshot of the last
+            -- real save, or of load. Otherwise quitting without saving would persist lines
+            -- the savegame never had (paid again on the next load) or drop lines it still
+            -- owes.
+            local snap
+            if opts ~= nil and opts.savegame then
+                snap = settingsObject:currentStateSnapshot()
+                settingsObject._savedStateSnapshot = snap
+            else
+                snap = settingsObject._savedStateSnapshot or {}
+            end
+
             -- Save active event state as remaining time so timers survive reload
-            local es = settingsObject.EVENT_STATE
-            if es and es.activeEvent then
-                xml:setString(manager.XMLTAG..".eventState.activeEvent", es.activeEvent)
-                local remaining = math.max(0, (es.eventStartTime + (es.eventDuration or 0)) - g_currentMission.time)
-                xml:setFloat(manager.XMLTAG..".eventState.remainingMs", remaining)
-                xml:setBool(manager.XMLTAG..".eventState.midpointFired", es.midpointFired or false)
-                xml:setInt(manager.XMLTAG..".eventState.intensity", es.activeIntensity or 0)
+            if snap.activeEvent ~= nil then
+                xml:setString(manager.XMLTAG..".eventState.activeEvent", snap.activeEvent)
+                xml:setFloat(manager.XMLTAG..".eventState.remainingMs", snap.remainingMs or 0)
+                xml:setBool(manager.XMLTAG..".eventState.midpointFired", snap.midpointFired == true)
+                xml:setInt(manager.XMLTAG..".eventState.intensity", snap.intensity or 0)
+                xml:setString(manager.XMLTAG..".eventState#summaryKey", snap.summaryKey or "")
+                for i, arg in ipairs(snap.summaryArgs or {}) do
+                    xml:setString(string.format("%s.eventState.summaryArg(%d)#value", manager.XMLTAG, i - 1), tostring(arg))
+                end
+                xml:setBool(manager.XMLTAG..".eventState#crisisHasPrice", snap.crisisHasPrice == true)
+                xml:setBool(manager.XMLTAG..".eventState#crisisHasLoan", snap.crisisHasLoan == true)
             else
                 xml:setString(manager.XMLTAG..".eventState.activeEvent", "")
             end
-            local esCooldown = es and math.max(0, (es.cooldownUntil or 0) - g_currentMission.time) or 0
-            xml:setFloat(manager.XMLTAG..".eventState.cooldownRemainingMs", esCooldown)
+            xml:setFloat(manager.XMLTAG..".eventState.cooldownRemainingMs", snap.cooldownRemainingMs or 0)
+            if RWESettlement ~= nil then
+                RWESettlement.saveListToXML(xml, manager.XMLTAG..".eventState", snap.settlement or {})
+            end
 
             xml:save()
             xml:delete()
@@ -331,9 +407,10 @@ function RandomWorldEvents:loadSettings()
     end
 end
 
-function RandomWorldEvents:saveSettings()
+--- @param opts table|nil  { savegame = true } only from the game's save cycle
+function RandomWorldEvents:saveSettings(opts)
     if self.settingsManager and self.settingsManager.saveSettings then
-        self.settingsManager.saveSettings(self)
+        self.settingsManager.saveSettings(self, opts)
         self:dbg("Settings saved")
     else
         Logging.error("[RandomWorldEvents] Settings manager not properly initialized")
@@ -362,8 +439,10 @@ end
 
 --- Arcade-physics opt-in (redesign): the retained vehicle-physics events
 --- (speed boost, engine trouble, equipment durability) only fire when this is
---- ON. Default OFF. Always scoped to the player's own vehicle, never an NPC
---- machine, never the economy. Admin key RandomWorldEvents.arcadePhysics.
+--- ON. Default OFF. Speed boost and engine trouble act on the host player's own
+--- vehicle; the equipment durability pair scales usage wear on every vehicle in
+--- use, decided on the server (Design d3c0626). Never the economy. Admin key
+--- RandomWorldEvents.arcadePhysics.
 ---@return boolean
 function RandomWorldEvents:allowsArcadePhysics()
     return self.events.arcadePhysics == true
@@ -548,7 +627,341 @@ function RandomWorldEvents:dbg(msg, level)
     end
 end
 
+-- =====================
+-- EC-6: ELIGIBILITY, NOTICES, SHARED STATE, END PATH
+-- =====================
+
+--- True for the four arcade-physics events (stored gate). Their broadcast and
+--- save-resume stay host-local, and so do the NOTICES of the two host-local ones,
+--- speed boost and engine trouble. The durability pair is the exception on two
+--- counts: its wear effect is server-decided, and since Design 2c032b5 its notice
+--- DOES reach joined players. The announce sites gate on isArcadeEvent AND NOT
+--- isServerScopedArcadeEvent via noticeIsHostLocal, branching on arcadeScope
+--- rather than on this function, which cannot tell the pair apart.
+function RandomWorldEvents:isArcadeEvent(event)
+    return type(event) == "table" and event.gate == "arcadePhysics"
+end
+
+--- The host player's current vehicle, or nil.
+function RandomWorldEvents:getLocalVehicle()
+    local player = g_localPlayer
+    local cur = (player ~= nil and type(player.getCurrentVehicle) == "function") and player:getCurrentVehicle() or nil
+    return cur or (g_currentMission ~= nil and g_currentMission.controlledVehicle) or nil
+end
+
+--- Speed boost and engine trouble are host-local: the toggle is on, this machine is
+--- a listen server with a local player, and that player is in a vehicle. A
+--- dedicated server (no local player) and a pure client never start one.
+function RandomWorldEvents:arcadeEligible()
+    return self:allowsArcadePhysics() and g_server ~= nil and g_localPlayer ~= nil and self:getLocalVehicle() ~= nil
+end
+
+--- The equipment durability pair (arcadeScope "server") scales usage wear on every
+--- vehicle in use, which the server decides (Design d3c0626), so it needs only the
+--- toggle and a server: a dedicated server with no local player starts one too.
+function RandomWorldEvents:durabilityEligible()
+    return self:allowsArcadePhysics() and g_server ~= nil
+end
+
+--- True for an arcade event whose effect the server decides for every vehicle.
+function RandomWorldEvents:isServerScopedArcadeEvent(event)
+    return self:isArcadeEvent(event) and event.arcadeScope == "server"
+end
+
+--- True when this event's notice must NOT leave the host.
+---
+--- This is the composition of the two predicates above, given a name so the four
+--- announce sites share ONE tested expression instead of four transcriptions of it.
+--- It introduces no new notion: arcadeScope is still the field, isServerScoped-
+--- ArcadeEvent is still the test, and eventEligibility forks on the same split.
+---
+--- THE DISCRIMINATOR IS arcadeScope, NOT isArcadeEvent. All four arcade events
+--- answer true to isArcadeEvent, including the durability pair whose notice MUST
+--- reach clients (Design 2c032b5, "wear included"). Writing this as isArcadeEvent
+--- alone would silence wear, which is the one way this gate can be wrong.
+---
+--- Only the host-local pair is held back. Speed boost and engine trouble need a
+--- local player in a vehicle (arcadeEligible), so they fire only on a listen host
+--- and affect only that machine. Design's ruling targets the unexplained-penalty
+--- class, an effect a player feels with no notice explaining it; a joined player
+--- feels nothing from these two, so a notice would describe an event that is not
+--- happening to them rather than explain one that is.
+function RandomWorldEvents:noticeIsHostLocal(event)
+    return self:isArcadeEvent(event) and not self:isServerScopedArcadeEvent(event)
+end
+
+--- The same eligibility for the scheduler and for every forced trigger: the stored
+--- gate and the event's own canTrigger (price status, the old-market exclusion,
+--- eligible farms, map conditions). Returns ok, reason.
+function RandomWorldEvents:eventEligibility(event)
+    if type(event) ~= "table" then return false, "unknown event" end
+    if self:isServerScopedArcadeEvent(event) then
+        if not self:durabilityEligible() then
+            return false, "equipment durability events need Arcade Physics on, on the server"
+        end
+    elseif self:isArcadeEvent(event) and not self:arcadeEligible() then
+        return false, "arcade physics events need Arcade Physics on and the host player in a vehicle on a listen server"
+    end
+    local ok, can = pcall(event.canTrigger)
+    if ok and can then return true end
+    if RWEMarketBridge ~= nil then
+        local status = RWEMarketBridge.priceStatus()
+        if RWEMarketBridge.isOldMarketExcluded(event.name) then
+            return false, "update MarketDynamics to enable this event (status " .. tostring(status) .. ")"
+        end
+        if RWEMarketBridge.isPriceEvent(event.name) and status ~= RWEMarketBridge.STATUS_AVAILABLE then
+            return false, "market price events are unavailable (status " .. tostring(status) .. ")"
+        end
+    end
+    return false, ok and "no eligible farm or map condition for this event" or ("canTrigger error: " .. tostring(can))
+end
+
+--- Resolve a notice to display text. A notice is { key = "...", args = { ... } } with
+--- string arguments (each resolved as a translation key when one exists), or a
+--- plain string (a translation key when one exists, else literal text from a
+--- third-party event). A missing key falls back to the key itself and logs once.
+function RandomWorldEvents:noticeText(notice)
+    if notice == nil then return nil end
+    local function t(key)
+        if type(key) == "string" and g_i18n ~= nil and type(g_i18n.hasText) == "function" and g_i18n:hasText(key) then
+            return g_i18n:getText(key)
+        end
+        return nil
+    end
+    if type(notice) == "string" then return t(notice) or notice end
+    if type(notice) ~= "table" or type(notice.key) ~= "string" or notice.key == "" then return nil end
+    local template = t(notice.key)
+    if template == nil then
+        self._missingKeys = self._missingKeys or {}
+        if not self._missingKeys[notice.key] then
+            self._missingKeys[notice.key] = true
+            Logging.warning("[RWE] missing translation key '%s'", notice.key)
+        end
+        return notice.key
+    end
+    local args = {}
+    for i, a in ipairs(notice.args or {}) do args[i] = t(a) or tostring(a) end
+    if #args == 0 then return template end
+    local ok, text = pcall(string.format, template, unpack(args))
+    if ok then return text end
+    return template
+end
+
+--- The translated title of an event: rwe_event_<name>_title, or the raw id (logged once).
+function RandomWorldEvents:eventTitle(name)
+    if name == nil then return "" end
+    local key = "rwe_event_" .. tostring(name) .. "_title"
+    if g_i18n ~= nil and type(g_i18n.hasText) == "function" and g_i18n:hasText(key) then
+        return g_i18n:getText(key)
+    end
+    self._missingKeys = self._missingKeys or {}
+    if not self._missingKeys[key] then
+        self._missingKeys[key] = true
+        Logging.warning("[RWE] missing translation key '%s'", key)
+    end
+    return tostring(name)
+end
+
+local function stringArgs(args)
+    local out = {}
+    for _, a in ipairs(type(args) == "table" and args or {}) do
+        if type(a) == "string" then out[#out + 1] = a end
+    end
+    return out
+end
+
+--- Choose the active shared event's figure-free summary into eventData. Arcade
+--- events get none. The crisis chooses its row from the recorded parts.
+function RandomWorldEvents:chooseSummary(event)
+    local d = self.EVENT_STATE.eventData
+    if type(d) ~= "table" then d = {}; self.EVENT_STATE.eventData = d end
+    d.summaryKey, d.summaryArgs = nil, {}
+    if type(event) ~= "table" or self:isArcadeEvent(event) then return end
+    if type(event.chooseSummary) == "function" then
+        local ok, key, args = pcall(event.chooseSummary, d)
+        if ok and type(key) == "string" then d.summaryKey, d.summaryArgs = key, stringArgs(args) end
+    elseif type(event.summaryKey) == "string" then
+        d.summaryKey = event.summaryKey
+    end
+end
+
+--- The shared state every client sees. The only numbers are intensity and
+--- remainingMs. While an arcade event holds the slot, the event is empty.
+function RandomWorldEvents:sharedState()
+    local es = self.EVENT_STATE
+    local p = {
+        activeEvent = "", activeIntensity = 0, activeCategory = "", remainingMs = 0, midpointFired = false,
+        priceStatus = RWEMarketBridge ~= nil and RWEMarketBridge.priceStatus() or "",
+        summaryKey = "", summaryArgs = {}, crisisHasPrice = false, crisisHasLoan = false,
+        noticeKind = "", noticeKey = "", noticeArgs = {},
+    }
+    local event = es.activeEvent ~= nil and self.EVENTS[es.activeEvent] or nil
+    if es.activeEvent ~= nil and not self:isArcadeEvent(event) then
+        local now = g_currentMission ~= nil and g_currentMission.time or 0
+        local d = type(es.eventData) == "table" and es.eventData or {}
+        p.activeEvent = es.activeEvent
+        p.activeIntensity = es.activeIntensity or 0
+        p.activeCategory = es.activeCategory or ""
+        p.remainingMs = math.max(0, (es.eventStartTime or 0) + (es.eventDuration or 0) - now)
+        p.midpointFired = es.midpointFired == true
+        p.summaryKey = d.summaryKey or ""
+        p.summaryArgs = stringArgs(d.summaryArgs)
+        if es.activeEvent == "economic_crisis" then
+            p.crisisHasPrice = d.crisisHasPrice == true
+            p.crisisHasLoan = d.crisisHasLoan == true
+        end
+    end
+    return p
+end
+
+--- Attach a notice to a shared state payload (only a keyed notice travels).
+local function withNotice(p, kind, notice)
+    if type(notice) == "table" and type(notice.key) == "string" and notice.key ~= "" then
+        p.noticeKind, p.noticeKey, p.noticeArgs = kind, notice.key, stringArgs(notice.args)
+    elseif type(notice) == "string" and g_i18n ~= nil and type(g_i18n.hasText) == "function" and g_i18n:hasText(notice) then
+        p.noticeKind, p.noticeKey, p.noticeArgs = kind, notice, {}
+    end
+    return p
+end
+RandomWorldEvents._withNotice = withNotice
+
+--- Broadcast the shared state to every client. Server only.
+function RandomWorldEvents:broadcastState(p)
+    if g_server == nil or RWEEventStateEvent == nil then return false end
+    local ok = pcall(RWEEventStateEvent.broadcast, p or self:sharedState())
+    return ok
+end
+
+--- Client: apply the synced display copy. Never runs onEnd, onMid, tick handlers,
+--- settlement or the price modifier.
+function RandomWorldEvents:applySyncedState(p)
+    if g_server ~= nil or type(p) ~= "table" then return end
+    local es = self.EVENT_STATE
+    if RWEMarketBridge ~= nil then
+        RWEMarketBridge.clientPriceStatus = (p.priceStatus ~= nil and p.priceStatus ~= "") and p.priceStatus or nil
+    end
+    if p.activeEvent == nil or p.activeEvent == "" then
+        es.activeEvent, es.activeIntensity, es.activeCategory = nil, nil, nil
+        es.eventData = {}
+        es.midpointFired = false
+    else
+        es.activeEvent     = p.activeEvent
+        es.activeIntensity = (tonumber(p.activeIntensity) or 0) > 0 and p.activeIntensity or nil
+        es.activeCategory  = (p.activeCategory ~= nil and p.activeCategory ~= "") and p.activeCategory or nil
+        es.eventStartTime  = g_currentMission ~= nil and g_currentMission.time or 0
+        es.eventDuration   = tonumber(p.remainingMs) or 0
+        es.midpointFired   = p.midpointFired == true
+        es.eventData = {
+            summaryKey = (p.summaryKey ~= nil and p.summaryKey ~= "") and p.summaryKey or nil,
+            summaryArgs = stringArgs(p.summaryArgs),
+            crisisHasPrice = p.crisisHasPrice == true,
+            crisisHasLoan = p.crisisHasLoan == true,
+        }
+    end
+    if p.noticeKey ~= nil and p.noticeKey ~= "" then
+        local positive = nil
+        if p.noticeKind == "start" then positive = true elseif p.noticeKind == "mid" then positive = "warn" end
+        local category = (p.activeCategory ~= nil and p.activeCategory ~= "") and p.activeCategory or nil
+        self:notifyEvent(self:noticeText({ key = p.noticeKey, args = p.noticeArgs }), category, positive)
+    end
+end
+
+--- The one server end path for every reason (timer, console, arcade toggle off,
+--- price status). Clients never run it.
+function RandomWorldEvents:_endActiveEvent(reason)
+    if g_server == nil then return false end
+    local es = self.EVENT_STATE
+    local name = es.activeEvent
+    if name == nil then return false end
+    local event = self.EVENTS[name]
+    local arcade = self:isArcadeEvent(event)
+    local notice = nil
+    if event ~= nil and type(event.onEnd) == "function" then
+        local ok, result = pcall(event.onEnd)
+        if ok then
+            notice = result
+        else
+            Logging.warning("[RWE] onEnd failed for %s: %s", tostring(name), tostring(result))
+        end
+    end
+    local category = es.activeCategory
+    Logging.info("[RWE] Event ended: %s (%s)", tostring(name), tostring(reason))
+    es.activeEvent          = nil
+    es.activeIntensity      = nil
+    es.activeCategory       = nil
+    es.eventData            = {}
+    es.customPriceModifiers = nil
+    if notice ~= nil then
+        self:notifyEvent(self:noticeText(notice), category, nil, self:noticeIsHostLocal(event))
+    end
+    if not arcade then
+        local p = withNotice(self:sharedState(), "end", notice)
+        p.activeCategory = category or ""
+        self:broadcastState(p)
+    end
+    return true
+end
+
+--- The live price-status rule (EC-6 3.7.7), called once per change by the watch:
+--- (1) end or narrow the active event the same way roll and restore judge it,
+--- (2) send the state, (3) ask a current MarketDynamics to recompose its quotes.
+function RandomWorldEvents:onPriceStatusChanged(status)
+    if g_server == nil or RWEMarketBridge == nil then return end
+    local es = self.EVENT_STATE
+    local name = es.activeEvent
+    local available = status == RWEMarketBridge.STATUS_AVAILABLE
+    local updateNeeded = status == RWEMarketBridge.STATUS_UPDATE_NEEDED
+    local ended = false
+    if name == "economic_crisis" then
+        local d = type(es.eventData) == "table" and es.eventData or {}
+        es.eventData = d
+        if not available then d.crisisHasPrice = false end   -- never revived during the event
+        if updateNeeded or d.crisisHasLoan ~= true then
+            ended = self:_endActiveEvent("price_status")
+        elseif not available then
+            self:chooseSummary(self.EVENTS[name])
+            es.ambientMsgIndex = 1
+        end
+    elseif name ~= nil then
+        if (RWEMarketBridge.isPriceEvent(name) and not available)
+           or (updateNeeded and RWEMarketBridge.OLD_READER_EXTRA[name] == true) then
+            ended = self:_endActiveEvent("price_status")
+        end
+    end
+    if not ended then
+        self:broadcastState(self:sharedState())
+    end
+    if RWEMarketBridge.market == "current" then
+        RWEMarketBridge.refresh()
+    end
+end
+
+--- The savegame-coupled state as it stands now (written only by a real save).
+function RandomWorldEvents:currentStateSnapshot()
+    local es = self.EVENT_STATE
+    local now = g_currentMission ~= nil and g_currentMission.time or 0
+    local snap = {
+        cooldownRemainingMs = math.max(0, (es.cooldownUntil or 0) - now),
+        settlement = RWESettlement ~= nil and RWESettlement.serialize() or {},
+    }
+    if es.activeEvent ~= nil then
+        local d = type(es.eventData) == "table" and es.eventData or {}
+        snap.activeEvent = es.activeEvent
+        snap.intensity = es.activeIntensity or 0
+        snap.remainingMs = math.max(0, (es.eventStartTime or 0) + (es.eventDuration or 0) - now)
+        snap.midpointFired = es.midpointFired == true
+        snap.summaryKey = d.summaryKey
+        snap.summaryArgs = stringArgs(d.summaryArgs)
+        snap.crisisHasPrice = d.crisisHasPrice == true
+        snap.crisisHasLoan = d.crisisHasLoan == true
+    end
+    return snap
+end
+
 function RandomWorldEvents:triggerRandomEvent()
+    if g_server == nil then
+        return false
+    end
     if not self.events.enabled then
         self:dbg("triggerRandomEvent: events disabled")
         return false
@@ -558,23 +971,22 @@ function RandomWorldEvents:triggerRandomEvent()
         self:dbg("triggerRandomEvent: event already active: " .. tostring(self.EVENT_STATE.activeEvent))
         return false
     end
-    
+
     local baseIntensity = self:getBaseIntensity()
     local available = {}
-    for eventId, event in pairs(self.EVENTS) do
+    local ids = {}
+    for eventId in pairs(self.EVENTS) do ids[#ids + 1] = eventId end
+    table.sort(ids)
+    for _, eventId in ipairs(ids) do
+        local event = self.EVENTS[eventId]
         local categoryKey = event.category .. "Events"
         local categoryEnabled = self.events[categoryKey]
-        local canTrigger = event.canTrigger()
         local intensityOk = baseIntensity >= (event.minIntensity or 1)
+        -- EC-6: the stored gate and the event's own canTrigger, the same check a
+        -- forced trigger applies.
+        local eligible = self:eventEligibility(event)
 
-        -- Opt-in gate for the retained arcade-physics events (redesign):
-        -- they only enter the pool when the arcadePhysics toggle is ON.
-        local gateOk = true
-        if event.gate == "arcadePhysics" then
-            gateOk = self:allowsArcadePhysics()
-        end
-
-        if categoryEnabled and canTrigger and intensityOk and gateOk then
+        if categoryEnabled and intensityOk and eligible then
             table.insert(available, eventId)
         end
     end
@@ -612,12 +1024,21 @@ end
 ---@param intensity number  1-5
 ---@return string
 function RandomWorldEvents:triggerNamedEvent(name, intensity)
+    if g_server == nil then
+        return "[RWE] Not triggered: events start on the server only"
+    end
     if self.EVENT_STATE.activeEvent ~= nil then
         return "[RWE] Another event is already active: " .. tostring(self.EVENT_STATE.activeEvent)
     end
     local event = self.EVENTS[name]
     if not event then
         return "[RWE] Event not found: " .. tostring(name)
+    end
+    -- EC-6: a forced event may bypass probability and cooldown only, never price
+    -- status, the old-market exclusion, eligible farms or arcade eligibility.
+    local eligible, why = self:eventEligibility(event)
+    if not eligible then
+        return "[RWE] Not triggered: " .. tostring(name) .. ": " .. tostring(why)
     end
     local safeIntensity = math.max(1, math.min(5, math.floor(intensity or 1)))
     local msg = self:_activateEvent(event, safeIntensity)
@@ -626,7 +1047,9 @@ function RandomWorldEvents:triggerNamedEvent(name, intensity)
 end
 
 --- Internal: write EVENT_STATE for a new event and fire onStart + opening notify.
---- Returns the onStart message string (may be nil for silent events).
+--- EC-6: resets eventData and the custom price terms, chooses the figure-free
+--- summary, shows the start notice here and sends the shared state (never for an
+--- arcade event, which is host-local). Returns the start notice text (may be nil).
 ---@param event table   event definition from self.EVENTS
 ---@param intensity number  1-5
 ---@return string|nil
@@ -636,6 +1059,8 @@ function RandomWorldEvents:_activateEvent(event, intensity)
         duration = math.random(event.duration.min, event.duration.max) * 60000
     end
 
+    self.EVENT_STATE.eventData            = {}
+    self.EVENT_STATE.customPriceModifiers = nil
     self.EVENT_STATE.activeEvent     = event.name
     self.EVENT_STATE.activeIntensity = intensity
     self.EVENT_STATE.activeCategory  = event.category
@@ -652,17 +1077,25 @@ function RandomWorldEvents:_activateEvent(event, intensity)
     Logging.info(string.format("[RWE] Event activated: %s (intensity=%d, duration=%.1f min)",
         event.name, intensity, duration / 60000))
 
-    local message = event.onStart(intensity)
-    self:notifyEvent(message, event.category, true)
-    return message
+    local notice = event.onStart(intensity)
+    self:chooseSummary(event)
+    local text = self:noticeText(notice)
+    self:notifyEvent(text, event.category, true, self:noticeIsHostLocal(event))
+    if not self:isArcadeEvent(event) then
+        self:broadcastState(withNotice(self:sharedState(), "start", notice))
+    end
+    return text
 end
 
---- Show a rich event notification.
+--- Present a notification on THIS machine. Purely local: the HUD flash queue
+--- plus the standard ingame notification. No networking happens here.
+--- Called by notifyEvent for the local player, and by RWENotificationEvent:run
+--- on a client for one that arrived from the server.
 -- Uses HUD flash queue when available; falls back to ingame notification.
 -- @param message     Display text (nil = silent)
 -- @param categoryKey Event category string
 -- @param isPositive  true = good event, false/nil = neutral, "warn" = warning
-function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive)
+function RandomWorldEvents:presentNotification(message, categoryKey, isPositive)
     if not message then return end
 
     -- Always push to HUD flash queue (even if HUD is hidden — it queues for when shown)
@@ -681,6 +1114,37 @@ function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive)
             notifType = FSBaseMission.INGAME_NOTIFICATION_INFO
         end
         g_currentMission:addIngameNotification(notifType, message)
+    end
+end
+
+--- Announce an event here and, unless it is host-local, on every client.
+--- Presentation is delegated to presentNotification, which holds the original
+--- body unchanged. The only new behaviour is the broadcast below.
+---
+--- EVERY RWE announcement funnels through this one function, and deliberately so:
+--- a host-local event is handled by SKIPPING THE BROADCAST here, never by calling
+--- presentNotification directly at a call site. If announcements were allowed to
+--- bypass this funnel, the next thing added here would silently miss them, which
+--- is the same shape as the defect this event was written to fix.
+-- @param message     Display text (nil = silent)
+-- @param categoryKey Event category string
+-- @param isPositive  true = good event, false/nil = neutral, "warn" = warning
+-- @param hostOnly    true = present locally and do NOT broadcast. Callers that
+--                    know their event pass self:noticeIsHostLocal(event); callers
+--                    that do not know it omit the argument, and the default is to
+--                    broadcast.
+function RandomWorldEvents:notifyEvent(message, categoryKey, isPositive, hostOnly)
+    if not message then return end
+
+    self:presentNotification(message, categoryKey, isPositive)
+
+    -- Server only. sendLocal is false so broadcastEvent skips the loopback
+    -- connection: a listen host is notified exactly once, by the
+    -- presentNotification call above, never twice. The g_server guard means a
+    -- client reaching this path presents locally and sends nothing, so a
+    -- received notification can never be rebroadcast.
+    if not hostOnly and g_server ~= nil and RWENotificationEvent ~= nil then
+        g_server:broadcastEvent(RWENotificationEvent.new(message, categoryKey, isPositive), false)
     end
 end
 
@@ -707,6 +1171,11 @@ function RandomWorldEvents:update(dt)
         self.eventHUD:update(dt)
     end
 
+    -- Settings panel cursor and camera keepalive (every frame while it is open)
+    if self.settingsPanel then
+        self.settingsPanel:update()
+    end
+
     -- Debug heartbeat every ~30 seconds of game time
     if self.debug and self.debug.enabled then
         self._dbgNextHeartbeat = self._dbgNextHeartbeat or 0
@@ -724,9 +1193,27 @@ function RandomWorldEvents:update(dt)
         end
     end
 
+    -- EC-6 client gate, unconditional: a client displays the synced state only. It
+    -- never runs the scheduler, tick handlers, notices of its own, an end, settlement
+    -- or the price modifier, whatever its own events-enabled setting says. The display
+    -- copy ends only when the server's end state arrives.
+    if g_server == nil then return end
+
+    -- Restored settlement lines bind to their Farm objects once the farms exist.
+    if RWESettlement ~= nil then RWESettlement.bindRestored() end
+
+    -- The price-status watch runs every update, whether or not an event is active
+    -- or events are enabled. An unchanged read does nothing.
+    if RWEMarketBridge ~= nil then RWEMarketBridge.watch(self) end
+
+    -- Switching Arcade Physics off ends an active arcade event at once.
+    local activeDef = self.EVENT_STATE.activeEvent ~= nil and self.EVENTS[self.EVENT_STATE.activeEvent] or nil
+    if activeDef ~= nil and self:isArcadeEvent(activeDef) and not self:allowsArcadePhysics() then
+        self:_endActiveEvent("arcade_physics_off")
+    end
+
     -- Event system update
     if self.events.enabled then
-        if g_server == nil then return end
         if g_currentMission.time > (self.EVENT_STATE.cooldownUntil or 0) then
             local chance = self:getEffectiveFrequency() * 0.001
             local roll = math.random()
@@ -757,16 +1244,9 @@ function RandomWorldEvents:update(dt)
         self:applyActiveEventEffects()
         self:_tickImmersion()
 
-        if g_currentMission.time > (self.EVENT_STATE.eventStartTime + (self.EVENT_STATE.eventDuration or 0)) then
-            local event = self.EVENTS[self.EVENT_STATE.activeEvent]
-            if event and event.onEnd then
-                local message = event.onEnd()
-                self:notifyEvent(message, event and event.category, nil)
-            end
-            Logging.info("[RWE] Event ended: " .. tostring(self.EVENT_STATE.activeEvent))
-            self.EVENT_STATE.activeEvent     = nil
-            self.EVENT_STATE.activeIntensity = nil
-            self.EVENT_STATE.activeCategory  = nil
+        if self.EVENT_STATE.activeEvent ~= nil
+           and g_currentMission.time > (self.EVENT_STATE.eventStartTime + (self.EVENT_STATE.eventDuration or 0)) then
+            self:_endActiveEvent("timer")
         end
     end
     
@@ -808,15 +1288,21 @@ function RandomWorldEvents:_tickImmersion()
     -- Uses "warn" urgency so it stands out from the start notification.
     if not s.midpointFired and duration > 0 and elapsed >= duration * 0.50 then
         s.midpointFired = true
+        local notice = nil
         if event.onMid then
             -- Midpoint narrative must mirror the intensity the event was
             -- actually activated at (spine-scaled), not the raw setting.
             local midIntensity = s.activeIntensity or self:getBaseIntensity()
             local ok, msg = pcall(event.onMid, midIntensity)
             if ok and msg then
-                self:notifyEvent(msg, event.category, "warn")
+                notice = msg
+                self:notifyEvent(self:noticeText(msg), event.category, "warn", self:noticeIsHostLocal(event))
                 self:dbg("Midpoint fired for: " .. s.activeEvent)
             end
+        end
+        -- EC-6: joined players see the midpoint too; an arcade event stays host-local.
+        if not self:isArcadeEvent(event) then
+            self:broadcastState(withNotice(self:sharedState(), "mid", notice))
         end
     end
 
@@ -824,15 +1310,26 @@ function RandomWorldEvents:_tickImmersion()
     -- Cycles through event.ambientMsgs on a timer.
     -- Interval: 15 % of duration (min 90 s, max 5 min) so messages feel
     -- proportional regardless of whether an event lasts 10 or 90 minutes.
-    if event.ambientMsgs and #event.ambientMsgs > 0 and now >= s.nextAmbientTime then
-        local msgs  = event.ambientMsgs
+    -- EC-6: an event with ambientVariants (the crisis) picks its list at each tick
+    -- from the recorded parts, never saved: both, price-only or loan-only. Ambients
+    -- stay host-local flavour and are never sent.
+    local msgs = event.ambientMsgs
+    if type(event.ambientVariants) == "table" then
+        local d = type(s.eventData) == "table" and s.eventData or {}
+        local variant = nil
+        if d.crisisHasPrice == true and d.crisisHasLoan == true then variant = "both"
+        elseif d.crisisHasPrice == true then variant = "price"
+        elseif d.crisisHasLoan == true then variant = "loan" end
+        msgs = variant ~= nil and event.ambientVariants[variant] or nil
+    end
+    if msgs and #msgs > 0 and now >= s.nextAmbientTime then
         local idx   = ((s.ambientMsgIndex - 1) % #msgs) + 1
         local msg   = msgs[idx]
         s.ambientMsgIndex = idx + 1
 
         -- Ambient messages use nil isPositive → INGAME_NOTIFICATION_INFO
         if msg then
-            self:notifyEvent(msg, event.category, nil)
+            self:notifyEvent(self:noticeText(msg), event.category, nil, self:noticeIsHostLocal(event))
         end
 
         -- Schedule next ambient tick
@@ -851,7 +1348,7 @@ function RandomWorldEvents:consoleCommandHelp()
     print("rweStatus    - Show current status")
     print("rweTest      - Force-trigger random event")
     print("rweEnd       - End current event")
-    print("rweSettings  - Open settings screen (also F3)")
+    print("rweSettings  - Open settings screen (or the RWE_TOGGLE_SETTINGS key you assigned in Controls)")
     print("rweDebug on|off - Toggle debug mode")
     print("rweList [category] - List registered events")
     print("================================")
@@ -868,6 +1365,7 @@ function RandomWorldEvents:consoleCommandStatus()
         "Cooldown active: %s\n" ..
         "Arcade physics: %s\n" ..
         "Physics enabled: %s\n" ..
+        "Market price events: %s (MarketDynamics %s)\n" ..
         "=========================",
         tostring(self.events.enabled),
         self.events.frequency or 5,
@@ -877,7 +1375,9 @@ function RandomWorldEvents:consoleCommandStatus()
         self.EVENT_STATE.activeEvent or "None",
         tostring(g_currentMission.time < self.EVENT_STATE.cooldownUntil),
         tostring(self:allowsArcadePhysics()),
-        tostring(self.physics.enabled)
+        tostring(self.physics.enabled),
+        tostring(RWEMarketBridge ~= nil and RWEMarketBridge.displayStatus() or "unknown"),
+        tostring(RWEMarketBridge ~= nil and RWEMarketBridge.market or "unknown")
     )
     print(status)
     return status
@@ -893,19 +1393,13 @@ function RandomWorldEvents:consoleCommandTest()
 end
 
 function RandomWorldEvents:consoleCommandEnd()
+    if g_server == nil then
+        return "Events end on the server only"
+    end
     if not self.EVENT_STATE.activeEvent then
         return "No active event to end"
     end
-    
-    local event = self.EVENTS[self.EVENT_STATE.activeEvent]
-    if event and event.onEnd then
-        local message = event.onEnd()
-        self:notifyEvent(message, event and event.category, nil)
-    end
-    
-    self.EVENT_STATE.activeEvent     = nil
-    self.EVENT_STATE.activeIntensity = nil
-    self.EVENT_STATE.activeCategory  = nil
+    self:_endActiveEvent("console")
     return "Event ended"
 end
 
@@ -939,7 +1433,7 @@ function RandomWorldEvents:consoleCommandList(category)
     return string.format("Listed %d events", total)
 end
 
--- Settings: open with Shift+O or this command
+-- Settings: open with the RWE_TOGGLE_SETTINGS chord or this command
 function RandomWorldEvents:consoleCommandSettings()
     if self.settingsPanel then
         self.settingsPanel:toggle()
@@ -985,7 +1479,7 @@ function RandomWorldEvents:loadGUI()
         Logging.warning("[RWE] RWEEventHUD not available — HUD disabled")
     end
 
-    -- Create the custom settings panel (Shift+O)
+    -- Create the custom settings panel (the RWE_TOGGLE_SETTINGS chord)
     self.settingsPanel = RWESettingsPanel.new(self)
     if self.settingsPanel then
         self:dbg("Custom Settings Panel created")
@@ -1042,21 +1536,111 @@ local function load(mission)
     end
 end
 
+-- RSF-F201 input record and expected sets. `rweManager` is the owner; the
+-- handlers are resolved on it by name at call time.
+local function rweInputRecord()
+    return RWEContextInput.record(RWE_InputHookRecord, "input")
+end
+
+local function rweOwnsHudKeys() return not __rfMhOwnsHudKeys() end
+local function rweHideRow(binding, eventId) binding:setActionEventTextVisibility(eventId, false) end
+local function rweLabel(key, fallback)
+    return function(binding, eventId)
+        binding:setActionEventText(eventId, g_i18n:getText(key) or fallback)
+    end
+end
+local rweLabelHud  = rweLabel("input_RWE_TOGGLE_HUD", "Toggle RWE HUD")
+local rweLabelDrag = rweLabel("input_RWE_HUD_DRAG", "RWE HUD Edit Mode")
+--- Refresh the cached settings chord and its KIND on one owner.
+--- The kind travels with the label because the panel may only print an
+--- imperative key instruction for kind "live"; see RWESettingsPanel:draw.
+local function rweRefreshSettingsHint(owner)
+    if owner == nil then return end
+    if RweLiveKeyLabel ~= nil and type(RweLiveKeyLabel.resolve) == "function" then
+        local label, kind = RweLiveKeyLabel.resolve("RWE_TOGGLE_SETTINGS")
+        if type(label) == "string" and label ~= "" then
+            owner.settingsKeyHint = label
+            owner.settingsKeyHintKind = kind
+        else
+            owner.settingsKeyHint = RweLiveKeyLabel.unavailableText
+                and RweLiveKeyLabel.unavailableText() or "unavailable"
+            owner.settingsKeyHintKind = "unavailable"
+        end
+    else
+        -- No helper at all: nothing about a key can be stated truthfully.
+        owner.settingsKeyHint = "unavailable"
+        owner.settingsKeyHintKind = "unavailable"
+    end
+end
+
+--- Released in delete(); see rweReleaseSettingsHint below.
+local rweSettingsHintUnsubscribe = nil
+
+local function rweSettingsPlayerAfter(binding, eventId, owner)
+    binding:setActionEventText(eventId, g_i18n:getText("input_RWE_TOGGLE_SETTINGS") or "RWE Settings")
+    -- ASH-153: live Controls chord, never a factory chord as if it were live.
+    rweRefreshSettingsHint(owner)
+    -- Cost, from the PR review: resolve() rebuilds the whole action-to-bindings
+    -- map, and the panel used to call it once per draw. Registration already runs
+    -- here, so the only thing that can invalidate the cache afterwards is a remap,
+    -- and the engine publishes exactly that. Subscribe once and let the panel read
+    -- a cache that cannot go stale.
+    if rweSettingsHintUnsubscribe == nil
+        and RweLiveKeyLabel ~= nil and type(RweLiveKeyLabel.subscribe) == "function" then
+        rweSettingsHintUnsubscribe = RweLiveKeyLabel.subscribe(owner, function()
+            rweRefreshSettingsHint(owner)
+        end)
+    end
+    -- subscribe() returns nil when the message centre or MessageType is absent,
+    -- and when it throws. In that case NOTHING would ever refresh the cache and
+    -- it would outlive a remap, so the panel is told to re-read instead. The
+    -- refresher is handed over as a closure because the resolve is file-local.
+    owner.settingsKeyHintSubscribed = (rweSettingsHintUnsubscribe ~= nil)
+    owner.refreshSettingsKeyHint = function() rweRefreshSettingsHint(owner) end
+end
+
+--- Drop the binding-change subscription. Called from delete(), so a second
+--- mission in one session does not inherit the first mission's owner.
+local function rweReleaseSettingsHint()
+    if rweSettingsHintUnsubscribe ~= nil then
+        pcall(rweSettingsHintUnsubscribe)
+        rweSettingsHintUnsubscribe = nil
+    end
+end
+
+local RWE_PLAYER_SPECS = {
+    { action = "RWE_TOGGLE_HUD", handler = "onToggleHUDInput", idField = "hudPlayerEventId",
+      present = rweOwnsHudKeys, after = rweLabelHud, up = false, down = true, always = false, startActive = true },
+    { action = "RWE_TOGGLE_SETTINGS", handler = "onToggleSettingsInput", idField = "settingsPlayerEventId",
+      after = rweSettingsPlayerAfter, up = false, down = true, always = false, startActive = true },
+    { action = "RWE_HUD_DRAG", handler = "onHUDDragInput", idField = "hudDragPlayerEventId",
+      present = rweOwnsHudKeys, after = rweLabelDrag, up = false, down = true, always = false, startActive = true },
+}
+local RWE_VEHICLE_SPECS = {
+    { action = "RWE_TOGGLE_HUD", handler = "onToggleHUDInput", idField = "hudVehicleEventId",
+      present = rweOwnsHudKeys, after = rweLabelHud, up = false, down = true, always = false, startActive = true },
+    { action = "RWE_TOGGLE_SETTINGS", handler = "onToggleSettingsInput", idField = "settingsVehicleEventId",
+      after = rweHideRow, up = false, down = true, always = false, startActive = true },
+    { action = "RWE_HUD_DRAG", handler = "onHUDDragInput", idField = "hudDragVehicleEventId",
+      present = rweOwnsHudKeys, after = rweHideRow, up = false, down = true, always = false, startActive = true },
+}
+
+
 local function update(mission, dt)
+    -- RSF-F201: admission reset is the first input act of every update interval.
+    RWEContextInput.resetAdmission(rweInputRecord())
     if rweManager and rweManager.isInitialized then
         rweManager:update(dt)
     end
 end
 
 local function delete(mission)
+    rweReleaseSettingsHint()
     if rweManager then
-        -- Restore hooked functions before teardown
-        if rweManager._playerInputHookOriginal and PlayerInputComponent then
-            PlayerInputComponent.registerActionEvents = rweManager._playerInputHookOriginal
-        end
-        if rweManager._vehicleInputHookOriginal and InputBinding then
-            InputBinding.endActionEventsModification = rweManager._vehicleInputHookOriginal
-        end
+        -- RSF-F201: retire the input owner before teardown. Old forwarding targets
+        -- go inert and the owner reference is released. The captured predecessors
+        -- are NOT restored: restoring per mission can remove a later mod's wrapper.
+        RWEContextInput.retire(rweInputRecord())
 
         if rweManager.eventHUD then
             rweManager.eventHUD:saveLayout()
@@ -1068,6 +1652,11 @@ local function delete(mission)
             rweManager.settingsPanel = nil
         end
         rweManager:saveSettings()
+        -- EC-6 delete-path order: unregister the price modifier (when live), then the
+        -- settlement accrual, the day subscription and the farm-deleted subscription,
+        -- then clear the manager.
+        if RWEMarketBridge then RWEMarketBridge.unbind() end
+        if RWESettlement then RWESettlement.uninstall() end
         rweManager = nil
         getfenv(0)["g_RandomWorldEvents"] = nil
         if g_currentMission then g_currentMission.randomWorldEvents = nil end
@@ -1081,6 +1670,13 @@ end
 -- =====================
 
 function RandomWorldEvents:onToggleHUDInput()
+    -- 2026-08-22 (Wizard): MasterHUD takeover. When MasterHUD is installed it owns the
+    -- suite-wide hide/move binds, so this mod's own per-mod key is deliberately inert:
+    -- one surface, one way to reach it. Standalone (no MasterHUD) this runs normally.
+    -- Canonical presence check, the same expression the suite's MasterHUD bridges use.
+    if ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil then
+        return
+    end
     if self.eventHUD then
         self.eventHUD:toggleVisibility()
     end
@@ -1093,6 +1689,13 @@ function RandomWorldEvents:onToggleSettingsInput()
 end
 
 function RandomWorldEvents:onHUDDragInput()
+    -- 2026-08-22 (Wizard): MasterHUD takeover. When MasterHUD is installed it owns the
+    -- suite-wide hide/move binds, so this mod's own per-mod key is deliberately inert:
+    -- one surface, one way to reach it. Standalone (no MasterHUD) this runs normally.
+    -- Canonical presence check, the same expression the suite's MasterHUD bridges use.
+    if ((g_currentMission ~= nil and g_currentMission.masterHUD) or g_masterHUD) ~= nil then
+        return
+    end
     if not self.eventHUD then return end
     if not self.eventHUD.visible then return end
     if self.eventHUD.editMode then
@@ -1103,167 +1706,46 @@ function RandomWorldEvents:onHUDDragInput()
 end
 
 -- =====================
--- INPUT REGISTRATION
--- Mirrors the SoilFertilizer pattern:
---   PLAYER context  → hook PlayerInputComponent.registerActionEvents
---   VEHICLE context → hook InputBinding.endActionEventsModification
+-- INPUT REGISTRATION (RSF-F201 context-qualified)
+--   PLAYER context  -> wrap PlayerInputComponent.registerActionEvents
+--   VEHICLE context -> hook InputBinding.endActionEventsModification
 -- FSBaseMission.registerActionEvents targets the base class and never fires in FS25.
+--
+-- Each context registers through its own private forwarding target. The engine
+-- keys an event by action, target and trigger shape only, so the old shared
+-- `mgr` target made PLAYER and VEHICLE one global slot; the old vehicle hook's
+-- "skip when all three cab ids are set" early return then skipped registrations
+-- the rebuilt context needed (ids stay non-nil after the engine destroys the
+-- context). Membership is now asked of the wrap's own context by walking the
+-- native lists, so nothing is inferred from a stored id and a complete set
+-- costs no transaction. The old "never clear PLAYER ids" workaround is plain
+-- scoping now: PLAYER and VEHICLE handles cannot alias.
+--
+-- The hook record lives on RWE_InputHookRecord (declared near the settings
+-- literal above), not on this settings table and not on the mission-scoped
+-- manager, and the captured predecessors are never restored per mission.
 -- =====================
 
 installInputHooks = function()
     if not rweManager then return end
-
-    -- ── PLAYER context ────────────────────────────────────────────────────
-    if PlayerInputComponent and PlayerInputComponent.registerActionEvents then
-        local originalPlayerReg = PlayerInputComponent.registerActionEvents
-        rweManager._playerInputHookOriginal = originalPlayerReg
-
-        PlayerInputComponent.registerActionEvents = function(inputComponent, ...)
-            originalPlayerReg(inputComponent, ...)
-
-            -- Only for the local owning player
-            if not (inputComponent.player and inputComponent.player.isOwner) then return end
-            -- Guard against double-registration
-            if g_RandomWorldEvents and g_RandomWorldEvents.hudPlayerEventId then return end
-            if not g_RandomWorldEvents then return end
-
-            g_inputBinding:beginActionEventsModification(PlayerInputComponent.INPUT_CONTEXT_NAME)
-
-            local hudOk, hudId = g_inputBinding:registerActionEvent(
-                InputAction.RWE_TOGGLE_HUD, g_RandomWorldEvents,
-                g_RandomWorldEvents.onToggleHUDInput,
-                false, true, false, true
-            )
-            if hudOk and hudId then
-                g_RandomWorldEvents.hudPlayerEventId = hudId
-                g_inputBinding:setActionEventText(hudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
-                Logging.info("[RWE] HUD toggle registered in PLAYER context")
-            else
-                Logging.warning("[RWE] HUD toggle PLAYER registration failed")
-            end
-
-            local spOk, spId = g_inputBinding:registerActionEvent(
-                InputAction.RWE_TOGGLE_SETTINGS, g_RandomWorldEvents,
-                g_RandomWorldEvents.onToggleSettingsInput,
-                false, true, false, true
-            )
-            if spOk and spId then
-                g_RandomWorldEvents.settingsPlayerEventId = spId
-                g_inputBinding:setActionEventText(spId, g_i18n:getText("input_RWE_TOGGLE_SETTINGS") or "RWE Settings")
-                -- Cache key hint for the settings panel close button
-                local ok, ktext = pcall(function()
-                    return g_inputBinding:getActionDisplayName(InputAction.RWE_TOGGLE_SETTINGS)
-                end)
-                g_RandomWorldEvents.settingsKeyHint = (ok and ktext and ktext ~= "") and ktext or "Shift+O"
-                Logging.info("[RWE] Settings toggle registered in PLAYER context")
-            else
-                Logging.warning("[RWE] Settings toggle PLAYER registration failed")
-            end
-
-            -- HUD drag (enter/exit edit mode) — PLAYER context
-            local dragOk, dragId = g_inputBinding:registerActionEvent(
-                InputAction.RWE_HUD_DRAG, g_RandomWorldEvents,
-                g_RandomWorldEvents.onHUDDragInput,
-                false, true, false, true
-            )
-            if dragOk and dragId then
-                g_RandomWorldEvents.hudDragPlayerEventId = dragId
-                g_inputBinding:setActionEventText(dragId, g_i18n:getText("input_RWE_HUD_DRAG") or "RWE HUD Edit Mode")
-                Logging.info("[RWE] HUD drag registered in PLAYER context")
-            end
-
-            g_inputBinding:endActionEventsModification()
-        end
+    -- Client-only: a dedicated server has no local input. Install once per loaded
+    -- script environment; the helper latches on its captured predecessors.
+    local mission = rweManager.mission or g_currentMission
+    if mission == nil or (mission.getIsClient ~= nil and not mission:getIsClient()) then return end
+    local record = rweInputRecord()
+    if record.playerOriginal == nil and RWEContextInput.installPlayerWrapper(record, RWE_PLAYER_SPECS) then
         Logging.info("[RWE] PlayerInputComponent hook installed")
     end
-
-    -- ── VEHICLE context ───────────────────────────────────────────────────
-    if InputBinding and InputBinding.endActionEventsModification then
-        local _rweVehicleHookActive = false
-        local originalEndMod = InputBinding.endActionEventsModification
-        rweManager._vehicleInputHookOriginal = originalEndMod
-
-        InputBinding.endActionEventsModification = function(binding, ignoreCheck)
-            -- Capture context name BEFORE the original resets it
-            local contextName = ""
-            if binding.registrationContext and
-               binding.registrationContext ~= InputBinding.NO_REGISTRATION_CONTEXT then
-                contextName = binding.registrationContext.name or ""
-            end
-
-            originalEndMod(binding, ignoreCheck)
-
-            if contextName ~= Vehicle.INPUT_CONTEXT_NAME then return end
-            if _rweVehicleHookActive then return end
-            if not g_RandomWorldEvents then return end
-
-            -- BUILD 17:45: the engine calls this constantly while the player is in a
-            -- cab. When all three vehicle slots are already live there is nothing to repair,
-            -- so the remove and re-register is skipped outright. A partial set still takes
-            -- the full path, because that is the case the teardown exists for. The return is
-            -- deliberately BEFORE the re-entrancy flag is set, so the skip cannot wedge the
-            -- hook shut.
-            if g_RandomWorldEvents.hudVehicleEventId ~= nil
-                and g_RandomWorldEvents.settingsVehicleEventId ~= nil
-                and g_RandomWorldEvents.hudDragVehicleEventId ~= nil then
-                return
-            end
-
-            _rweVehicleHookActive = true
-
-            -- Only remove vehicle-context IDs. Player-context IDs were registered
-            -- once at loadFinished and must NOT be cleared here — doing so forces
-            -- re-registration which creates fresh event IDs and discards the user's
-            -- saved key binding, causing the "must rebind every session" issue.
-            local mgr = g_RandomWorldEvents
-            local staleVehicleIds = { "hudVehicleEventId", "settingsVehicleEventId", "hudDragVehicleEventId" }
-            for _, field in ipairs(staleVehicleIds) do
-                local oldId = mgr[field]
-                if oldId then
-                    pcall(function() binding:removeActionEvent(oldId) end)
-                    mgr[field] = nil
-                end
-            end
-
-            -- Register in VEHICLE context
-            binding:beginActionEventsModification(Vehicle.INPUT_CONTEXT_NAME)
-
-            local vHudOk, vHudId = binding:registerActionEvent(
-                InputAction.RWE_TOGGLE_HUD, mgr,
-                mgr.onToggleHUDInput,
-                false, true, false, true
-            )
-            if vHudOk and vHudId then
-                mgr.hudVehicleEventId = vHudId
-                binding:setActionEventText(vHudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
-            end
-
-            local vSpOk, vSpId = binding:registerActionEvent(
-                InputAction.RWE_TOGGLE_SETTINGS, mgr,
-                mgr.onToggleSettingsInput,
-                false, true, false, true
-            )
-            if vSpOk and vSpId then
-                mgr.settingsVehicleEventId = vSpId
-                binding:setActionEventTextVisibility(vSpId, false)
-            end
-
-            local vDragOk, vDragId = binding:registerActionEvent(
-                InputAction.RWE_HUD_DRAG, mgr,
-                mgr.onHUDDragInput,
-                false, true, false, true
-            )
-            if vDragOk and vDragId then
-                mgr.hudDragVehicleEventId = vDragId
-                binding:setActionEventTextVisibility(vDragId, false)
-            end
-
-            binding:endActionEventsModification()
-
-            _rweVehicleHookActive = false
-        end
+    if record.vehicleOriginal == nil and RWEContextInput.installVehicleWrapper(record, RWE_VEHICLE_SPECS) then
         Logging.info("[RWE] InputBinding.endActionEventsModification hooked for VEHICLE context")
     end
+    if PlayerInputComponent == nil or Vehicle == nil then return end
+    -- Bind the current manager as input owner of this mission and mint fresh
+    -- per-context forwarding targets. A stacked reload copy adopts the binding.
+    RWEContextInput.activate(record, rweManager, mission, {
+        [PlayerInputComponent.INPUT_CONTEXT_NAME] = RWE_PLAYER_SPECS,
+        [Vehicle.INPUT_CONTEXT_NAME]              = RWE_VEHICLE_SPECS,
+    })
 end
 
 local function draw(mission)
@@ -1305,39 +1787,13 @@ local function loadFinished(mission, ...)
         rweManager:loadGUI()
         rweManager.guiLoaded = true
 
-        -- Direct PLAYER context registration as a safety net:
-        -- PlayerInputComponent.registerActionEvents may have already fired during
-        -- mission loading before our hook in installInputHooks() could intercept it.
-        -- This ensures bindings work on-foot without the user needing to rebind.
-        if g_inputBinding and g_RandomWorldEvents and not g_RandomWorldEvents.hudPlayerEventId then
-            local mgr = g_RandomWorldEvents
-            g_inputBinding:beginActionEventsModification(PlayerInputComponent.INPUT_CONTEXT_NAME)
-
-            local hudOk, hudId = g_inputBinding:registerActionEvent(
-                InputAction.RWE_TOGGLE_HUD, mgr, mgr.onToggleHUDInput,
-                false, true, false, true)
-            if hudOk and hudId then
-                mgr.hudPlayerEventId = hudId
-                g_inputBinding:setActionEventText(hudId, g_i18n:getText("input_RWE_TOGGLE_HUD") or "Toggle RWE HUD")
-                Logging.info("[RWE] HUD toggle registered (PLAYER context, loadFinished fallback)")
-            end
-
-            local spOk, spId = g_inputBinding:registerActionEvent(
-                InputAction.RWE_TOGGLE_SETTINGS, mgr, mgr.onToggleSettingsInput,
-                false, true, false, true)
-            if spOk and spId then
-                mgr.settingsPlayerEventId = spId
-                g_inputBinding:setActionEventText(spId, g_i18n:getText("input_RWE_TOGGLE_SETTINGS") or "RWE Settings")
-                -- Cache key hint text for the settings panel close button
-                local ok, ktext = pcall(function()
-                    return g_inputBinding:getActionDisplayName(InputAction.RWE_TOGGLE_SETTINGS)
-                end)
-                mgr.settingsKeyHint = (ok and ktext and ktext ~= "") and ktext or "Shift+O"
-                Logging.info("[RWE] Settings toggle registered (PLAYER context, loadFinished fallback)")
-            end
-
-            g_inputBinding:endActionEventsModification()
-        end
+        -- RSF-F201 post-load catch-up. PlayerInputComponent.registerActionEvents may
+        -- have fired during mission loading before installInputHooks() wrapped it.
+        -- One complete PLAYER reconciliation (HUD toggle, settings, drag when
+        -- locally owned) if the local owning player and the native PLAYER context
+        -- already exist; no context and no timer are created. The old body here
+        -- registered HUD and settings only and skipped drag.
+        RWEContextInput.catchUpPlayer(rweInputRecord(), RWE_PLAYER_SPECS)
 
         -- ── Bedrock core-API bridges (delegate-when-present) ──────────────────
         -- Register with the shared ecosystem engines when they are installed.
@@ -1348,6 +1804,13 @@ local function loadFinished(mission, ...)
         -- below then reconstructs EVENT_STATE from them (single restore path).
         if RWESettingsHubBridge then RWESettingsHubBridge.register(rweManager) end
         if RWEMasterHUDBridge   then RWEMasterHUDBridge.register(rweManager)   end
+        -- EC-6: bind MarketDynamics and install the settlement doors before the
+        -- restore block, so restore reads the real market kind. MarketDynamics
+        -- publishes its handle earlier, at its own Mission00.load.
+        if g_server ~= nil then
+            if RWEMarketBridge then RWEMarketBridge.bind() end
+            if RWESettlement then RWESettlement.install() end
+        end
         if RWEStateLedgerBridge then
             RWEStateLedgerBridge.register(rweManager)
             if RWEStateLedgerBridge.hasState() then
@@ -1356,42 +1819,148 @@ local function loadFinished(mission, ...)
         end
 
         -- Restore active event state saved before this session ended.
-        -- g_currentMission.time is valid here; we use remaining-time offsets
-        -- instead of absolute timestamps so reloads work correctly.
-        if g_RandomWorldEvents and g_RandomWorldEvents._savedActiveEvent then
-            local mgr = g_RandomWorldEvents
-            local es = mgr.EVENT_STATE
-            local savedName  = mgr._savedActiveEvent
-            local savedEvent = mgr.EVENTS[savedName]
-
-            -- Vehicle physics effects are transient and only applied at trigger
-            -- time, not on restore. Resuming one as "active" would apply nothing
-            -- yet block every new trigger ("already active"). Skip those.
-            if savedEvent ~= nil and savedEvent.category == "vehicle" then
-                Logging.info("[RWE] Not resuming transient vehicle event from save: " .. tostring(savedName))
-            else
-                es.activeEvent     = savedName
-                es.activeIntensity = (mgr._savedActiveIntensity and mgr._savedActiveIntensity > 0) and mgr._savedActiveIntensity or nil
-                es.activeCategory  = savedEvent and savedEvent.category or nil
-                es.eventStartTime  = g_currentMission.time
-                es.eventDuration   = mgr._savedRemainingMs or 0
-                es.midpointFired   = mgr._savedMidpointFired or false
-                es.cooldownUntil   = g_currentMission.time + (mgr._savedCooldownRemainingMs or 0)
-                Logging.info("[RWE] Resumed active event from save: " .. tostring(savedName))
-            end
-
-            mgr._savedActiveEvent         = nil
-            mgr._savedActiveIntensity     = nil
-            mgr._savedRemainingMs         = nil
-            mgr._savedCooldownRemainingMs = nil
-            mgr._savedMidpointFired       = nil
+        if g_server ~= nil and g_RandomWorldEvents ~= nil then
+            g_RandomWorldEvents:restoreFromSave()
         end
     end
+end
+
+--- EC-6 restore (brief 3.7.3-3.7.6). g_currentMission.time is valid here; the
+--- saved snapshot uses remaining-time offsets. Pending settlement lines are
+--- restored untouched (bound to farms at the first server update). The price
+--- status is seeded whether or not an event is restored. An arcade event, an
+--- unknown or retired event, a price event without an available market and an
+--- event an older MarketDynamics would price are not resumed. A crisis follows
+--- its saved parts, never current loans.
+function RandomWorldEvents:restoreFromSave()
+    local es = self.EVENT_STATE
+    if RWESettlement ~= nil then
+        RWESettlement.restore(self._savedSettlement)
+    end
+    self._savedSettlement = nil
+
+    local status = RWEMarketBridge ~= nil and RWEMarketBridge.seed() or "no_market"
+    local AVAILABLE = RWEMarketBridge ~= nil and RWEMarketBridge.STATUS_AVAILABLE or "available"
+    local UPDATE_NEEDED = RWEMarketBridge ~= nil and RWEMarketBridge.STATUS_UPDATE_NEEDED or "market_update_needed"
+
+    local savedName = self._savedActiveEvent
+    if savedName ~= nil then
+        local savedEvent = self.EVENTS[savedName]
+        local restore, why = true, nil
+        if savedEvent == nil then
+            restore, why = false, "no such event (retired or from another mod)"
+        elseif self:isArcadeEvent(savedEvent) then
+            restore, why = false, "arcade events are host-local and never resume"
+        elseif savedName == "economic_crisis" then
+            local hasLoan, hasPrice = self._savedCrisisHasLoan == true, self._savedCrisisHasPrice == true
+            if status == UPDATE_NEEDED then
+                restore, why = false, "MarketDynamics needs an update"
+            elseif not (hasLoan or (hasPrice and status == AVAILABLE)) then
+                restore, why = false, "no crisis part it can still deliver"
+            end
+        elseif RWEMarketBridge ~= nil and RWEMarketBridge.isPriceEvent(savedName) and status ~= AVAILABLE then
+            restore, why = false, "market price events are unavailable (" .. tostring(status) .. ")"
+        elseif status == UPDATE_NEEDED and RWEMarketBridge ~= nil and RWEMarketBridge.OLD_READER_EXTRA[savedName] == true then
+            restore, why = false, "MarketDynamics needs an update"
+        end
+
+        if restore then
+            es.activeEvent          = savedName
+            es.activeIntensity      = (self._savedActiveIntensity and self._savedActiveIntensity > 0) and self._savedActiveIntensity or nil
+            es.activeCategory       = savedEvent.category
+            es.eventStartTime       = g_currentMission.time
+            es.eventDuration        = self._savedRemainingMs or 0
+            es.midpointFired        = self._savedMidpointFired or false
+            es.cooldownUntil        = g_currentMission.time + (self._savedCooldownRemainingMs or 0)
+            es.customPriceModifiers = nil
+            es.eventData            = {}
+            if savedName == "economic_crisis" then
+                es.eventData.crisisHasLoan  = self._savedCrisisHasLoan == true
+                es.eventData.crisisHasPrice = self._savedCrisisHasPrice == true and status == AVAILABLE
+                self:chooseSummary(savedEvent)
+            elseif self._savedSummaryKey ~= nil then
+                es.eventData.summaryKey  = self._savedSummaryKey
+                es.eventData.summaryArgs = stringArgs(self._savedSummaryArgs)
+            else
+                self:chooseSummary(savedEvent)
+            end
+            if type(savedEvent.applyFlags) == "function" then
+                local ok, err = pcall(savedEvent.applyFlags, es.activeIntensity or self.events.intensity or 1)
+                if not ok then Logging.warning("[RWE] applyFlags failed on restore for %s: %s", tostring(savedName), tostring(err)) end
+            end
+            Logging.info("[RWE] Resumed active event from save: " .. tostring(savedName))
+            self:broadcastState(self:sharedState())
+        else
+            Logging.info("[RWE] Not resuming saved event %s: %s", tostring(savedName), tostring(why))
+        end
+    end
+
+    self._savedActiveEvent         = nil
+    self._savedActiveIntensity     = nil
+    self._savedRemainingMs         = nil
+    self._savedCooldownRemainingMs = nil
+    self._savedMidpointFired       = nil
+    self._savedSummaryKey          = nil
+    self._savedSummaryArgs         = nil
+    self._savedCrisisHasPrice      = nil
+    self._savedCrisisHasLoan       = nil
 end
 
 -- Hook into FS25
 Mission00.load = Utils.prependedFunction(Mission00.load, load)
 Mission00.loadMission00Finished = Utils.appendedFunction(Mission00.loadMission00Finished, loadFinished)
+
+-- ---------------------------------------------------------
+-- Realistic Farming Control Center: publish a runnable delegate.
+--
+-- MasterHUD owns the physical suite HUD keys, so the per-mod hide/move keys stay
+-- gated (no native binding). RWE_TOGGLE_HUD is surfaced here instead as a Control
+-- Center delegate: the # key hides the whole suite at once, this button hides or
+-- shows only the RWE event HUD, so a player can disable just this mod. RWE_HUD_DRAG
+-- stays a directory row only - moving the panel needs the in-world drag, not a
+-- dialog button.
+-- ---------------------------------------------------------
+local function registerControlCenterActions()
+    local registry = g_currentMission ~= nil and g_currentMission.rfActionRegistry or nil
+    if registry == nil then return end
+
+    registry.registerAction({
+        action     = "RWE_TOGGLE_SETTINGS",
+        button     = "Open",
+        -- The settings panel draws on the HUD, so the dialog steps aside.
+        closeFirst = true,
+        run = function()
+            local mgr = g_RandomWorldEvents
+            if mgr ~= nil and mgr.onToggleSettingsInput ~= nil then
+                mgr:onToggleSettingsInput()
+            end
+        end,
+    })
+
+    -- Per-mod HUD hide/show. Calls the HUD directly rather than onToggleHUDInput,
+    -- which deliberately stands down while MasterHUD owns the physical key. The
+    -- draw path honours self.visible under both MasterHUD and standalone, so the
+    -- panel actually appears/disappears; it composes with the suite-wide # hide.
+    registry.registerAction({
+        action = "RWE_TOGGLE_HUD",
+        -- Live caption: reflects the panel's current state so the row reads "Hide"
+        -- when shown and "Show" when hidden, flipping in place on each click.
+        button = function()
+            local hud = g_RandomWorldEvents ~= nil and g_RandomWorldEvents.eventHUD or nil
+            return (hud ~= nil and hud.visible) and "Hide" or "Show"
+        end,
+        run = function()
+            local hud = g_RandomWorldEvents ~= nil and g_RandomWorldEvents.eventHUD or nil
+            if hud ~= nil and hud.toggleVisibility ~= nil then
+                hud:toggleVisibility()
+                return hud.visible and "RWE HUD shown" or "RWE HUD hidden"
+            end
+        end,
+    })
+end
+
+Mission00.loadMission00Finished = Utils.appendedFunction(
+    Mission00.loadMission00Finished, registerControlCenterActions)
 FSBaseMission.update     = Utils.appendedFunction(FSBaseMission.update,     update)
 FSBaseMission.draw       = Utils.appendedFunction(FSBaseMission.draw,       draw)
 FSBaseMission.mouseEvent = Utils.prependedFunction(FSBaseMission.mouseEvent, mouseEvent)
@@ -1406,11 +1975,25 @@ if FSCareerMissionInfo and FSCareerMissionInfo.saveToXMLFile then
         FSCareerMissionInfo.saveToXMLFile,
         function(missionInfo)
             if rweManager and g_currentMission and g_currentMission:getIsServer() then
-                rweManager:saveSettings()
+                -- The only write of the current event and settlement state (EC-6).
+                rweManager:saveSettings({ savegame = true })
             end
         end
     )
     Logging.info("[RandomWorldEvents] Save hook installed on FSCareerMissionInfo:saveToXMLFile")
+end
+
+-- EC-6: a joining connection receives the full shared state, summary included, so
+-- its HUD shows the same event as everyone else without having seen the start notice.
+if FSBaseMission ~= nil and FSBaseMission.sendInitialClientState ~= nil then
+    FSBaseMission.sendInitialClientState = Utils.appendedFunction(
+        FSBaseMission.sendInitialClientState,
+        function(mission, connection, user, farm)
+            if rweManager ~= nil and g_server ~= nil and RWEEventStateEvent ~= nil and connection ~= nil then
+                pcall(RWEEventStateEvent.sendTo, connection, rweManager:sharedState())
+            end
+        end
+    )
 end
 
 Logging.info("========================================")

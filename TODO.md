@@ -29,11 +29,20 @@
 - [x] Companion surface: `RWEEconomicAPI` subsystem (getPriceModifier) is consumed by MarketDynamics; top-level reads defined.
 
 ## Docs / localization
-- [ ] Keep all 26 languages in step for any new setting.
+- [ ] Keep all 27 FS25 languages in step for any new setting (dataS/settings.xml lists 27: cs is Simplified Chinese, fc is French Canadian).
 - [ ] Update README/version on each release.
 
 ## Blocked / waiting on
-- [!] Redesign PRICE half (gated): re-home the retained price events to MarketDynamics registered price modifiers; the EffectHooks getPricePerLiter patch stays until then. Brief gate says registerPriceModifier is unbuilt; notes.md records it as built (1.2.0.9, MarketDynamics.lua:301) since 2026-07-31 - re-verify at build time, do not build ahead.
-- [!] Redesign MONEY half (gated): accrue retained money events and settle on onDayChange via TaxMod recordExpense (both directions); instant server-gated addMoney stays until then. Includes the harvest-festival money trickle.
-- [!] Economy-dial application: read + exposed via getDifficulty(), application lands with the money/price re-homes.
+- [x] Redesign PRICE and MONEY halves (EC-6, brief v1.7, branch `feat/EC-6-rwe-redesign-remaining-half`, paired with MarketDynamics #154, one release): MarketDynamics consumer modifier with status watch and refresh; statement lines settled at the next in-game day (BALANCE CHANGE, money events now pay); 4 events retired (40 -> 36); shared state and private settlement notice events; reload keeps events whole (StateLedger schema 2); bill events no longer write vehicles; governor behind Arcade Physics; steering pull removed; 27-language player text. Bench: 5 fengari specs + structural bench; 50 mutations killed.
+- [!] Economy-dial application: read + exposed via getDifficulty(), not applied. Authority 1 on HOLD (API5-H1 to H5).
 - [!] Vehicle-event server-gate exemption decision (waits on: audit answer, whether physics events skip the getIsServer gate since they are local-player physics, not farm balance). Superseded in practice by the arcadePhysics opt-in + player-vehicle scoping.
+
+## 2026-10-07 (Fred): TaxMod mirror handle (MAINTENANCE row 246)
+
+- [x] `utils/RWESettlement.lua` mirrorToTaxMod reads `g_currentMission.taxManager` first; bar `MAINT-246-taxmanager_handle_spec_test.lua`, battery `tools/test/mutate_maint246.py`, 1 of 1.
+- [~] In game (owed): TESTING row 507.
+
+## 2026-10-08 (Fred): SettingsHub bridge server guard (MAINTENANCE row 254)
+
+- [x] `integrations/RWESettingsHubBridge.lua` `applyChange`: save behind `g_server ~= nil`. Bar `MAINT-254-hub_save_server_guard_spec_test.lua`; battery `tools/test/mutate_maint254.py`, 1 of 1.
+- [~] In game (owed): TESTING row 514.

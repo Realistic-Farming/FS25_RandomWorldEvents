@@ -2,14 +2,14 @@
 -- Random World Events - Custom Settings Panel
 -- =========================================================
 -- Pure overlay renderer (no XML) for mod settings.
--- Opens with Shift+O.
+-- Opens with the RWE_TOGGLE_SETTINGS chord.
 -- Handles mouse input manually.
 -- =========================================================
 -- Author: TisonK
 -- =========================================================
 
 ---@class RWESettingsPanel
-RWESettingsPanel = {}
+RWESettingsPanel = RWESettingsPanel or {}
 local RWESettingsPanel_mt = Class(RWESettingsPanel)
 
 -- =========================================================
@@ -79,29 +79,71 @@ end
 -- Toggle & Lifecycle
 -- =========================================================
 
-function RWESettingsPanel:toggle()
-    self.isOpen = not self.isOpen
-    
+-- The suite's settings-panel triple (SoilFertilizer's SoilSettingsPanel is the
+-- reference shape): open shows the cursor and saves the camera rotation, update()
+-- re-asserts both EVERY FRAME while the panel is open, close hides the cursor. Showing
+-- the cursor once on open was not enough: the game hides it again, so the player could
+-- not reach the panel's toggles (tester blue_bally, RWE-52 check thread). The camera
+-- lock this replaces called setForcedNoCameraRotation, which does not exist in the
+-- FS25 engine (no definition in the decompiled scripts), so it never locked anything.
+
+function RWESettingsPanel:open()
+    self.isOpen = true
+    -- Save the camera rotation so update() can hold it every frame (no mouse-look
+    -- while the panel is open).
+    self.savedCamRotX, self.savedCamRotY, self.savedCamRotZ = nil, nil, nil
+    if getCamera and getRotation then
+        local ok, cam = pcall(getCamera)
+        if ok and cam and cam ~= 0 then
+            local ok2, rx, ry, rz = pcall(getRotation, cam)
+            if ok2 then
+                self.savedCamRotX, self.savedCamRotY, self.savedCamRotZ = rx, ry, rz
+            end
+        end
+    end
     if g_inputBinding and g_inputBinding.setShowMouseCursor then
-        g_inputBinding:setShowMouseCursor(self.isOpen)
+        g_inputBinding:setShowMouseCursor(true, true)
     end
-
-    -- Prevent camera movement when panel is open
-    if g_currentMission then
-        if g_currentMission.controlledVehicle then
-            g_currentMission.controlledVehicle:setForcedNoCameraRotation(self.isOpen)
-        end
-        if g_currentMission.player then
-            g_currentMission.player:setForcedNoCameraRotation(self.isOpen)
-        end
+    -- EC-6: the server re-reads the market price status when the panel opens; a change
+    -- takes the one status-change path. (Carried from the old toggle unchanged.)
+    if g_server ~= nil and RWEMarketBridge ~= nil then
+        RWEMarketBridge.watch(self.rwe)
     end
+end
 
-    if self.isOpen then
-        -- Optional: lock player movement too
-        -- if g_currentMission.player then g_currentMission.player:setDisableInput(true) end
-    else
+function RWESettingsPanel:close()
+    self.isOpen = false
+    self.savedCamRotX, self.savedCamRotY, self.savedCamRotZ = nil, nil, nil
+    if g_inputBinding and g_inputBinding.setShowMouseCursor then
+        g_inputBinding:setShowMouseCursor(false)
+    end
+    -- Settings persist when the panel closes, as before.
+    if self.rwe and self.rwe.saveSettings then
         self.rwe:saveSettings()
     end
+end
+
+--- Called every frame by RandomWorldEvents:update(). Keeps the cursor shown and the
+--- camera held while the panel is open, and closes the panel when a GUI (menu or
+--- dialog) opens on top of it.
+function RWESettingsPanel:update()
+    if not self.isOpen then return end
+    if g_inputBinding and g_inputBinding.setShowMouseCursor then
+        g_inputBinding:setShowMouseCursor(true, true)
+    end
+    if self.savedCamRotX ~= nil and getCamera and setRotation then
+        local ok, cam = pcall(getCamera)
+        if ok and cam and cam ~= 0 then
+            pcall(setRotation, cam, self.savedCamRotX, self.savedCamRotY, self.savedCamRotZ)
+        end
+    end
+    if g_gui and (g_gui:getIsGuiVisible() or g_gui:getIsDialogVisible()) then
+        self:close()
+    end
+end
+
+function RWESettingsPanel:toggle()
+    if self.isOpen then self:close() else self:open() end
 end
 
 function RWESettingsPanel:delete()
@@ -137,6 +179,32 @@ end
 -- =========================================================
 -- Drawing
 -- =========================================================
+
+--- Text for the close hint at the foot of the panel.
+--- An imperative key instruction is produced for resolver kind "live" and for
+--- nothing else: an unbound, keyboard-unbound or unavailable action, and an
+--- absent helper, name the ACTION and state the status instead. The old form
+--- printed "Press Unbound to close and save", which instructs the player to
+--- press a key that does not exist.
+---@return string
+function RWESettingsPanel:closeFooterText()
+    local rwe = self.rwe or {}
+    -- When the owner could not subscribe to INPUT_BINDINGS_CHANGED there is
+    -- nothing to invalidate its cache, so a remap would never show. Re-read on
+    -- the spot in that case: slower, and the only truthful option.
+    if rwe.settingsKeyHintSubscribed ~= true and type(rwe.refreshSettingsKeyHint) == "function" then
+        pcall(rwe.refreshSettingsKeyHint)
+    end
+    local keyHint = rwe.settingsKeyHint
+    local keyKind = rwe.settingsKeyHintKind
+    if keyKind == "live" and type(keyHint) == "string" and keyHint ~= "" then
+        return "Press " .. keyHint .. " to close and save"
+    end
+    local action = (g_i18n ~= nil and g_i18n:getText("input_RWE_TOGGLE_SETTINGS"))
+        or "RWE Settings"
+    local status = (type(keyHint) == "string" and keyHint ~= "") and keyHint or "unavailable"
+    return action .. " - " .. status
+end
 
 function RWESettingsPanel:draw()
     if not self.isOpen then return end
@@ -187,11 +255,18 @@ function RWESettingsPanel:draw()
         self:drawDebugTab(contentX, contentY, contentW)
     end
 
-    -- Close Hint (dynamic key)
-    local keyHint = (self.rwe.settingsKeyHint and self.rwe.settingsKeyHint ~= "") and self.rwe.settingsKeyHint or "Shift+O"
+    -- Close hint. Read from the owner's cache, which RandomWorldEvents refreshes
+    -- on registration and on INPUT_BINDINGS_CHANGED, so this costs nothing per
+    -- draw and still cannot go stale after a remap.
+    --
+    -- The imperative is gated on resolver kind "live" and nothing else. An
+    -- unbound, keyboard-unbound or unavailable action used to read "Press Unbound
+    -- to close and save", which tells the player to press a key that does not
+    -- exist. Every other kind now names the ACTION and states the status, with no
+    -- chord and no instruction.
     setTextAlignment(RenderText.ALIGN_CENTER)
     setTextColor(unpack(self.COLORS.TEXT_LO))
-    renderText(self.posX + self.width / 2, self.posY + 0.015, 0.012, "Press " .. keyHint .. " to close and save")
+    renderText(self.posX + self.width / 2, self.posY + 0.015, 0.012, self:closeFooterText())
 
     -- Mouse cursor (simple crosshair or dot since we manage it)
     self:drawRect(self.mousePosX - 0.002, self.mousePosY - 0.0005, 0.004, 0.001, {1,1,1,1})
@@ -254,6 +329,7 @@ function RWESettingsPanel:drawCategoriesTab(x, y, w)
 
     cy = self:drawHeader(x, cy, w, "EVENT CATEGORIES")
     cy = self:drawToggle(x, cy, w, "Economic Events", ev.economicEvents, function(v) ev.economicEvents = v end)
+    cy = self:drawPriceStatus(x, cy, w)
     cy = self:drawToggle(x, cy, w, "Vehicle Events", ev.vehicleEvents, function(v) ev.vehicleEvents = v end)
     cy = self:drawToggle(x, cy, w, "Field Events", ev.fieldEvents, function(v) ev.fieldEvents = v end)
     cy = self:drawToggle(x, cy, w, "Wildlife Events", ev.wildlifeEvents, function(v) ev.wildlifeEvents = v end)
@@ -261,9 +337,46 @@ function RWESettingsPanel:drawCategoriesTab(x, y, w)
     cy = self:drawToggle(x, cy, w, "Weather Events (WIP)", ev.weatherEvents, function(v) ev.weatherEvents = v end)
 end
 
+--- EC-6: read-only market price status under Economic Events (the server's read, or
+--- the synced copy on a client). Nothing is drawn before a client has the copy.
+local PRICE_STATUS_KEYS = {
+    available            = "rwe_price_status_available",
+    no_market            = "rwe_price_status_no_market",
+    market_prices_off    = "rwe_price_status_prices_off",
+    market_update_needed = "rwe_price_status_update_needed",
+}
+
+function RWESettingsPanel:drawInfoLine(x, y, w, key)
+    local text = (g_i18n ~= nil and g_i18n:hasText(key)) and g_i18n:getText(key) or key
+    setTextAlignment(RenderText.ALIGN_LEFT)
+    setTextBold(false)
+    setTextColor(unpack(self.COLORS.TEXT_LO))
+    local size = 0.012
+    setTextWrapWidth(w)
+    local height = getTextHeight(size, text)
+    renderText(x, y - size - 0.004, size, text)
+    setTextWrapWidth(0)
+    return y - height - 0.012
+end
+
+function RWESettingsPanel:drawPriceStatus(x, y, w)
+    local status = RWEMarketBridge ~= nil and RWEMarketBridge.displayStatus() or nil
+    local key = status ~= nil and PRICE_STATUS_KEYS[status] or nil
+    if key == nil then return y end
+    return self:drawInfoLine(x + 0.01, y, w - 0.01, key)
+end
+
 function RWESettingsPanel:drawPhysicsTab(x, y, w)
     local cy = y
     local ph = self.rwe.physics
+
+    -- EC-6: the traction governor is part of Arcade Physics. With it off, the
+    -- controls are hidden and the tab says no driving physics change applies.
+    if not self.rwe:allowsArcadePhysics() then
+        cy = self:drawHeader(x, cy, w, "PHYSICS OVERRIDE")
+        cy = self:drawInfoLine(x, cy, w, "rwe_settings_physics_arcade_off")
+        return
+    end
 
     cy = self:drawHeader(x, cy, w, "PHYSICS OVERRIDE")
     cy = self:drawToggle(x, cy, w, "Enable Physics", ph.enabled, function(v) ph.enabled = v end)
@@ -271,7 +384,7 @@ function RWESettingsPanel:drawPhysicsTab(x, y, w)
 
     cy = self:drawHeader(x, cy, w, "HANDLING")
     -- Traction governor: higher = more grip = less slowdown on loose ground
-    -- (field, mud, snow). 1.00 = neutral. Drives RWEVehiclePhysics.
+    -- (mud, snow, ice). 1.00 = neutral. Drives RWEVehiclePhysics.
     cy = self:drawSlider(x, cy, w, "Traction (loose ground)", ph.wheelGripMultiplier, 0.5, 2.0, 0.05, function(v) ph.wheelGripMultiplier = v end, "%.2fx")
 end
 

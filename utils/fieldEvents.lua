@@ -1,207 +1,104 @@
 -- =========================================================
--- Random World Events (version 2.1.3.0) - FS25
+-- Random World Events - FS25
 -- =========================================================
 -- Field events for FS25
 -- =========================================================
 -- Author: TisonK
 -- =========================================================
+-- EC-6 (brief v1.7 sections 3.1, 3.8 and 3.9.1):
+--   * The crop, fertilizer and seed events are PULL read-signals: RandomWorldEvents
+--     sets the EVENT_STATE flags and the owning systems decide what they mean. Their
+--     notices describe conditions and name no yield, fertilizer or seed percentage.
+--   * Harvest and field-sale events are price events through MarketDynamics'
+--     registered modifier, eligible only while the price status is "available".
+--   * Every field event keeps the field loop's own fields-exist check (it used to be
+--     the loop's shared canTrigger); it now travels in each event's own canTrigger.
+--   * While MarketDynamics needs an update, the crop-yield pair is ineligible: an
+--     older MarketDynamics prices those two names by itself.
+-- =========================================================
 
 local fieldEvents = {}
 
--- Server-authoritative money. addMoney must run only on the server in multiplayer,
--- or every client applies the change (desync); the engine syncs the balance back.
-local function rweAddMoney(...)
-    if g_currentMission and g_currentMission:getIsServer() then
-        g_currentMission:addMoney(...)
+local function priceAvailable()
+    return RWEMarketBridge ~= nil and RWEMarketBridge.priceStatus() == RWEMarketBridge.STATUS_AVAILABLE
+end
+
+local function oldMarketExcluded(name)
+    return RWEMarketBridge ~= nil and RWEMarketBridge.isOldMarketExcluded(name)
+end
+
+--- The field loop's fields-exist check (unchanged from the pre-EC-6 loop).
+function fieldEvents.fieldsExist()
+    if g_fieldManager then
+        local fields = g_fieldManager:getFields()
+        return fields ~= nil and #fields > 0
     end
+    return g_currentMission ~= nil
+end
+
+local function key(name, part) return "rwe_event_" .. name .. "_" .. part end
+
+local function setFlag(field, value)
+    if g_RandomWorldEvents then g_RandomWorldEvents.EVENT_STATE[field] = value end
+end
+
+--- A condition signal: sets flags, needs fields, and (for the crop-yield pair) is
+--- excluded while an older MarketDynamics would price it.
+local function signal(name, flags, ambientCount, extraCheck)
+    local e = {
+        name = name, minI = 1,
+        summaryKey = "rwe_summary_" .. name,
+        applyFlags = flags,
+        canTrigger = function()
+            if extraCheck ~= nil and not extraCheck() then return false end
+            return fieldEvents.fieldsExist()
+        end,
+        onMid = function(intensity) return { key = key(name, "mid") } end,
+        ambientMsgs = {},
+    }
+    e.func = function(intensity)
+        e.applyFlags(intensity)
+        return { key = key(name, "start") }
+    end
+    for n = 1, ambientCount do e.ambientMsgs[n] = key(name, "ambient" .. n) end
+    return e
+end
+
+--- A price event: sets flags for other readers, needs fields and an available market.
+local function priceEvent(name, summaryKey, flags, ambientCount)
+    local e = signal(name, flags, ambientCount, priceAvailable)
+    e.summaryKey = summaryKey
+    return e
 end
 
 fieldEvents.eventList = {
-    {
-        name="crop_yield_bonus", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.yieldBonus = 0.05 * intensity
-            end
-            return string.format("Perfect growing conditions! Yields up %.0f%%.", (0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return string.format("Crops still thriving — %.0f%% yield bonus active.", (0.05 * intensity) * 100)
-        end,
-        ambientMsgs = {
-            "The fields look unusually lush. Something in the air this week.",
-            "Neighbours are commenting on the colour of your crop — deep green all the way.",
-            "Agronomist says conditions are near perfect. Make the most of it.",
-            "Rain and sun in just the right balance — the stalks are heavy.",
-        },
-    },
-
-    {
-        name="crop_yield_penalty", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.yieldMalus = 0.05 * intensity
-            end
-            return string.format("Poor conditions — yields down %.0f%%.", (0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return string.format("Conditions haven't improved — still %.0f%% below normal yield.", (0.05 * intensity) * 100)
-        end,
-        ambientMsgs = {
-            "The crop looks thinner than last season. Hard to say why.",
-            "Soil moisture levels are off. The plants are stressed.",
-            "Agronomist flagged a nutrient issue — yields will suffer this run.",
-        },
-    },
-
-    {
-        name="fertilizer_bonus", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.fertilizerBonus = 0.10 + 0.05 * intensity
-            end
-            return string.format("Nutrient surge! Fertilizer %.0f%% more effective.", (0.10 + 0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return "Soil is absorbing fertilizer exceptionally well — keep applying."
-        end,
-        ambientMsgs = {
-            "The nitrogen is working overtime today. Fields are drinking it up.",
-            "Soil temp is ideal for nutrient uptake — spreader is earning its keep.",
-        },
-    },
-
-    {
-        name="fertilizer_penalty", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.fertilizerMalus = 0.10 + 0.05 * intensity
-            end
-            return string.format("Soil lock-up — fertilizer %.0f%% less effective.", (0.10 + 0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return "Soil chemistry still fighting the fertilizer. Efficiency remains low."
-        end,
-        ambientMsgs = {
-            "pH is off in the top fields — nutrients aren't binding properly.",
-            "Heavy rain is washing fertilizer down before it can be absorbed.",
-        },
-    },
-
-    {
-        name="seed_growth_bonus", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.seedBonus = 0.10 + 0.05 * intensity
-            end
-            return string.format("Fast germination! Seeds %.0f%% more productive.", (0.10 + 0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return "Seedlings are pushing up fast — this batch is vigorous."
-        end,
-        ambientMsgs = {
-            "Germination rates are unusually high this planting. Very few gaps.",
-            "The new batch of seeds is showing exceptional vigour in the rows.",
-        },
-    },
-
-    {
-        name="seed_growth_penalty", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.seedMalus = 0.10 + 0.05 * intensity
-            end
-            return string.format("Poor germination — %.0f%% growth setback.", (0.10 + 0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return "Patchy emergence across the field — growth penalty ongoing."
-        end,
-        ambientMsgs = {
-            "Gaps in the rows. The cold snap hit germination hard.",
-            "A few patches didn't take at all. Replanting would cost more than it's worth.",
-        },
-    },
-
-    {
-        name="harvest_bonus", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.harvestBonus = 0.10 + 0.05 * intensity
-            end
-            return string.format("Premium harvest! Sell prices up %.0f%%.", (0.10 + 0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return string.format("Harvest premium still active — %.0f%% above market rate.", (0.10 + 0.05 * intensity) * 100)
-        end,
-        ambientMsgs = {
-            "Quality assessors at the silo are grading everything top tier today.",
-            "Buyers are paying above the board rate for this quality of grain.",
-            "Moisture content is perfect — driers are sitting idle. Straight to storage.",
-        },
-    },
-
-    {
-        name="harvest_penalty", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.harvestMalus = 0.10 + 0.05 * intensity
-            end
-            return string.format("Low-grade harvest — prices down %.0f%%.", (0.10 + 0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return string.format("Quality still down — %.0f%% price penalty continuing.", (0.10 + 0.05 * intensity) * 100)
-        end,
-        ambientMsgs = {
-            "The silo is rejecting some loads — protein content is too low.",
-            "Moisture is high after the rain. The drier is running non-stop.",
-            "Market graders are being strict today. Even decent grain is marked down.",
-        },
-    },
-
-    {
-        name="field_sale_bonus", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.fieldSaleBonus = 0.05 * intensity
-            end
-            return string.format("Regional demand spike! Field sale prices up %.0f%%.", (0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return string.format("Demand is holding — still %.0f%% above normal at the sell point.", (0.05 * intensity) * 100)
-        end,
-        ambientMsgs = {
-            "The regional mill is calling farmers directly — they need volume now.",
-            "Word from the co-op: they're short on stocks and prices are up.",
-        },
-    },
-
-    {
-        name="field_sale_penalty", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.fieldSaleMalus = 0.05 * intensity
-            end
-            return string.format("Market glut — field sale prices down %.0f%%.", (0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return string.format("Oversupply continues — %.0f%% below normal at the silo.", (0.05 * intensity) * 100)
-        end,
-        ambientMsgs = {
-            "Silos in the region are full — buyers are being picky about price.",
-            "Import prices dropped overnight. Domestic grain has nowhere to go.",
-        },
-    },
+    signal("crop_yield_bonus",
+        function(i) setFlag("yieldBonus", 0.05 * i) end, 4,
+        function() return not oldMarketExcluded("crop_yield_bonus") end),
+    signal("crop_yield_penalty",
+        function(i) setFlag("yieldMalus", 0.05 * i) end, 3,
+        function() return not oldMarketExcluded("crop_yield_penalty") end),
+    signal("fertilizer_bonus",
+        function(i) setFlag("fertilizerBonus", 0.10 + 0.05 * i) end, 2),
+    signal("fertilizer_penalty",
+        function(i) setFlag("fertilizerMalus", 0.10 + 0.05 * i) end, 2),
+    signal("seed_growth_bonus",
+        function(i) setFlag("seedBonus", 0.10 + 0.05 * i) end, 2),
+    signal("seed_growth_penalty",
+        function(i) setFlag("seedMalus", 0.10 + 0.05 * i) end, 2),
+    priceEvent("harvest_bonus", "rwe_summary_price_rise",
+        function(i) setFlag("harvestBonus", 0.10 + 0.05 * i) end, 3),
+    priceEvent("harvest_penalty", "rwe_summary_price_fall",
+        function(i) setFlag("harvestMalus", 0.10 + 0.05 * i) end, 3),
+    priceEvent("field_sale_bonus", "rwe_summary_price_rise",
+        function(i) setFlag("fieldSaleBonus", 0.05 * i) end, 2),
+    priceEvent("field_sale_penalty", "rwe_summary_price_fall",
+        function(i) setFlag("fieldSaleMalus", 0.05 * i) end, 2),
 }
 
 -- =====================
 -- REGISTER FIELD EVENTS
 -- =====================
--- The crop/fertilizer/seed-growth events are PULL read-signals in the redesign:
--- RWE sets the EVENT_STATE flags and the owning sim system (SoilFertilizer /
--- CropDisease) reads them via getActiveEvent / getSubsystem("field") and applies
--- its own model. The old per-60-second money trickle for these flags is CUT
--- (cash-from-nowhere); harvest and field-sale price effects stay in EffectHooks
--- until the MarketDynamics re-home lands (the gated price half).
 local function registerFieldEvents()
     if not g_RandomWorldEvents or not g_RandomWorldEvents.registerEvent then
         Logging.warning("[FieldEvents] g_RandomWorldEvents not available yet")
@@ -209,22 +106,22 @@ local function registerFieldEvents()
     end
 
     for _, e in ipairs(fieldEvents.eventList) do
+        local def = e
         g_RandomWorldEvents:registerEvent({
-            name         = e.name,
-            category     = "field",
-            weight       = 1,
-            duration     = { min = 30, max = 120 },
-            minIntensity = e.minI,
-            canTrigger   = function()
-                if g_fieldManager then
-                    local fields = g_fieldManager:getFields()
-                    return fields ~= nil and #fields > 0
-                end
-                return g_currentMission ~= nil
-            end,
-            onStart     = e.func,
-            onMid       = e.onMid,
-            ambientMsgs = e.ambientMsgs,
+            name            = def.name,
+            category        = "field",
+            weight          = 1,
+            duration        = { min = 30, max = 120 },
+            minIntensity    = def.minI,
+            gate            = def.gate,
+            applyFlags      = def.applyFlags,
+            summaryKey      = def.summaryKey,
+            chooseSummary   = def.chooseSummary,
+            ambientVariants = def.ambientVariants,
+            canTrigger      = function() return g_currentMission ~= nil and (def.canTrigger == nil or def.canTrigger()) end,
+            onStart         = def.func,
+            onMid           = def.onMid,
+            ambientMsgs     = def.ambientMsgs,
             onEnd = function()
                 if g_RandomWorldEvents then
                     local s = g_RandomWorldEvents.EVENT_STATE

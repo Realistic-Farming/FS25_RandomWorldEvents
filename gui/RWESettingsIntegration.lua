@@ -16,7 +16,7 @@
 -- Author: TisonK
 -- =========================================================
 
-RWESettingsIntegration = {}
+RWESettingsIntegration = RWESettingsIntegration or {}
 RWESettingsIntegration_mt = Class(RWESettingsIntegration)
 
 -- Dropdown option tables
@@ -128,7 +128,7 @@ function RWESettingsIntegration:addSettingsElements(frame)
     frame.rwe_showHUD = RWESettingsIntegration:addBinaryOption(
         frame, "onRWEShowHUDChanged",
         g_i18n:getText("rwe_show_hud_short") or "Show HUD Panel",
-        g_i18n:getText("rwe_show_hud_long")  or "Show the World Events HUD overlay (F3 to toggle in-game)"
+        g_i18n:getText("rwe_show_hud_long")  or "Show the World Events HUD overlay (toggle key assignable in Controls)"
     )
 
     frame.rwe_hudScale = RWESettingsIntegration:addMultiTextOption(
@@ -399,6 +399,10 @@ function RWESettingsIntegration:updateSettingsUI(frame)
     if frame.rwe_physicsEnabled then
         frame.rwe_physicsEnabled:setIsChecked(ph.enabled == true, false, false)
     end
+    -- EC-6: the traction governor is part of Arcade Physics; its controls are
+    -- disabled while Arcade Physics is off.
+    RWESettingsIntegration._lastFrame = frame
+    RWESettingsIntegration.setGripControlsEnabled(frame, ev.arcadePhysics == true)
     if frame.rwe_wheelGrip then
         frame.rwe_wheelGrip:setState(RWESettingsIntegration:findValueIndex(
             RWESettingsIntegration.physicsMultValues, ph.wheelGripMultiplier or 1.0))
@@ -414,6 +418,13 @@ function RWESettingsIntegration:updateSettingsUI(frame)
     end
     if frame.rwe_debugMode then
         frame.rwe_debugMode:setIsChecked(db and db.enabled == true, false, false)
+    end
+end
+
+function RWESettingsIntegration.setGripControlsEnabled(frame, enabled)
+    if frame == nil then return end
+    for _, el in ipairs({ frame.rwe_physicsEnabled, frame.rwe_wheelGrip }) do
+        if type(el.setDisabled) == "function" then el:setDisabled(not enabled) end
     end
 end
 
@@ -460,7 +471,9 @@ function RWESettingsIntegration:onRWECooldownChanged(state)
 end
 
 function RWESettingsIntegration:onRWEArcadePhysicsChanged(state)
-    applyEventSetting("arcadePhysics", state == BinaryOptionElement.STATE_RIGHT)
+    local enabled = state == BinaryOptionElement.STATE_RIGHT
+    applyEventSetting("arcadePhysics", enabled)
+    RWESettingsIntegration.setGripControlsEnabled(RWESettingsIntegration._lastFrame, enabled)
 end
 
 function RWESettingsIntegration:onRWENotificationsChanged(state)

@@ -10,21 +10,18 @@
 -- USAGE (third-party mod):
 --   if RWEEconomicAPI and RWEEconomicAPI.registerEvent then
 --     RWEEconomicAPI:registerEvent({
---       name        = "myMod_corn_subsidy",
+--       name        = "myMod_corn_demand",
 --       minIntensity = 1,
---       ambientMsgs = {
---         "Grain buyers are flooding the market!",
---         "Export terminals are overwhelmed with orders.",
---       },
 --       func        = function(intensity)
---         g_currentMission:addMoney(intensity * 1000, ...)
---         return "Corn subsidy! +" .. intensity * 1000 .. "€"
---       end,
---       onMid = function(intensity)
---         return "Subsidies are peaking — sell now!"
+--         -- Server only; moves the corn selling price at the next market update
+--         -- while this event runs (needs MarketDynamics).
+--         RWEEconomicAPI:setPriceModifier("MAIZE", 1.10)
+--         return "Corn buyers are busy: selling prices rise at the next market update."
 --       end,
 --     })
 --   end
+-- EC-6: RandomWorldEvents never writes money directly; money events post statement
+-- lines at the next in-game day through RandomWorldEvents' own settlement.
 -- =========================================================
 
 ---@class RWEEconomicAPI
@@ -51,18 +48,58 @@ end
 -- CATEGORY-SPECIFIC: PRICE MODIFIER
 -- =====================
 
---- Set a custom crop price multiplier for a duration (third-party hook).
---- Pass nil for durationMin to apply indefinitely until the active event ends.
----@param cropType any   FillType constant or string key
----@param multiplier number  price scale factor (e.g. 1.20 = +20%)
----@param durationMin number|nil  duration in in-game minutes; nil = until event ends
+--- Resolve a crop key to a fill type index: a numeric index is accepted when the
+--- fill type manager knows it, a string is converted by name. Anything else is nil.
+local function fillTypeIndexOf(cropType)
+    if type(cropType) == "number" then
+        if g_fillTypeManager ~= nil and type(g_fillTypeManager.getFillTypeByIndex) == "function"
+           and g_fillTypeManager:getFillTypeByIndex(cropType) == nil then
+            return nil
+        end
+        return cropType
+    end
+    if type(cropType) == "string" and g_fillTypeManager ~= nil and type(g_fillTypeManager.getFillTypeIndexByName) == "function" then
+        return g_fillTypeManager:getFillTypeIndexByName(cropType)
+    end
+    return nil
+end
+
+--- Set a custom sell-price multiplier for one fill type while the current event runs
+--- (third-party hook). EC-6: server only; the key is a fill type index, or a name
+--- converted to one; anything else is refused. The entry is read by RandomWorldEvents'
+--- registered MarketDynamics modifier, so it moves selling-point prices at the next
+--- market update and only where MarketDynamics prices are available. It lives only
+--- for the event that is active when it is set: the activation reset and the shared
+--- end path both clear the table, so a custom term never outlives its event. With no
+--- active event it is refused. Entries are not saved.
+---@param cropType any   fill type index or name
+---@param multiplier number  price scale factor (e.g. 1.20 = +20%), must be > 0
+---@param durationMin number|nil  in-game minutes; nil = until the event ends
+---@return boolean set
 function RWEEconomicAPI:setPriceModifier(cropType, multiplier, durationMin)
     if not g_RandomWorldEvents then
         Logging.warning("[RWEEconomicAPI] setPriceModifier: core not available")
-        return
+        return false
+    end
+    if g_server == nil then
+        Logging.warning("[RWEEconomicAPI] setPriceModifier: server only, ignored on a client")
+        return false
+    end
+    local state = g_RandomWorldEvents.EVENT_STATE
+    if state.activeEvent == nil then
+        Logging.warning("[RWEEconomicAPI] setPriceModifier: no active event, ignored (a custom term lives only for the event it is set during)")
+        return false
+    end
+    local index = fillTypeIndexOf(cropType)
+    if index == nil then
+        Logging.warning("[RWEEconomicAPI] setPriceModifier: unknown fill type '%s', ignored", tostring(cropType))
+        return false
+    end
+    if type(multiplier) ~= "number" or multiplier ~= multiplier or multiplier <= 0 or multiplier == math.huge then
+        Logging.warning("[RWEEconomicAPI] setPriceModifier: multiplier must be a finite number above 0, ignored")
+        return false
     end
 
-    local state = g_RandomWorldEvents.EVENT_STATE
     if not state.customPriceModifiers then
         state.customPriceModifiers = {}
     end
@@ -72,24 +109,26 @@ function RWEEconomicAPI:setPriceModifier(cropType, multiplier, durationMin)
         expiresAt = g_currentMission.time + (durationMin * 60000)
     end
 
-    state.customPriceModifiers[cropType] = { multiplier = multiplier, expiresAt = expiresAt }
+    state.customPriceModifiers[index] = { multiplier = multiplier, expiresAt = expiresAt }
 
     Logging.info(string.format(
-        "[RWEEconomicAPI] Price modifier set: crop=%s multiplier=%.2f duration=%s min",
-        tostring(cropType), multiplier, tostring(durationMin)
+        "[RWEEconomicAPI] Price modifier set: fillType=%s multiplier=%.2f duration=%s min",
+        tostring(index), multiplier, tostring(durationMin)
     ))
+    return true
 end
 
---- Retrieve the active price modifier for a given crop type, or nil if none/expired.
+--- Retrieve the active price modifier for a fill type (index or name), or nil if none/expired.
 ---@param cropType any
 ---@return number|nil
 function RWEEconomicAPI:getPriceModifier(cropType)
     if not g_RandomWorldEvents then return nil end
     local mods = g_RandomWorldEvents.EVENT_STATE.customPriceModifiers
-    if not mods or not mods[cropType] then return nil end
-    local mod = mods[cropType]
+    local index = fillTypeIndexOf(cropType)
+    if not mods or index == nil or not mods[index] then return nil end
+    local mod = mods[index]
     if mod.expiresAt and g_currentMission and g_currentMission.time > mod.expiresAt then
-        mods[cropType] = nil
+        mods[index] = nil
         return nil
     end
     return mod.multiplier

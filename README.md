@@ -41,7 +41,7 @@ All settings save per-savegame, so each farm can have its own configuration.
 - **45+ unique events** across 4 active categories
 - Configurable **frequency** (1-10), **intensity** (1-5), and **cooldown** (1-240 min)
 - Events trigger automatically on a probability timer during gameplay
-- Manual trigger via **F9** or the `rweTest` console command
+- Manual trigger via the `rweTest` console command
 - Per-category enable/disable toggles (economic, vehicle, field, special)
 - In-game HUD notifications and warnings when events start and end
 - Single active event at a time - a cooldown prevents event spam
@@ -130,8 +130,9 @@ Open the in-game console (`` ` `` key) and type any of these:
 
 | Key | Action |
 |-----|--------|
-| **F9** | Force-trigger a random event |
-| **F3** | Open settings screen *(coming soon)* |
+| `rweTest` (console command) | Force-trigger a random event |
+| *Toggle World Events HUD* action | Show/hide the event HUD (no default key - assign one under Options > Controls > Mods) |
+| *Toggle World Events Settings* action | Open the settings screen (no default key - assign one under Options > Controls > Mods) |
 
 ---
 
@@ -169,7 +170,6 @@ Open the in-game console (`` ` `` key) and type any of these:
 - Complete wildlife/animal event category
 - Complete weather event category
 - Multiplayer-safe money synchronization
-- Full F3 settings screen keybind
 - Event history log viewable in-game
 - Weighted event selection (rare vs. common events)
 

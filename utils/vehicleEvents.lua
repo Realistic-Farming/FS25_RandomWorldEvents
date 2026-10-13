@@ -10,33 +10,18 @@
 -- =========================================================
 -- Author: TisonK
 -- =========================================================
+-- EC-6 (brief v1.7 sections 3.3, 3.4 and 3.8):
+--   * vehicle_accident and vehicle_repair_bill no longer write any vehicle. Each
+--     queues one invoice line per eligible farm (a farm with a motorized vehicle, or
+--     a farm with a machine above 10 percent damage), settled at the next in-game
+--     day. The notices describe an invoice; no machine was damaged or repaired.
+--   * vehicle_speed_boost and vehicle_engine_trouble are arcade physics events:
+--     host-local, eligible only with Arcade Physics on and the host player in a
+--     vehicle on a listen server. Their factors are stored once in eventData at
+--     activation, and their notices say the direction only.
+-- =========================================================
 
 local vehicleEvents = {}
-
--- Server-authoritative money. addMoney must run only on the server in multiplayer,
--- or every client applies the change (desync); the engine syncs the balance back.
-local function rweAddMoney(...)
-    if g_currentMission and g_currentMission:getIsServer() then
-        g_currentMission:addMoney(...)
-    end
-end
-
-vehicleEvents.getFarmId = function()
-    -- FS25: the player's farm comes from g_localPlayer, not the old
-    -- g_currentMission.player (nil here) - which returned 0 and sent every
-    -- repair charge to "no farm" while making getAllVehicles match nothing.
-    if g_localPlayer ~= nil and type(g_localPlayer.farmId) == "number" and g_localPlayer.farmId > 0 then
-        return g_localPlayer.farmId
-    end
-    if g_currentMission ~= nil and g_currentMission.getFarmId ~= nil then
-        local ok, fid = pcall(function() return g_currentMission:getFarmId() end)
-        if ok and type(fid) == "number" and fid > 0 then return fid end
-    end
-    if g_currentMission ~= nil and g_currentMission.player ~= nil and g_currentMission.player.farmId then
-        return g_currentMission.player.farmId
-    end
-    return 0
-end
 
 vehicleEvents.getVehicle = function()
     -- FS25: the player's vehicle comes from g_localPlayer:getCurrentVehicle()
@@ -45,18 +30,6 @@ vehicleEvents.getVehicle = function()
     local cur = (player ~= nil and player.getCurrentVehicle ~= nil) and player:getCurrentVehicle() or nil
     local ctrl = (g_currentMission ~= nil) and g_currentMission.controlledVehicle or nil
     return cur or ctrl
-end
-
-vehicleEvents.getAllVehicles = function()
-    local vehicles = {}
-    if g_currentMission and g_currentMission.vehicles then
-        for _, vehicle in pairs(g_currentMission.vehicles) do
-            if vehicle and vehicle.getOwnerFarmId and vehicle:getOwnerFarmId() == vehicleEvents.getFarmId() then
-                table.insert(vehicles, vehicle)
-            end
-        end
-    end
-    return vehicles
 end
 
 -- Convenience: remember which vehicle an active physics event touched so
@@ -78,34 +51,34 @@ vehicleEvents.restoreTrackedPhysics = function()
     end
 end
 
--- =====================
--- VEHICLE DAMAGE SYSTEM (real: Wearable API)
--- Note: vehicle damage also reduces engine torque and top speed natively
--- (getTorqueCurveValue / getSpeedLimit apply a damage factor), so an
--- accident genuinely weakens the machine - no faked power loss needed.
--- =====================
-vehicleEvents.applyVehicleDamage = function(vehicle, damagePercentage)
-    if not vehicle then return end
-    local damageAmount = damagePercentage / 100
-    if vehicle.addDamageAmount then
-        vehicle:addDamageAmount(damageAmount)
-    elseif vehicle.spec_wearable then
-        local spec = vehicle.spec_wearable
-        local newDamage = math.min((spec.damage or 0) + damageAmount, 1)
-        spec.damage = newDamage
-        spec.damageByCurve = math.max(newDamage - 0.3, 0) / 0.7
-    end
+local function key(name, part) return "rwe_event_" .. name .. "_" .. part end
+local function title(name) return "rwe_event_" .. name .. "_title" end
+
+local function ambients(name, count)
+    local out = {}
+    for n = 1, count do out[n] = key(name, "ambient" .. n) end
+    return out
 end
 
-vehicleEvents.repairVehicleDamage = function(vehicle)
-    if not vehicle or not vehicle.repair then return 0 end
-    vehicle:repair()
-    local repairCost = math.random(500, 2000)
-    local farmId = vehicleEvents.getFarmId()
-    if farmId > 0 and g_currentMission and g_currentMission.addMoney then
-        rweAddMoney(-repairCost, farmId, MoneyType.VEHICLE_REPAIR, true, true)
+--- The host-local arcade eligibility (the core applies the same rule to every
+--- arcade event; each event also carries it as its own canTrigger).
+local function arcadeEligible()
+    return g_RandomWorldEvents ~= nil and g_RandomWorldEvents:arcadeEligible()
+end
+
+--- Store the arcade factors once, at activation, and apply them to the host
+--- player's vehicle. Every later line derives from the stored values.
+local function applyArcadeFactors(speedScale, accelScale)
+    local d = g_RandomWorldEvents ~= nil and g_RandomWorldEvents.EVENT_STATE.eventData or nil
+    if type(d) == "table" then
+        d.speedScale = speedScale
+        d.accelScale = accelScale
     end
-    return repairCost
+    local vehicle = vehicleEvents.getVehicle()
+    if vehicle and RWEVehiclePhysics then
+        RWEVehiclePhysics.applyEventMods(vehicle, { speedScale = speedScale, accelScale = accelScale })
+        vehicleEvents.trackPhysics(vehicle)
+    end
 end
 
 -- =====================
@@ -116,77 +89,55 @@ vehicleEvents.eventList = {
         name = "vehicle_speed_boost",
         minI = 1,
         gate = "arcadePhysics",
+        canTrigger = arcadeEligible,
         func = function(intensity)
-            local vehicle = vehicleEvents.getVehicle()
-            if vehicle and RWEVehiclePhysics then
-                local multiplier = 1.25 + (intensity * 0.12)  -- ~1.37x .. 1.85x top speed
-                -- speedScale raises the real top speed (taller top gear);
-                -- accelScale adds extra pull off the line.
-                local accelBoost = 1.20 + (intensity * 0.06)  -- ~1.26x .. 1.50x acceleration
-                RWEVehiclePhysics.applyEventMods(vehicle, { speedScale = multiplier, accelScale = accelBoost })
-                vehicleEvents.trackPhysics(vehicle)
-                return string.format("Turbo day! Your machine is running %.0f%% faster.", (multiplier - 1) * 100)
-            end
-            return "Speed boost available - climb into a vehicle to feel it!"
+            -- speedScale raises the real top speed (taller top gear);
+            -- accelScale adds extra pull off the line.
+            applyArcadeFactors(1.25 + (intensity * 0.12), 1.20 + (intensity * 0.06))
+            return { key = key("vehicle_speed_boost", "start") }
         end,
-        onMid = function(intensity)
-            local mult = 1.2 + intensity * 0.1
-            return string.format("Still running hot! +%.0f%% speed boost continues.", (mult - 1) * 100)
-        end,
-        ambientMsgs = {
-            "The engine note is higher than usual - everything feels responsive today.",
-            "You're covering ground fast. The fields won't know what hit them.",
-            "Neighbours are asking what you put in the tank. It's a good day to work.",
-        },
+        onMid = function(intensity) return { key = key("vehicle_speed_boost", "mid") } end,
+        endNotice = { key = key("vehicle_speed_boost", "end") },
+        ambientMsgs = ambients("vehicle_speed_boost", 3),
     },
 
     {
         name = "vehicle_accident",
         minI = 1,
-        func = function(intensity)
-            local vehicle = vehicleEvents.getVehicle()
-            if vehicle then
-                local damagePercent = 10 + (intensity * 5)
-                vehicleEvents.applyVehicleDamage(vehicle, damagePercent)
-                local repairCost = math.random(500, 1500) * intensity
-                local farmId = vehicleEvents.getFarmId()
-                if farmId > 0 and g_currentMission and g_currentMission.addMoney then
-                    rweAddMoney(-repairCost, farmId, MoneyType.VEHICLE_REPAIR, true, true)
-                end
-                if g_RandomWorldEvents then
-                    g_RandomWorldEvents.EVENT_STATE.vehicleAccident = { vehicle = vehicle, damagePercent = damagePercent }
-                end
-                return string.format("Fender bender! %.0f%% damage - EUR %d repair bill already submitted.", damagePercent, repairCost)
-            end
-            return "Something scraped past, but nobody was in a vehicle."
+        summaryKey = "rwe_summary_bill_accident",
+        canTrigger = function()
+            return RWESettlement ~= nil and RWESettlement.anyFarm(function(farm) return RWESettlement.farmHasMotorized(farm.farmId) end)
         end,
-        ambientMsgs = {
-            "The dent is nagging at you. Should've watched that gatepost.",
-            "The machine feels a touch down on power since the knock. Workshop soon.",
-        },
+        func = function(intensity)
+            if RWESettlement ~= nil then
+                RWESettlement.queueForFarms("vehicle_accident", "VEHICLE_REPAIR", title("vehicle_accident"), function(farm)
+                    if not RWESettlement.farmHasMotorized(farm.farmId) then return nil end
+                    return -(math.random(500, 1500) * intensity)
+                end)
+            end
+            return { key = key("vehicle_accident", "start") }
+        end,
+        ambientMsgs = ambients("vehicle_accident", 2),
     },
 
     {
         name = "vehicle_repair_bill",
         minI = 1,
+        summaryKey = "rwe_summary_bill_inspection",
+        canTrigger = function()
+            return RWESettlement ~= nil and RWESettlement.anyFarm(function(farm) return #RWESettlement.farmDamagedVehicles(farm.farmId) > 0 end)
+        end,
         func = function(intensity)
-            local vehicles = vehicleEvents.getAllVehicles()
-            local totalCost = 0
-            local repairedCount = 0
-            for _, vehicle in ipairs(vehicles) do
-                if vehicle and vehicle.getDamageAmount then
-                    local damage = vehicle:getDamageAmount() or 0
-                    if damage > 0.1 then
-                        local cost = vehicleEvents.repairVehicleDamage(vehicle)
-                        totalCost = totalCost + cost
-                        repairedCount = repairedCount + 1
-                    end
-                end
+            if RWESettlement ~= nil then
+                RWESettlement.queueForFarms("vehicle_repair_bill", "VEHICLE_REPAIR", title("vehicle_repair_bill"), function(farm)
+                    local damaged = RWESettlement.farmDamagedVehicles(farm.farmId)
+                    if #damaged == 0 then return nil end
+                    local total = 0
+                    for _ = 1, #damaged do total = total + math.random(500, 2000) end
+                    return -total
+                end)
             end
-            if repairedCount > 0 then
-                return string.format("%d machine%s serviced. Total bill: EUR %d.", repairedCount, repairedCount > 1 and "s" or "", totalCost)
-            end
-            return "Service van arrived - all machines already in top shape."
+            return { key = key("vehicle_repair_bill", "start") }
         end,
     },
 
@@ -194,27 +145,16 @@ vehicleEvents.eventList = {
         name = "vehicle_engine_trouble",
         minI = 2,
         gate = "arcadePhysics",
+        canTrigger = arcadeEligible,
         func = function(intensity)
-            local vehicle = vehicleEvents.getVehicle()
-            if vehicle and RWEVehiclePhysics then
-                -- Real "limp home": cut acceleration hard (sluggish engine)
-                -- and shave the top speed. Both are engine-respected levers.
-                local accelScale = math.max(0.35, 1 - (0.12 * intensity))
-                local speedScale = math.max(0.5,  1 - (0.06 * intensity))
-                RWEVehiclePhysics.applyEventMods(vehicle, { accelScale = accelScale, speedScale = speedScale })
-                vehicleEvents.trackPhysics(vehicle)
-                return string.format("Engine misfiring! Down on power - limp it home.")
-            end
-            return "Engine warning light came on, but no vehicle is running."
+            -- Real "limp home": cut acceleration hard (sluggish engine)
+            -- and shave the top speed. Both are engine-respected levers.
+            applyArcadeFactors(math.max(0.5, 1 - (0.06 * intensity)), math.max(0.35, 1 - (0.12 * intensity)))
+            return { key = key("vehicle_engine_trouble", "start") }
         end,
-        onMid = function(intensity)
-            return "Engine still struggling - sluggish and slow. Get to the workshop soon."
-        end,
-        ambientMsgs = {
-            "The revs are hunting. Something isn't right under the hood.",
-            "Black smoke from the exhaust. Don't push it too hard.",
-            "It crawls away from every stop. Power feels gone.",
-        },
+        onMid = function(intensity) return { key = key("vehicle_engine_trouble", "mid") } end,
+        endNotice = { key = key("vehicle_engine_trouble", "end") },
+        ambientMsgs = ambients("vehicle_engine_trouble", 3),
     },
 
 }
@@ -229,27 +169,28 @@ local function registerVehicleEvents()
     end
 
     for _, e in ipairs(vehicleEvents.eventList) do
+        local def = e
         g_RandomWorldEvents:registerEvent({
-            name         = e.name,
-            category     = "vehicle",
-            weight       = 1,
-            duration     = e.dur or { min = 10, max = 30 },
-            minIntensity = e.minI,
-            canTrigger   = function() return g_currentMission ~= nil end,
-            onStart      = e.func,
-            onMid        = e.onMid,
-            ambientMsgs  = e.ambientMsgs,
+            name            = def.name,
+            category        = "vehicle",
+            weight          = 1,
+            duration        = def.dur or { min = 10, max = 30 },
+            minIntensity    = def.minI,
+            gate            = def.gate,
+            applyFlags      = def.applyFlags,
+            summaryKey      = def.summaryKey,
+            chooseSummary   = def.chooseSummary,
+            ambientVariants = def.ambientVariants,
+            canTrigger      = function() return g_currentMission ~= nil and (def.canTrigger == nil or def.canTrigger()) end,
+            onStart         = def.func,
+            onMid           = def.onMid,
+            ambientMsgs     = def.ambientMsgs,
             onEnd = function()
-                if g_RandomWorldEvents then
-                    local d = g_RandomWorldEvents.EVENT_STATE
-
-                    -- Restore any vehicle physics modifiers (speed / engine)
-                    -- applied by this event.
-                    vehicleEvents.restoreTrackedPhysics()
-
-                    d.vehicleAccident = nil
-                end
-                return nil
+                -- Restore any vehicle physics modifiers (speed / engine)
+                -- applied by this event.
+                vehicleEvents.restoreTrackedPhysics()
+                -- Arcade events end with a host-local notice (the core never sends it).
+                return def.endNotice
             end
         })
     end

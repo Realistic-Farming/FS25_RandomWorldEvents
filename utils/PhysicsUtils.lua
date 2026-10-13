@@ -57,11 +57,10 @@ function PhysicsUtils:showPhysicsInfo(vehicle)
     local speedScale = state and state.eventSpeedScale or 1
     local accelScale = state and state.eventAccelScale or 1
     local topScale   = state and state.eventTopScale   or 1
-    local steerPull  = state and state.eventSteerPull  or 0
 
     Logging.info(string.format(
-        "[PhysicsUtils] %s | %.1f km/h | surface: %s | speedx%.2f accelx%.2f topx%.2f steer%+.2f",
-        vehicleName, speedKmh, surface, speedScale, accelScale, topScale, steerPull))
+        "[PhysicsUtils] %s | %.1f km/h | surface: %s | speedx%.2f accelx%.2f topx%.2f",
+        vehicleName, speedKmh, surface, speedScale, accelScale, topScale))
 end
 
 -- =====================

@@ -1,7 +1,7 @@
 -- =========================================================
 -- Random World Events (version 2.1.3.0) - FS25
 -- =========================================================
--- EffectHooks — patches FS25 class methods to apply EVENT_STATE
+-- EffectHooks: patches FS25 class methods to apply EVENT_STATE
 -- flags as real gameplay modifiers.
 --
 -- Installed at file-load time.  Uses a global sentinel so the
@@ -18,123 +18,89 @@ end
 _G.RWE_EffectHooks_installed = true
 
 -- =====================
--- ECONOMY MANAGER HOOK
--- Patches EconomyManager.getPricePerLiter to apply EVENT_STATE
--- price multipliers whenever the player sells goods.
---
--- FS25 signature: getPricePerLiter(fillTypeIndex, supplyDemandPressure, ...)
--- fillTypeIndex is captured so per-crop modifiers from RWEEconomicAPI can be applied.
+-- PRICE PATH (EC-6)
+-- The EconomyManager.getPricePerLiter patch that lived here is gone. Selling
+-- stations price through SellingStation:getEffectiveFillTypePrice and never called
+-- it; fill-trigger purchases, bale value and production payouts did. World-event
+-- sell-price swings now reach selling points only through MarketDynamics'
+-- registered consumer modifier (integrations/RWEMarketBridge.lua).
 -- =====================
-if EconomyManager and EconomyManager.getPricePerLiter then
-    local origGetPrice = EconomyManager.getPricePerLiter
-
-    EconomyManager.getPricePerLiter = function(self, fillTypeIndex, ...)
-        local price = origGetPrice(self, fillTypeIndex, ...)
-        if type(price) ~= "number" or price <= 0 then return price end
-        if not g_RandomWorldEvents then return price end
-
-        local s = g_RandomWorldEvents.EVENT_STATE
-        local mult = 1.0
-
-        -- Economic modifiers
-        if s.marketBonus then mult = mult * (1 + s.marketBonus) end
-        if s.marketMalus then mult = mult * (1 - s.marketMalus) end
-        if s.priceFixing  then mult = mult * (1 + s.priceFixing) end
-        if s.exportBonus  then mult = mult * (1 + s.exportBonus) end
-        if s.economicCrisis and s.economicCrisis.marketMalus then
-            mult = mult * (1 - s.economicCrisis.marketMalus)
-        end
-
-        -- Field price modifiers (harvest / field-sale stay here until the
-        -- MarketDynamics re-home lands; crop_yield and wildlife_pest are now
-        -- PULL read-signals owned by the sim systems, so yieldBonus/yieldMalus
-        -- no longer scale sell prices).
-        if s.harvestBonus   then mult = mult * (1 + s.harvestBonus)   end
-        if s.harvestMalus   then mult = mult * (1 - s.harvestMalus)   end
-        if s.fieldSaleBonus then mult = mult * (1 + s.fieldSaleBonus) end
-        if s.fieldSaleMalus then mult = mult * (1 - s.fieldSaleMalus) end
-
-        -- Special / wildlife
-        if s.tradeBonus then mult = mult * (1 + s.tradeBonus) end
-
-        -- Per-crop-type modifiers from RWEEconomicAPI:setPriceModifier().
-        -- Entries are keyed by FillType index or string.  Expired entries are
-        -- lazily pruned here to avoid a separate cleanup pass.
-        if s.customPriceModifiers and fillTypeIndex ~= nil then
-            local entry = s.customPriceModifiers[fillTypeIndex]
-            if entry then
-                if entry.expiresAt and g_currentMission and g_currentMission.time > entry.expiresAt then
-                    -- Expired — prune and skip.
-                    s.customPriceModifiers[fillTypeIndex] = nil
-                else
-                    mult = mult * entry.multiplier
-                end
-            end
-        end
-
-        if mult ~= 1.0 and g_RandomWorldEvents.debug and g_RandomWorldEvents.debug.enabled then
-            Logging.info(string.format(
-                "[EffectHooks] Price modifier: x%.3f (fillType=%s base €%.2f -> €%.2f)",
-                mult, tostring(fillTypeIndex), price, price * mult))
-        end
-
-        return price * mult
-    end
-
-    Logging.info("[EffectHooks] EconomyManager.getPricePerLiter hooked")
-else
-    Logging.warning("[EffectHooks] EconomyManager.getPricePerLiter not found — price hooks disabled")
-end
 
 -- =====================
 -- VEHICLE DAMAGE HOOK
--- Patches Vehicle.addDamageAmount to scale incoming damage based on the
--- durability EVENT_STATE flags. Redesign: this global patch only acts behind
--- the arcadePhysics opt-in toggle (default OFF), and even then only for the
--- player's own vehicle. When the toggle is OFF the patch is a transparent
--- pass-through so normal gameplay damage is never touched.
+-- Scales the usage damage every vehicle in use takes, from the durability
+-- EVENT_STATE flags. Redesign: it only acts behind the arcadePhysics opt-in toggle
+-- (default OFF). When the toggle is OFF the wrapper is a transparent pass-through,
+-- so normal gameplay damage is never touched.
+--
+-- "In use" is the engine's own usage-damage gate (Design d3c0626): updateDamageAmount
+-- returns 0 unless getUsageCausesDamage, which needs the vehicle active
+-- (Wearable.lua:189-192, :204-209) and a motorized vehicle's motor running
+-- (Motorized.lua:1997-2003). A vehicle is active while any player drives it (the
+-- server sets isControlled for a client's entry, VehicleEnterResponseEvent.lua:45,
+-- Enterable.lua:712, :992-995), while a hired worker runs it (AIJobVehicle.lua:251),
+-- and an implement while its attacher is active (Attachable.lua:1456-1466). A parked
+-- vehicle's delta is 0 and passes through unscaled. The scaling runs on the server
+-- (onUpdateTick under isServer) and clients get the damage through the engine's
+-- own Wearable sync.
+--
+-- Where the damage is (decompiled FS25 scripts):
+--   * Usage damage accrues on the server in Wearable:onUpdateTick as
+--     self:setDamageAmount(spec.damage + self:updateDamageAmount(dt))
+--     (vehicles/specializations/Wearable.lua:161-166). addDamageAmount, patched
+--     here before as Vehicle.addDamageAmount (which never existed, so the patch
+--     never installed), is only the gsVehicleAddDamage console command, a used
+--     sale item's starting damage and the shop preview.
+--   * updateDamageAmount is a registered per-vehicle function (Wearable.lua:47).
+--     Vehicle:load copies the type's functions onto each instance
+--     (vehicles/Vehicle.lua:486) and only then raises onLoad (:866); raised events
+--     look the listener function up on the Wearable table at call time
+--     (specialization/SpecializationUtil.lua:12). So an appended Wearable.onLoad
+--     replaces each loaded vehicle's own updateDamageAmount, whenever the type's
+--     function table was captured.
+--   * Wearable:updateDebugValues (:366) calls the same function for the debug
+--     readout, so while an event scales damage that readout shows the scaled rate.
 -- =====================
-if Vehicle and Vehicle.addDamageAmount then
-    local origAddDamage = Vehicle.addDamageAmount
-
-    Vehicle.addDamageAmount = function(self, damage, ...)
-        if type(damage) ~= "number" or damage <= 0 then
-            return origAddDamage(self, damage, ...)
-        end
-        if not g_RandomWorldEvents then
-            return origAddDamage(self, damage, ...)
-        end
-        if not g_RandomWorldEvents:allowsArcadePhysics() then
-            return origAddDamage(self, damage, ...)
-        end
-
-        -- Never scale damage on an NPC-driven vehicle.
-        local isPlayerVehicle = false
-        local p = g_localPlayer
-        if p ~= nil and p.getCurrentVehicle ~= nil then
-            isPlayerVehicle = p:getCurrentVehicle() == self
-        elseif g_currentMission ~= nil then
-            isPlayerVehicle = g_currentMission.controlledVehicle == self
-        end
-        if not isPlayerVehicle then
-            return origAddDamage(self, damage, ...)
-        end
-
-        local s = g_RandomWorldEvents.EVENT_STATE
-        local scaledDamage = damage
-
-        if s.durabilityBoost then
-            scaledDamage = scaledDamage * math.max(0, 1 - s.durabilityBoost)
-        elseif s.durabilityMalus then
-            scaledDamage = scaledDamage * (1 + s.durabilityMalus)
-        end
-
-        return origAddDamage(self, scaledDamage, ...)
+local function rweScaleUsageDamage(self, damage)
+    if type(damage) ~= "number" or damage <= 0 then
+        return damage
+    end
+    if not g_RandomWorldEvents then
+        return damage
+    end
+    if not g_RandomWorldEvents:allowsArcadePhysics() then
+        return damage
     end
 
-    Logging.info("[EffectHooks] Vehicle.addDamageAmount hooked (arcade-physics gate)")
+    local s = g_RandomWorldEvents.EVENT_STATE
+    local scaledDamage = damage
+
+    if s.durabilityBoost then
+        scaledDamage = scaledDamage * math.max(0, 1 - s.durabilityBoost)
+    elseif s.durabilityMalus then
+        scaledDamage = scaledDamage * (1 + s.durabilityMalus)
+    end
+
+    return scaledDamage
+end
+
+if Wearable ~= nil and type(Wearable.onLoad) == "function" then
+    local origWearableOnLoad = Wearable.onLoad
+
+    Wearable.onLoad = function(self, ...)
+        origWearableOnLoad(self, ...)
+        local ownUpdateDamage = self.updateDamageAmount
+        if type(ownUpdateDamage) == "function" and not self.rweUsageDamageWrapped then
+            self.rweUsageDamageWrapped = true
+            self.updateDamageAmount = function(vehicle, dt, ...)
+                return rweScaleUsageDamage(vehicle, ownUpdateDamage(vehicle, dt, ...))
+            end
+        end
+    end
+
+    Logging.info("[EffectHooks] Wearable.onLoad hooked: usage damage scaling installs per vehicle (arcade-physics gate)")
 else
-    Logging.info("[EffectHooks] Vehicle.addDamageAmount not available in this build — durability scaling disabled")
+    Logging.info("[EffectHooks] Wearable.onLoad not available in this build; durability scaling disabled")
 end
 
 Logging.info("[EffectHooks] Module loaded successfully")

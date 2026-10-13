@@ -1,32 +1,53 @@
 -- =========================================================
--- Random World Events (version 2.1.3.0) - FS25
+-- Random World Events - FS25
 -- =========================================================
 -- Economic events for FS25
 -- =========================================================
 -- Author: TisonK
 -- =========================================================
+-- EC-6 (brief v1.7 sections 3.1 and 3.3):
+--   * Price events move selling-point prices only through MarketDynamics' registered
+--     modifier (integrations/RWEMarketBridge.lua) and are eligible only while that
+--     price status is "available". Their notices name the direction and "the next
+--     market update", never a figure.
+--   * Money events queue one statement line per eligible farm at event start, with
+--     the amount fixed then; the lines settle at the next in-game day
+--     (utils/RWESettlement.lua). Shared notices never name a euro amount; each paid
+--     farm sees its own amount privately.
+--   * Loan charges read only the farm's native loan, never its cash.
+--   * Retired on Arissani's 2026-09-16 rulings: seed_discount, fertilizer_discount,
+--     equipment_discount and tax_refund. Economic events go from 14 to 10.
+-- =========================================================
 
 local economicEvents = {}
 
--- Server-authoritative money. addMoney must run only on the server in multiplayer,
--- or every client applies the change (desync); the engine syncs the balance back.
-local function rweAddMoney(...)
-    if g_currentMission and g_currentMission:getIsServer() then
-        g_currentMission:addMoney(...)
-    end
+local function mgr() return g_RandomWorldEvents end
+
+local function priceAvailable()
+    return RWEMarketBridge ~= nil and RWEMarketBridge.priceStatus() == RWEMarketBridge.STATUS_AVAILABLE
 end
 
-economicEvents.getFarmId = function()
-    return g_currentMission and g_currentMission.player and g_currentMission.player.farmId or 0
+local function oldMarketExcluded(name)
+    return RWEMarketBridge ~= nil and RWEMarketBridge.isOldMarketExcluded(name)
 end
 
-economicEvents.getFarmMoney = function()
-    local farmId = economicEvents.getFarmId()
-    if farmId > 0 and g_farmManager then
-        local farm = g_farmManager:getFarmById(farmId)
-        return farm and farm.money or 0
-    end
-    return 0
+local function title(name) return "rwe_event_" .. name .. "_title" end
+local function key(name, part) return "rwe_event_" .. name .. "_" .. part end
+
+--- A money event: queue one line per candidate farm, amountFor(farm, i) returning a
+--- signed whole amount or nil for an ineligible farm.
+local function queueLines(name, moneyTypeName, intensity, amountFor)
+    if RWESettlement == nil then return 0 end
+    return RWESettlement.queueForFarms(name, moneyTypeName, title(name), function(farm) return amountFor(farm, intensity) end)
+end
+
+local function anyFarm(predicate)
+    return RWESettlement ~= nil and RWESettlement.anyFarm(predicate)
+end
+
+local function setFlag(field, value)
+    local m = mgr()
+    if m ~= nil then m.EVENT_STATE[field] = value end
 end
 
 -- =====================
@@ -34,271 +55,171 @@ end
 -- =====================
 economicEvents.eventList = {
     {
-        name="government_subsidy", minI=1,
-        func=function(intensity)
-            local amount = 5000 + intensity * 2500
-            if g_currentMission and g_currentMission.addMoney then
-                rweAddMoney(amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
-            end
-            return string.format("Government subsidy! +€%d landed in your account.", amount)
+        name = "government_subsidy", minI = 1,
+        summaryKey = "rwe_summary_money_every_credit",
+        canTrigger = function()
+            return not oldMarketExcluded("government_subsidy") and anyFarm(function() return true end)
         end,
-        -- Instant payout — no duration effects, so no ambient/mid needed.
-    },
-
-    {
-        name="market_boom", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.marketBonus = 0.1 + intensity * 0.05
-            end
-            return string.format("MARKET BOOM! Sell prices up %.0f%%!", (0.1 + intensity * 0.05) * 100)
-        end,
-        onMid = function(intensity)
-            return string.format("Market boom still running — %.0f%% bonus on all sales.", (0.1 + intensity * 0.05) * 100)
-        end,
-        ambientMsgs = {
-            "Trading floors are buzzing — buyers are hungry for your crops.",
-            "Commodity futures hit a seasonal high. Time to sell big.",
-            "Local co-op reports record purchase volumes this week.",
-            "Grain trucks are lined up at every silo in the region.",
-        },
-    },
-
-    {
-        name="market_crash", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.marketMalus = 0.1 + intensity * 0.05
-            end
-            return string.format("MARKET CRASH! Sell prices down %.0f%%!", (0.1 + intensity * 0.05) * 100)
-        end,
-        onMid = function(intensity)
-            return string.format("Market crash continues — prices still %.0f%% below normal. Hold if you can.", (0.1 + intensity * 0.05) * 100)
-        end,
-        ambientMsgs = {
-            "Traders are dumping stock — oversupply has tanked the market.",
-            "The regional grain exchange reports no bids at yesterday's prices.",
-            "Farmers across the county are holding off on sales, hoping for recovery.",
-            "Market analysts say the slump may last several more days.",
-        },
-    },
-
-    {
-        name="sudden_expense", minI=1,
-        func=function(intensity)
-            local amount = 2000 + 1000 * intensity
-            if g_currentMission and g_currentMission.addMoney then
-                rweAddMoney(-amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
-            end
-            return string.format("Unexpected expense! -€%d deducted.", amount)
+        func = function(intensity)
+            queueLines("government_subsidy", "OTHER", intensity, function(farm, i) return 5000 + 2500 * i end)
+            return { key = key("government_subsidy", "start") }
         end,
     },
 
     {
-        name="farmer_donation", minI=1,
-        func=function(intensity)
-            local amount = 1000 * intensity
-            if g_currentMission and g_currentMission.addMoney then
-                rweAddMoney(amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
-            end
-            return string.format("Neighbour donated €%d — community spirit!", amount)
+        name = "market_boom", minI = 1,
+        summaryKey = "rwe_summary_price_rise",
+        canTrigger = priceAvailable,
+        applyFlags = function(intensity) setFlag("marketBonus", 0.1 + intensity * 0.05) end,
+        func = function(intensity)
+            economicEvents.byName.market_boom.applyFlags(intensity)
+            return { key = key("market_boom", "start") }
+        end,
+        onMid = function(intensity) return { key = key("market_boom", "mid") } end,
+        ambientMsgs = { key("market_boom", "ambient1"), key("market_boom", "ambient2"), key("market_boom", "ambient3"), key("market_boom", "ambient4") },
+    },
+
+    {
+        name = "market_crash", minI = 1,
+        summaryKey = "rwe_summary_price_fall",
+        canTrigger = priceAvailable,
+        applyFlags = function(intensity) setFlag("marketMalus", 0.1 + intensity * 0.05) end,
+        func = function(intensity)
+            economicEvents.byName.market_crash.applyFlags(intensity)
+            return { key = key("market_crash", "start") }
+        end,
+        onMid = function(intensity) return { key = key("market_crash", "mid") } end,
+        ambientMsgs = { key("market_crash", "ambient1"), key("market_crash", "ambient2"), key("market_crash", "ambient3"), key("market_crash", "ambient4") },
+    },
+
+    {
+        name = "sudden_expense", minI = 1,
+        summaryKey = "rwe_summary_money_every_debit",
+        canTrigger = function() return anyFarm(function() return true end) end,
+        func = function(intensity)
+            queueLines("sudden_expense", "OTHER", intensity, function(farm, i) return -(2000 + 1000 * i) end)
+            return { key = key("sudden_expense", "start") }
         end,
     },
 
     {
-        name="seed_discount", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.seedDiscount = 0.1 + 0.05 * intensity
-            end
-            return string.format("Seed sale on at the co-op! -%.0f%% while stocks last.", (0.1 + 0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return "Seed discount still active — stock up before the sale ends!"
-        end,
-        ambientMsgs = {
-            "The co-op's seed aisles are busy — farmers filling their boots.",
-            "Suppliers are clearing last season's inventory at reduced rates.",
-        },
-    },
-
-    {
-        name="fertilizer_discount", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.fertilizerDiscount = 0.1 + 0.05 * intensity
-            end
-            return string.format("Fertilizer on sale! -%.0f%% at all suppliers.", (0.1 + 0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return "Fertilizer discount still running — keep stocking up."
-        end,
-        ambientMsgs = {
-            "Freight costs fell this week, passing savings down to growers.",
-            "A new shipment arrived at the depot — prices haven't recovered yet.",
-        },
-    },
-
-    {
-        name="equipment_discount", minI=1,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.equipmentDiscount = 0.1 + 0.05 * intensity
-            end
-            return string.format("Dealer clearance sale! Equipment -%.0f%%.", (0.1 + 0.05 * intensity) * 100)
-        end,
-        onMid = function(intensity)
-            return "Clearance sale halfway through — still time to upgrade your fleet."
-        end,
-        ambientMsgs = {
-            "The dealership lot is packed with discounted demo models.",
-            "End-of-year clearance means serious savings on new iron.",
-        },
-    },
-
-    {
-        name="insurance_bonus", minI=1,
-        func=function(intensity)
-            local amount = 3000 + intensity * 1000
-            if g_currentMission and g_currentMission.addMoney then
-                rweAddMoney(amount, economicEvents.getFarmId(), MoneyType.OTHER, true)
-            end
-            return string.format("Insurance payout! +€%d deposited.", amount)
+        name = "farmer_donation", minI = 1,
+        summaryKey = "rwe_summary_money_every_credit",
+        canTrigger = function() return anyFarm(function() return true end) end,
+        func = function(intensity)
+            queueLines("farmer_donation", "OTHER", intensity, function(farm, i) return 1000 * i end)
+            return { key = key("farmer_donation", "start") }
         end,
     },
 
     {
-        name="tax_refund", minI=1,
-        func=function(intensity)
-            local farmMoney = economicEvents.getFarmMoney()
-            local refundAmount = math.min(farmMoney * 0.05 * intensity, 10000)
-            if refundAmount > 100 and g_currentMission and g_currentMission.addMoney then
-                rweAddMoney(refundAmount, economicEvents.getFarmId(), MoneyType.OTHER, true)
-                return string.format("Tax refund processed! +€%d", math.floor(refundAmount))
-            end
-            return "Small tax adjustment posted — check your account."
+        name = "insurance_bonus", minI = 1,
+        summaryKey = "rwe_summary_money_every_credit",
+        canTrigger = function() return anyFarm(function() return true end) end,
+        func = function(intensity)
+            queueLines("insurance_bonus", "OTHER", intensity, function(farm, i) return 3000 + 1000 * i end)
+            return { key = key("insurance_bonus", "start") }
         end,
     },
 
     {
-        name="price_fixing", minI=2,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.priceFixing = 0.15 + 0.05 * intensity
-                g_RandomWorldEvents.EVENT_STATE.priceFixingDuration = 15 * intensity
-            end
-            return string.format("Price fixing deal! Guaranteed +%.0f%% on all sales.", (0.15 + 0.05 * intensity) * 100)
+        name = "price_fixing", minI = 2,
+        summaryKey = "rwe_summary_price_rise",
+        canTrigger = priceAvailable,
+        applyFlags = function(intensity)
+            setFlag("priceFixing", 0.15 + 0.05 * intensity)
+            setFlag("priceFixingDuration", 15 * intensity)
         end,
-        onMid = function(intensity)
-            return string.format("Price deal still in force — locking in +%.0f%% margins.", (0.15 + 0.05 * intensity) * 100)
+        func = function(intensity)
+            economicEvents.byName.price_fixing.applyFlags(intensity)
+            return { key = key("price_fixing", "start") }
         end,
-        ambientMsgs = {
-            "Buyers' consortium is honouring the fixed-price agreement.",
-            "Traders grumble about the ceiling, but your receipts look great.",
-        },
+        onMid = function(intensity) return { key = key("price_fixing", "mid") } end,
+        ambientMsgs = { key("price_fixing", "ambient1"), key("price_fixing", "ambient2") },
     },
 
     {
-        name="loan_interest", minI=1,
-        func=function(intensity)
-            local farmMoney = economicEvents.getFarmMoney()
-            local interest = farmMoney * 0.02 * intensity
-            if interest > 100 and g_currentMission and g_currentMission.addMoney then
-                rweAddMoney(-interest, economicEvents.getFarmId(), MoneyType.LOAN_INTEREST, true)
-                return string.format("Loan interest due! -€%d withdrawn.", math.floor(interest))
-            end
-            return "Loan statement arrived — minimal interest charged this period."
+        name = "loan_interest", minI = 1,
+        summaryKey = "rwe_summary_money_loan",
+        -- Eligible when at least one farm's native loan gives a line of at least 1 at
+        -- the lowest intensity; a higher intensity only raises the line.
+        canTrigger = function()
+            return anyFarm(function(farm) return RWESettlement.loanLine(farm, 0.02, 1) ~= nil end)
+        end,
+        func = function(intensity)
+            queueLines("loan_interest", "LOAN_INTEREST", intensity, function(farm, i)
+                local line = RWESettlement.loanLine(farm, 0.02, i)
+                return line ~= nil and -line or nil
+            end)
+            return { key = key("loan_interest", "start") }
         end,
     },
 
     {
-        name="export_opportunity", minI=3,
-        func=function(intensity)
-            local bonus = 0.25 + 0.05 * intensity
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.exportBonus = bonus
-                g_RandomWorldEvents.EVENT_STATE.exportDuration = 30 * intensity
-            end
-            return string.format("Export window open! +%.0f%% on everything you sell.", bonus * 100)
+        name = "export_opportunity", minI = 3,
+        summaryKey = "rwe_summary_price_rise",
+        canTrigger = priceAvailable,
+        applyFlags = function(intensity)
+            setFlag("exportBonus", 0.25 + 0.05 * intensity)
+            setFlag("exportDuration", 30 * intensity)
         end,
-        onMid = function(intensity)
-            local bonus = 0.25 + 0.05 * intensity
-            return string.format("Export opportunity halfway — still +%.0f%% premium. Move that grain!", bonus * 100)
+        func = function(intensity)
+            economicEvents.byName.export_opportunity.applyFlags(intensity)
+            return { key = key("export_opportunity", "start") }
         end,
-        ambientMsgs = {
-            "Shipping containers are waiting at the port — foreign buyers are bidding up.",
-            "The export agent called again — prices are holding strong overseas.",
-            "International demand is soaking up everything the region can produce.",
-            "Dock workers are running overtime to handle the export surge.",
-        },
+        onMid = function(intensity) return { key = key("export_opportunity", "mid") } end,
+        ambientMsgs = { key("export_opportunity", "ambient1"), key("export_opportunity", "ambient2"), key("export_opportunity", "ambient3"), key("export_opportunity", "ambient4") },
     },
 
     {
-        name="economic_crisis", minI=4,
-        func=function(intensity)
-            if g_RandomWorldEvents then
-                g_RandomWorldEvents.EVENT_STATE.economicCrisis = {
-                    marketMalus = 0.2 + 0.1 * intensity,
-                    loanPenalty = 0.05 * intensity,
-                    duration    = 60 * intensity
-                }
-            end
-            return string.format("ECONOMIC CRISIS! Market -%.0f%%, loan costs +%.0f%%.",
-                (0.2 + 0.1 * intensity) * 100,
-                (0.05 * intensity) * 100)
+        name = "economic_crisis", minI = 4,
+        -- Parts recorded at activation, never recomputed from later loans or status:
+        -- crisisHasPrice (price status available) and crisisHasLoan (a loan line queued).
+        canTrigger = function()
+            if oldMarketExcluded("economic_crisis") then return false end
+            return priceAvailable() or anyFarm(function(farm) return RWESettlement.loanLine(farm, 0.05, 1) ~= nil end)
         end,
-        onMid = function(intensity)
-            return string.format("Crisis deepening — markets down %.0f%% and no recovery in sight yet.", (0.2 + 0.1 * intensity) * 100)
+        applyFlags = function(intensity)
+            setFlag("economicCrisis", {
+                marketMalus = 0.2 + 0.1 * intensity,
+                loanPenalty = 0.05 * intensity,
+                duration    = 60 * intensity,
+            })
         end,
-        ambientMsgs = {
-            "Banks are tightening lending — even sound farms are feeling the squeeze.",
-            "Commodity boards issued an emergency warning: expect further price drops.",
-            "Neighbours are cutting back. Hard to sell anything at a fair price.",
-            "The regional agricultural office confirms widespread financial stress.",
-            "Futures markets gapped down again overnight. Brace yourself.",
+        func = function(intensity)
+            economicEvents.byName.economic_crisis.applyFlags(intensity)
+            local hasPrice = priceAvailable()
+            local loans = queueLines("economic_crisis", "LOAN_INTEREST", intensity, function(farm, i)
+                local line = RWESettlement.loanLine(farm, 0.05, i)
+                return line ~= nil and -line or nil
+            end)
+            local m = mgr()
+            local d = m ~= nil and m.EVENT_STATE.eventData or {}
+            d.crisisHasPrice = hasPrice
+            d.crisisHasLoan = loans > 0
+            if d.crisisHasPrice and d.crisisHasLoan then return { key = key("economic_crisis", "start_both") } end
+            if d.crisisHasLoan then return { key = key("economic_crisis", "start_loan") } end
+            return { key = key("economic_crisis", "start_price") }
+        end,
+        --- The start copy's row, which is also the saved and synced summary.
+        chooseSummary = function(d)
+            if d.crisisHasPrice == true and d.crisisHasLoan == true then return "rwe_summary_crisis_both" end
+            if d.crisisHasLoan == true then return "rwe_summary_crisis_loan" end
+            if d.crisisHasPrice == true then return "rwe_summary_crisis_price" end
+            return nil
+        end,
+        onMid = function(intensity) return { key = key("economic_crisis", "mid") } end,
+        endNotice = { key = key("economic_crisis", "end") },
+        ambientVariants = {
+            both = { key("economic_crisis", "ambient_both1"), key("economic_crisis", "ambient_both2"), key("economic_crisis", "ambient_both3") },
+            price = { key("economic_crisis", "ambient_price1"), key("economic_crisis", "ambient_price2"), key("economic_crisis", "ambient_price3") },
+            loan = { key("economic_crisis", "ambient_loan1"), key("economic_crisis", "ambient_loan2"), key("economic_crisis", "ambient_loan3") },
         },
     },
 }
 
--- =====================
--- TICK HANDLER
--- =====================
-local function economicTickHandler(rwe)
-    local s = rwe.EVENT_STATE
-    if not g_currentMission then return end
-
-    local t = g_currentMission.time
-    local lastTick = s.lastEconomicTick or 0
-    if t - lastTick < 60000 then return end
-    s.lastEconomicTick = t
-
-    local farmId = g_currentMission.player and g_currentMission.player.farmId or 0
-    if farmId == 0 then return end
-
-    local amount = 0
-
-    if s.seedDiscount then
-        local savings = math.floor(500 * s.seedDiscount)
-        amount = amount + savings
-    end
-    if s.fertilizerDiscount then
-        local savings = math.floor(400 * s.fertilizerDiscount)
-        amount = amount + savings
-    end
-    if s.equipmentDiscount then
-        local savings = math.floor(350 * s.equipmentDiscount)
-        amount = amount + savings
-    end
-
-    if s.economicCrisis and s.economicCrisis.loanPenalty then
-        local penalty = math.floor(1000 * s.economicCrisis.loanPenalty)
-        amount = amount - penalty
-    end
-
-    if amount ~= 0 and g_currentMission.addMoney then
-        rweAddMoney(amount, farmId, MoneyType.OTHER, false)
-    end
-end
+economicEvents.byName = {}
+for _, e in ipairs(economicEvents.eventList) do economicEvents.byName[e.name] = e end
 
 -- =====================
 -- REGISTER ECONOMIC EVENTS
@@ -310,35 +231,37 @@ local function registerEconomicEvents()
     end
 
     for _, e in ipairs(economicEvents.eventList) do
+        local def = e
         g_RandomWorldEvents:registerEvent({
-            name         = e.name,
-            category     = "economic",
-            weight       = 1,
-            duration     = { min = 15, max = 60 },
-            minIntensity = e.minI,
-            canTrigger   = function() return g_currentMission ~= nil end,
-            onStart      = e.func,
-            onMid        = e.onMid,
-            ambientMsgs  = e.ambientMsgs,
+            name            = def.name,
+            category        = "economic",
+            weight          = 1,
+            duration        = { min = 15, max = 60 },
+            minIntensity    = def.minI,
+            gate            = def.gate,
+            applyFlags      = def.applyFlags,
+            summaryKey      = def.summaryKey,
+            chooseSummary   = def.chooseSummary,
+            ambientVariants = def.ambientVariants,
+            canTrigger      = function() return g_currentMission ~= nil and (def.canTrigger == nil or def.canTrigger()) end,
+            onStart         = def.func,
+            onMid           = def.onMid,
+            ambientMsgs     = def.ambientMsgs,
             onEnd = function()
                 if g_RandomWorldEvents then
                     local s = g_RandomWorldEvents.EVENT_STATE
-                    s.marketBonus        = nil
-                    s.marketMalus        = nil
-                    s.seedDiscount       = nil
-                    s.fertilizerDiscount = nil
-                    s.equipmentDiscount  = nil
-                    s.priceFixing        = nil
-                    s.exportBonus        = nil
-                    s.economicCrisis     = nil
-                    s.lastEconomicTick   = nil
+                    s.marketBonus         = nil
+                    s.marketMalus         = nil
+                    s.priceFixing         = nil
+                    s.priceFixingDuration = nil
+                    s.exportBonus         = nil
+                    s.exportDuration      = nil
+                    s.economicCrisis      = nil
                 end
-                return nil  -- silent end; the HUD timer expiry is sufficient feedback
+                return def.endNotice
             end
         })
     end
-
-    g_RandomWorldEvents:registerTickHandler("economicEvents", economicTickHandler)
 
     Logging.info("[EconomicEvents] Registered " .. #economicEvents.eventList .. " economic events")
     return true
