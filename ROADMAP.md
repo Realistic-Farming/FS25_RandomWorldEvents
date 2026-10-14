@@ -63,3 +63,8 @@ The NON-PRICE HALF was built 2026-08-14. EC-6 builds the rest (branch `feat/EC-6
 
 - [x] The bridge's `applyChange` ended in `mgr:saveSettings()` on every peer, and RWE's writer also writes the event-state snapshot and the settlement lines, so a client reached through its own SettingsHub would write its own unsynced copy of them. It now applies the value on every peer and saves only on the server. Design origin none.
 - The in-game check is TESTING row 514.
+
+## 2026-10-14 (Fred (via Desk)): keyboard defaults (Wizard, #54)
+
+- [x] Toggle RWE Settings is bound to Right Shift + equals (it was unbound); Toggle RWE HUD and HUD drag stay on Right Shift + E and Right Shift + Q. The settings panel stops printing 'Shift+O', and its footer names the live key only when one is bound, otherwise the action's name and its status (`utils/RweLiveKeyLabel.lua`). (Wizard's #54, merged at 652917b3 on 2026-10-11, one PR of his keyboard-defaults wave.)
+- The in-game check is TESTING row 537. Docs by Fred's catch-up (R-51), on Tyson's word of 2026-10-14.

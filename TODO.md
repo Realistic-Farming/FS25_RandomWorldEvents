@@ -46,3 +46,8 @@
 
 - [x] `integrations/RWESettingsHubBridge.lua` `applyChange`: save behind `g_server ~= nil`. Bar `MAINT-254-hub_save_server_guard_spec_test.lua`; battery `tools/test/mutate_maint254.py`, 1 of 1.
 - [~] In game (owed): TESTING row 514.
+
+## 2026-10-14 (Fred (via Desk)): keyboard defaults (Wizard, #54)
+
+- [x] `modDesc.xml`: RWE_TOGGLE_SETTINGS on Right Shift + equals; `gui/RWESettingsPanel.lua` reads the live key through `utils/RweLiveKeyLabel.lua` (new, loaded first in modDesc's extraSourceFiles); bar `RSF-F201-rwe_input_context_test.lua` updated.
+- [~] In game (owed): TESTING row 537.
