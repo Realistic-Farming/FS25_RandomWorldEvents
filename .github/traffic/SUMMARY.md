@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-10-14T00:52:51Z
-**Days tracked:** 152 | **Download snapshots:** 545 (hourly)
+**Last updated:** 2026-10-15T18:09:13Z
+**Days tracked:** 153 | **Download snapshots:** 551 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 61 | 37 |
-| Git Clones | 267 | 112 |
+| Page Views | 74 | 48 |
+| Git Clones | 370 | 140 |
 
-> **Engagement:** 1.6 pages per visitor (14-day avg)
+> **Engagement:** 1.5 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 609 of 37 visitors cloned or downloaded (**1645.9%**)
+> **14-day conversion:** 643 of 48 visitors cloned or downloaded (**1339.5%**)
 >
-> Unique cloners: 112 | Release downloads: 497
+> Unique cloners: 140 | Release downloads: 503
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 497 |
-| Git Clones (14-day) | 267 |
-| **Total Acquisitions** | **764** |
+| Zip Downloads | 503 |
+| Git Clones (14-day) | 370 |
+| **Total Acquisitions** | **873** |
 
 ---
 
@@ -54,8 +54,10 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 28 | 25 |
-| Google | 6 | 5 |
+| github.com | 33 | 29 |
+| Google | 5 | 4 |
+| kingmods.net | 1 | 1 |
+| realisticfarming.com | 1 | 1 |
 
 ---
 
@@ -75,9 +77,10 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 40 | 33 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 13 | 11 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 4 | 4 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 48 | 40 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 10 | 9 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 7 | 7 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 5 | 5 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 2 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/pull/44` | 1 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/pulls` | 1 | 1 |
