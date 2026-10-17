@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-10-16T00:07:36Z
-**Days tracked:** 154 | **Download snapshots:** 552 (hourly)
+**Last updated:** 2026-10-17T06:35:48Z
+**Days tracked:** 155 | **Download snapshots:** 559 (hourly)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 74 | 48 |
-| Git Clones | 370 | 140 |
+| Page Views | 72 | 47 |
+| Git Clones | 392 | 145 |
 
 > **Engagement:** 1.5 pages per visitor (14-day avg)
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 643 of 48 visitors cloned or downloaded (**1339.5%**)
+> **14-day conversion:** 661 of 47 visitors cloned or downloaded (**1406.3%**)
 >
-> Unique cloners: 140 | Release downloads: 503
+> Unique cloners: 145 | Release downloads: 516
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 503 |
-| Git Clones (14-day) | 370 |
-| **Total Acquisitions** | **873** |
+| Zip Downloads | 516 |
+| Git Clones (14-day) | 392 |
+| **Total Acquisitions** | **908** |
 
 ---
 
@@ -54,7 +54,7 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 33 | 29 |
+| github.com | 31 | 27 |
 | Google | 5 | 4 |
 | kingmods.net | 1 | 1 |
 | realisticfarming.com | 1 | 1 |
@@ -77,13 +77,14 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 48 | 40 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 10 | 9 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 47 | 39 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 8 | 8 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 7 | 7 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 5 | 5 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 2 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/pull/44` | 1 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/pulls` | 1 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0` | 1 | 1 |
 
 ---
 
