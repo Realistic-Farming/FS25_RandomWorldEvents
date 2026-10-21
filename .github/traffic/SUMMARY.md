@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-10-20T18:55:17Z
-**Days tracked:** 158 | **Download snapshots:** 572 (hourly)
+**Last updated:** 2026-10-21T18:23:51Z
+**Days tracked:** 159 | **Download snapshots:** 575 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 74 | 56 |
-| Git Clones | 393 | 144 |
+| Page Views | 74 | 60 |
+| Git Clones | 399 | 145 |
 
-> **Engagement:** 1.3 pages per visitor (14-day avg)
+> **Engagement:** 1.2 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 679 of 56 visitors cloned or downloaded (**1212.5%**)
+> **14-day conversion:** 683 of 60 visitors cloned or downloaded (**1138.3%**)
 >
-> Unique cloners: 144 | Release downloads: 535
+> Unique cloners: 145 | Release downloads: 538
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 535 |
-| Git Clones (14-day) | 393 |
-| **Total Acquisitions** | **928** |
+| Zip Downloads | 538 |
+| Git Clones (14-day) | 399 |
+| **Total Acquisitions** | **937** |
 
 ---
 
@@ -54,9 +54,9 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 26 | 24 |
-| realisticfarming.com | 12 | 11 |
-| Google | 5 | 5 |
+| github.com | 28 | 26 |
+| realisticfarming.com | 13 | 12 |
+| Google | 4 | 4 |
 | kingmods.net | 1 | 1 |
 
 ---
@@ -77,12 +77,11 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 43 | 39 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 16 | 15 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 8 | 8 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 3 | 3 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 2 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 44 | 41 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 18 | 17 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 9 | 9 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.7.0` | 1 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.1.8.0` | 1 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.2.0.0-pre` | 1 | 1 |
 
 ---
