@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-10-31T06:39:00Z
-**Days tracked:** 164 | **Download snapshots:** 603 (hourly)
+**Last updated:** 2026-10-31T18:11:30Z
+**Days tracked:** 164 | **Download snapshots:** 604 (hourly)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 139 | 98 |
-| Git Clones | 361 | 143 |
+| Page Views | 158 | 108 |
+| Git Clones | 364 | 143 |
 
 > **Engagement:** 1.4 pages per visitor (14-day avg)
 
@@ -30,7 +30,7 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 720 of 98 visitors cloned or downloaded (**734.6%**)
+> **14-day conversion:** 720 of 108 visitors cloned or downloaded (**666.6%**)
 >
 > Unique cloners: 143 | Release downloads: 577
 
@@ -43,8 +43,8 @@
 | Channel | Count |
 |---------|-------|
 | Zip Downloads | 577 |
-| Git Clones (14-day) | 361 |
-| **Total Acquisitions** | **938** |
+| Git Clones (14-day) | 364 |
+| **Total Acquisitions** | **941** |
 
 ---
 
@@ -54,12 +54,14 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 34 | 27 |
-| Google | 18 | 18 |
-| aocr.org | 16 | 16 |
-| realisticfarming.com | 15 | 14 |
+| github.com | 37 | 28 |
+| Google | 23 | 20 |
+| aocr.org | 22 | 22 |
+| realisticfarming.com | 12 | 12 |
 | kingmods.net | 6 | 4 |
 | Bing | 2 | 2 |
+| dilraj.uk | 1 | 1 |
+| search.brave.com | 1 | 1 |
 
 ---
 
@@ -79,16 +81,16 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 72 | 59 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 25 | 22 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 18 | 17 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 82 | 63 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 28 | 24 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 17 | 17 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/issues/20` | 4 | 4 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pull/19` | 3 | 3 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/issues` | 2 | 2 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/issues/20` | 2 | 2 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/pull/19` | 2 | 2 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/pull/21` | 2 | 2 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/pull/35` | 2 | 2 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/pull/7` | 2 | 2 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/tree/master` | 2 | 2 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/tree/master/.claude` | 2 | 2 |
 
 ---
 
