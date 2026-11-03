@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-11-02T00:15:36Z
-**Days tracked:** 165 | **Download snapshots:** 609 (hourly)
+**Last updated:** 2026-11-03T00:32:47Z
+**Days tracked:** 166 | **Download snapshots:** 611 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 165 | 107 |
-| Git Clones | 334 | 131 |
+| Page Views | 179 | 111 |
+| Git Clones | 343 | 133 |
 
-> **Engagement:** 1.5 pages per visitor (14-day avg)
+> **Engagement:** 1.6 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 716 of 107 visitors cloned or downloaded (**669.1%**)
+> **14-day conversion:** 719 of 111 visitors cloned or downloaded (**647.7%**)
 >
-> Unique cloners: 131 | Release downloads: 585
+> Unique cloners: 133 | Release downloads: 586
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 585 |
-| Git Clones (14-day) | 334 |
-| **Total Acquisitions** | **919** |
+| Zip Downloads | 586 |
+| Git Clones (14-day) | 343 |
+| **Total Acquisitions** | **929** |
 
 ---
 
@@ -54,12 +54,12 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 40 | 29 |
-| Google | 28 | 21 |
+| github.com | 46 | 32 |
+| Google | 32 | 22 |
 | aocr.org | 22 | 22 |
 | realisticfarming.com | 9 | 9 |
 | kingmods.net | 6 | 4 |
-| Bing | 2 | 2 |
+| Bing | 3 | 3 |
 | dilraj.uk | 1 | 1 |
 | search.brave.com | 1 | 1 |
 
@@ -81,8 +81,8 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 92 | 66 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 28 | 24 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 101 | 68 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 32 | 28 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 15 | 15 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/issues/20` | 4 | 4 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/pull/19` | 3 | 3 |

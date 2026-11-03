@@ -3933,5 +3933,47 @@
       "count": 1,
       "uniques": 1
     }
+  ],
+  "2026-11-03": [
+    {
+      "referrer": "github.com",
+      "count": 46,
+      "uniques": 32
+    },
+    {
+      "referrer": "Google",
+      "count": 32,
+      "uniques": 22
+    },
+    {
+      "referrer": "aocr.org",
+      "count": 22,
+      "uniques": 22
+    },
+    {
+      "referrer": "realisticfarming.com",
+      "count": 9,
+      "uniques": 9
+    },
+    {
+      "referrer": "kingmods.net",
+      "count": 6,
+      "uniques": 4
+    },
+    {
+      "referrer": "Bing",
+      "count": 3,
+      "uniques": 3
+    },
+    {
+      "referrer": "dilraj.uk",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "referrer": "search.brave.com",
+      "count": 1,
+      "uniques": 1
+    }
   ]
 }
