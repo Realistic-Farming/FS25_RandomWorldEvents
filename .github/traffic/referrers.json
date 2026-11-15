@@ -4153,5 +4153,42 @@
       "count": 1,
       "uniques": 1
     }
+  ],
+  "2026-11-15": [
+    {
+      "referrer": "github.com",
+      "count": 45,
+      "uniques": 29
+    },
+    {
+      "referrer": "Google",
+      "count": 34,
+      "uniques": 19
+    },
+    {
+      "referrer": "aocr.org",
+      "count": 11,
+      "uniques": 11
+    },
+    {
+      "referrer": "realisticfarming.com",
+      "count": 3,
+      "uniques": 3
+    },
+    {
+      "referrer": "Bing",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "referrer": "Yahoo",
+      "count": 1,
+      "uniques": 1
+    },
+    {
+      "referrer": "search.brave.com",
+      "count": 1,
+      "uniques": 1
+    }
   ]
 }
