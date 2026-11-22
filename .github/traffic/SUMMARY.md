@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-11-21T00:43:34Z
-**Days tracked:** 175 | **Download snapshots:** 644 (hourly)
+**Last updated:** 2026-11-22T18:14:21Z
+**Days tracked:** 176 | **Download snapshots:** 646 (hourly)
 
 ---
 
@@ -11,10 +11,10 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 127 | 70 |
-| Git Clones | 220 | 92 |
+| Page Views | 112 | 65 |
+| Git Clones | 238 | 104 |
 
-> **Engagement:** 1.8 pages per visitor (14-day avg)
+> **Engagement:** 1.7 pages per visitor (14-day avg)
 
 ---
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 730 of 70 visitors cloned or downloaded (**1042.8%**)
+> **14-day conversion:** 743 of 65 visitors cloned or downloaded (**1143.0%**)
 >
-> Unique cloners: 92 | Release downloads: 638
+> Unique cloners: 104 | Release downloads: 639
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 638 |
-| Git Clones (14-day) | 220 |
-| **Total Acquisitions** | **858** |
+| Zip Downloads | 639 |
+| Git Clones (14-day) | 238 |
+| **Total Acquisitions** | **877** |
 
 ---
 
@@ -54,8 +54,8 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 45 | 29 |
-| Google | 25 | 16 |
+| github.com | 41 | 26 |
+| Google | 19 | 13 |
 | realisticfarming.com | 4 | 4 |
 | Bing | 1 | 1 |
 | search.brave.com | 1 | 1 |
@@ -79,9 +79,9 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 95 | 63 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 22 | 22 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 8 | 8 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 86 | 59 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 18 | 18 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 6 | 6 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/compare/v2.2.0.0-pre...v2.3.0.0` | 1 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.2.0.0-pre` | 1 | 1 |
 
