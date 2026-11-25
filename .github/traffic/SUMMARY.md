@@ -1,7 +1,7 @@
 # Repository Traffic Dashboard
 
-**Last updated:** 2026-11-22T18:14:21Z
-**Days tracked:** 176 | **Download snapshots:** 646 (hourly)
+**Last updated:** 2026-11-25T00:22:15Z
+**Days tracked:** 177 | **Download snapshots:** 650 (hourly)
 
 ---
 
@@ -11,8 +11,8 @@
 
 | Metric | 14-Day Total | Unique |
 |--------|-------------|--------|
-| Page Views | 112 | 65 |
-| Git Clones | 238 | 104 |
+| Page Views | 105 | 60 |
+| Git Clones | 215 | 96 |
 
 > **Engagement:** 1.7 pages per visitor (14-day avg)
 
@@ -30,9 +30,9 @@
 
 ![Conversion](charts/conversion.png)
 
-> **14-day conversion:** 743 of 65 visitors cloned or downloaded (**1143.0%**)
+> **14-day conversion:** 739 of 60 visitors cloned or downloaded (**1231.6%**)
 >
-> Unique cloners: 104 | Release downloads: 639
+> Unique cloners: 96 | Release downloads: 643
 
 ---
 
@@ -42,9 +42,9 @@
 
 | Channel | Count |
 |---------|-------|
-| Zip Downloads | 639 |
-| Git Clones (14-day) | 238 |
-| **Total Acquisitions** | **877** |
+| Zip Downloads | 643 |
+| Git Clones (14-day) | 215 |
+| **Total Acquisitions** | **858** |
 
 ---
 
@@ -54,10 +54,11 @@
 
 | Source | Views | Unique |
 |--------|-------|--------|
-| github.com | 41 | 26 |
-| Google | 19 | 13 |
-| realisticfarming.com | 4 | 4 |
+| github.com | 43 | 27 |
+| Google | 14 | 9 |
+| realisticfarming.com | 2 | 2 |
 | Bing | 1 | 1 |
+| alice.yandex.ru | 1 | 1 |
 | search.brave.com | 1 | 1 |
 | yandex.ru | 1 | 1 |
 
@@ -79,11 +80,12 @@
 
 | Page | Views | Unique |
 |------|-------|--------|
-| `/Realistic-Farming/FS25_RandomWorldEvents` | 86 | 59 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 18 | 18 |
-| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 6 | 6 |
+| `/Realistic-Farming/FS25_RandomWorldEvents` | 84 | 57 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.3.0.0` | 14 | 14 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/releases` | 4 | 4 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/compare/v2.2.0.0-pre...v2.3.0.0` | 1 | 1 |
 | `/Realistic-Farming/FS25_RandomWorldEvents/releases/tag/v2.2.0.0-pre` | 1 | 1 |
+| `/Realistic-Farming/FS25_RandomWorldEvents/tree/master/icons` | 1 | 1 |
 
 ---
 
